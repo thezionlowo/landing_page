@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" fill="none">
+  <!-- Top bar -->
+  <rect x="0" y="0" width="10" height="23" fill="#D92332" />
+  <rect x="10" y="0" width="8" height="23" fill="#FC6A2E" />
+  <path d="M18 0 H64 C52 8 46 16 46 23 H18 Z" fill="#F2B844" />
+  
+  <!-- Bottom bar -->
+  <path d="M0 48 C0 32 10 25 18 25 V48 Z" fill="#D92332" />
+  <path d="M10 48 C12 36 20 25 32 25 H22 C14 25 6 36 6 48 Z" fill="#FC6A2E" />
+  <path d="M22 25 C14 36 12 48 12 48 H64 V25 Z" fill="#F2B844" />
+</svg>

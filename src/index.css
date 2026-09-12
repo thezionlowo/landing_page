@@ -1,0 +1,355 @@
+/* ============================================================================
+   ZAMERIA — Badass Product-Led SaaS Design System
+   Aesthetic: Linear / Stripe / Vercel + Boom Video Editorial Precision
+   Core Palette: Deep Authority Navy (#071A31), Obsidian (#040E1B), 
+                 Signature Bluish-Purple Gradient (#1D4ED8 -> #4F46E5 -> #6366F1 -> #7C3AED),
+                 Electric Sky (#60A5FA), Vivid Emerald (#10B981), Soft Canvas (#F8FAFC)
+   ============================================================================ */
+
+:root {
+  /* Core Tokens */
+  --brand-navy: #071a31;
+  --brand-navy-dark: #040e1b;
+  --brand-navy-light: #0c2340;
+  --brand-navy-border: #153258;
+
+  /* Signature Bluish-Purple Gradient */
+  --purple-start: #1d4ed8;
+  --purple-mid: #4f46e5;
+  --purple-end: #6366f1;
+  --purple-violet: #7c3aed;
+
+  /* Accent Signals */
+  --accent-sky: #60a5fa;
+  --accent-sky-soft: #eff6ff;
+  --accent-emerald: #10b981;
+  --accent-emerald-soft: #ecfdf5;
+  --accent-amber: #f59e0b;
+  --accent-amber-soft: #fffbeb;
+
+  /* Surfaces & Canvas */
+  --canvas-bg: #f8fafc;
+  --surface-white: #ffffff;
+  --surface-subtle: #f1f5f9;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* Typography */
+  --text-headline: #071a31;
+  --text-body: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+  --text-white: #ffffff;
+  --text-white-subtle: #cbd5e1;
+
+  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'Space Grotesk', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(7, 26, 49, 0.04);
+  --shadow-sm: 0 2px 8px -2px rgba(7, 26, 49, 0.05), 0 1px 3px rgba(7, 26, 49, 0.03);
+  --shadow-md: 0 8px 20px -4px rgba(7, 26, 49, 0.08);
+  --shadow-lg: 0 16px 36px -6px rgba(7, 26, 49, 0.1);
+  --shadow-xl: 0 28px 64px -12px rgba(7, 26, 49, 0.16);
+  --shadow-purple-glow: 0 12px 32px -4px rgba(79, 70, 229, 0.35), 0 4px 12px -2px rgba(29, 78, 216, 0.2);
+
+  /* Layout */
+  --container-max: 1240px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 9999px;
+}
+
+/* Reset */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--font-display);
+  background-color: var(--canvas-bg);
+  color: var(--text-headline);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  overflow-x: hidden;
+  min-height: 100vh;
+  line-height: 1.55;
+  background-color: var(--canvas-bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+/* Base Container */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Typography Scale */
+.eyebrow-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--brand-navy);
+  background: rgba(239, 246, 255, 0.9);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  border-radius: var(--radius-full);
+  box-shadow: 0 2px 6px rgba(96, 165, 250, 0.08);
+  width: fit-content;
+}
+
+.eyebrow-badge.purple {
+  color: #4338ca;
+  background: rgba(238, 242, 255, 0.9);
+  border-color: rgba(99, 102, 241, 0.35);
+}
+
+.eyebrow-badge.dark {
+  color: #93c5fd;
+  background: rgba(12, 35, 64, 0.7);
+  border-color: rgba(96, 165, 250, 0.3);
+}
+
+.eyebrow-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--accent-emerald);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-emerald);
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.35; transform: scale(0.85); }
+}
+
+/* Oversized Editorial Headlines */
+.hero-headline {
+  font-size: clamp(38px, 6.2vw, 78px);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+  color: var(--text-headline);
+  margin-bottom: 22px;
+}
+
+.section-headline {
+  font-size: clamp(30px, 4.4vw, 54px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  color: var(--text-headline);
+  margin-bottom: 16px;
+}
+
+.lead-text {
+  font-size: clamp(16px, 1.7vw, 20px);
+  line-height: 1.55;
+  color: var(--text-body);
+  max-width: 680px;
+  font-weight: 400;
+}
+
+.lead-text.center {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 13px 26px;
+  border-radius: var(--radius-full);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.btn-hero-gradient {
+  background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 48%, #6366f1 100%);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: var(--shadow-purple-glow);
+  font-weight: 700;
+}
+
+.btn-hero-gradient:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 48%, #7c3aed 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 16px 36px -4px rgba(79, 70, 229, 0.45), 0 6px 14px -2px rgba(37, 99, 235, 0.3);
+  color: #ffffff !important;
+}
+
+.btn-hero-gradient:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.3);
+}
+
+.btn-hero-gradient:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 3px;
+}
+
+.btn-secondary {
+  background-color: #ffffff;
+  color: var(--brand-navy);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-secondary:hover {
+  border-color: var(--border-strong);
+  background-color: #f8fafc;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Glass & Atmospheric Utilities */
+.radial-atmosphere {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(90px);
+  z-index: 0;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+  border-color: #cbd5e1;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+  .btn-group {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+  .btn-group .btn {
+    width: 100% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   ZAMERIA Authentication Layout & Responsive System
+   Ensures 100% visual consistency between Login, Sign Up, and Forgot Password
+   ============================================================================ */
+.zameria-auth-page {
+  min-height: 100vh;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  font-family: var(--font-display);
+}
+
+.zameria-auth-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.zameria-auth-card {
+  width: 100%;
+  max-width: 480px;
+  background-color: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 20px 40px -12px rgba(7, 26, 49, 0.08), 0 0 0 1px rgba(7, 26, 49, 0.02);
+  padding: 40px 36px;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s ease;
+}
+
+.zameria-auth-footer {
+  padding: 18px 20px;
+  text-align: center;
+  font-size: 12.5px;
+  color: #94a3b8;
+}
+
+@media (max-width: 640px) {
+  .zameria-auth-main {
+    padding: 24px 16px;
+    align-items: flex-start;
+  }
+  .zameria-auth-card {
+    border-radius: 20px;
+    padding: 28px 20px;
+  }
+}
+
+@media (max-width: 360px) {
+  .zameria-auth-main {
+    padding: 16px 12px;
+  }
+  .zameria-auth-card {
+    border-radius: 16px;
+    padding: 22px 14px;
+  }
+}
