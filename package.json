@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:e2e": "npx tsx src/__tests__/e2e-sync-test.ts"
   },
   "dependencies": {
     "lucide-react": "^1.43.0",
