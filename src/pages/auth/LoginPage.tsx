@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
-import { Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
 import { AuthHeader } from './AuthHeader';
 
 export const LoginPage: React.FC = () => {
@@ -42,12 +42,6 @@ export const LoginPage: React.FC = () => {
     } else {
       setError(res.error || 'Authentication failed. Please check your credentials.');
     }
-  };
-
-  const handleFillDemo = () => {
-    setEmail('zion@skincarelab.ng');
-    setPassword('password123');
-    setError(null);
   };
 
   return (
@@ -287,49 +281,6 @@ export const LoginPage: React.FC = () => {
               {!isLoading && <ArrowRight size={16} />}
             </button>
           </form>
-
-          {/* Quick Demo Helper */}
-          <div
-            style={{
-              marginTop: '24px',
-              padding: '12px 14px',
-              backgroundColor: '#f8fafc',
-              border: '1px dashed #cbd5e1',
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                Testing Demo Account
-              </div>
-              <div style={{ fontSize: '12px', color: '#071A31', fontWeight: 600 }}>
-                zion@skincarelab.ng
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleFillDemo}
-              style={{
-                fontSize: '12px',
-                fontWeight: 700,
-                color: '#2563eb',
-                backgroundColor: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                padding: '6px 12px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-              }}
-            >
-              <Sparkles size={13} />
-              <span>Fill Demo</span>
-            </button>
-          </div>
 
           {/* Registration Link */}
           <div

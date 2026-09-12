@@ -75,7 +75,7 @@ export const Footer: React.FC = () => {
 
   const handleOpenPos = (e: React.MouseEvent) => {
     e.preventDefault();
-    window.open('http://localhost:5174', '_blank', 'noopener,noreferrer');
+    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -119,7 +119,7 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="http://localhost:5174"
+                  href="http://localhost:5176"
                   onClick={handleOpenPos}
                   className="dark-footer-link"
                   style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
@@ -169,7 +169,7 @@ export const Footer: React.FC = () => {
             <ul className="dark-footer-links-list">
               <li>
                 <a
-                  href="https://downloads.wordpress.org/plugin/woocommerce.zip"
+                  href="http://localhost:5182"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="dark-footer-link"
@@ -182,7 +182,7 @@ export const Footer: React.FC = () => {
                   href="/#download"
                   onClick={(e) => {
                     e.preventDefault();
-                    window.open('http://localhost:5174', '_blank', 'noopener,noreferrer');
+                    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer');
                   }}
                   className="dark-footer-link"
                 >

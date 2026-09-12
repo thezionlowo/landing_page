@@ -284,8 +284,85 @@ async function runE2ETest() {
   assert(userBAccountRes.data.account.licenses.length === 0, 'User B must NOT see User A license');
   console.log('✓ Account isolation confirmed. User B cannot see or manipulate User A data.\n');
 
+  // STEP 10: Dedicated Paid License Key Validation & Direct Activation
+  console.log('--- TEST 10: Dedicated License Validation & Activation ---');
+  // 10a. Validate existing license
+  const licValRes = await request('/api/v1/license/validate', {
+    method: 'POST',
+    body: JSON.stringify({
+      licenseKey: paidKey,
+      store: { url: 'https://lekkiluxury.ng', name: 'Lekki Luxury Boutique Official' },
+    }),
+  });
+  assert(licValRes.ok, 'License validation must succeed for authorized domain');
+  assert(licValRes.data.entitlement.status === 'paid_active', 'Entitlement must be paid_active');
+  console.log('✓ Dedicated license validation succeeded on authorized store domain.');
+
+  // 10b. Invalid license key
+  const badLicRes = await request('/api/v1/license/validate', {
+    method: 'POST',
+    body: JSON.stringify({
+      licenseKey: 'ZMR-0000-FAKE-KEYY',
+      store: { url: 'https://lekkiluxury.ng' },
+    }),
+  });
+  assert(badLicRes.status === 404 && badLicRes.data.code === 'LICENSE_NOT_FOUND', 'Bad key must return 404 LICENSE_NOT_FOUND');
+  console.log('✓ Non-existent license key correctly rejected with 404.\n');
+
+  // STEP 11: Store Domain Mismatch Protection
+  console.log('--- TEST 11: Store Domain Mismatch Protection ---');
+  const mismatchRes = await request('/api/v1/license/validate', {
+    method: 'POST',
+    body: JSON.stringify({
+      licenseKey: paidKey,
+      store: { url: 'https://piratestore.com', name: 'Unauthorized Store' },
+    }),
+  });
+  assert(mismatchRes.status === 403 && mismatchRes.data.code === 'DOMAIN_MISMATCH', 'Domain mismatch must return 403 DOMAIN_MISMATCH');
+  console.log(`✓ Unauthorized store domain rejected: ${mismatchRes.data.error}`);
+  console.log('✓ Domain binding security strictly enforced.\n');
+
+  // STEP 12: Subscription Cancellation Synchronization
+  console.log('--- TEST 12: Subscription Cancellation Synchronization ---');
+  const cancelRes = await request('/api/v1/subscription/cancel', {
+    method: 'POST',
+    body: JSON.stringify({
+      accountId: accountA.id,
+      email: testEmail,
+    }),
+  });
+  assert(cancelRes.ok, 'Cancellation endpoint must succeed');
+  assert(cancelRes.data.account.accountStatus === 'cancelled', 'Account status must transition to cancelled');
+
+  // Plugin entitlement must immediately reflect paid_cancelled / suspended
+  const cancelledPluginRes = await request(`/api/v1/plugin/entitlement?account_id=${accountA.id}`);
+  assert(cancelledPluginRes.data.entitlement.status === 'paid_cancelled', 'Plugin entitlement must reflect paid_cancelled');
+  assert(cancelledPluginRes.data.entitlement.subscription.status === 'cancelled', 'Subscription status must be cancelled');
+  console.log('✓ Subscription cancellation synchronized immediately to WooCommerce plugin.');
+  console.log('✓ Plugin access revoked/restricted upon subscription cancellation.\n');
+
+  // STEP 13: Offline Resilience Verification
+  console.log('--- TEST 13: Offline Resilience & Service Degradation Handling ---');
+  // 13a. Simulate service unavailable
+  await request('/api/v1/simulation/state', {
+    method: 'POST',
+    body: JSON.stringify({ state: 'backend_unavailable' }),
+  });
+  const offlineCheck = await request('/api/v1/plugin/entitlement');
+  assert(offlineCheck.status === 503 && offlineCheck.data.code === 'SERVICE_UNAVAILABLE', 'Offline simulation must return 503');
+  console.log('✓ 503 Service Unavailable correctly returned during cloud outage.');
+
+  // 13b. Restore backend service
+  await request('/api/v1/simulation/state', {
+    method: 'POST',
+    body: JSON.stringify({ state: 'restored' }),
+  });
+  const restoredCheck = await request('/api/v1/health');
+  assert(restoredCheck.ok && restoredCheck.data.status === 'healthy', 'Cloud service must restore cleanly');
+  console.log('✓ Cloud connectivity restored. System operational.\n');
+
   console.log('================================================================');
-  console.log(' ALL 9 CORE SYSTEM INTEGRATION & SYNC TESTS PASSED PERFECTLY');
+  console.log(' ALL 13 CORE SYSTEM INTEGRATION & SYNC TESTS PASSED PERFECTLY');
   console.log('================================================================');
 }
 

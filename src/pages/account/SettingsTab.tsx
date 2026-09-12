@@ -227,7 +227,7 @@ export const SettingsTab: React.FC = () => {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="zion@skincarelab.ng"
+                  placeholder="merchant@business.com"
                   required
                   style={{
                     width: '100%',

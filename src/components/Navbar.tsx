@@ -499,11 +499,10 @@ export const Navbar: React.FC = () => {
 
                   {/* 1. ZAMERIA Plugin (Active) */}
                   <a
-                    href="#product-powers"
-                    onClick={(e) => {
-                      scrollToSection('product-powers')(e);
-                      setDownloadOpen(false);
-                    }}
+                    href="http://localhost:5182"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={() => setDownloadOpen(false)}
                     style={{
                       display: 'flex',
                       alignItems: 'flex-start',
@@ -559,7 +558,7 @@ export const Navbar: React.FC = () => {
 
                   {/* 2. Desktop App (Active / Available) */}
                   <a
-                    href="http://localhost:5174"
+                    href="http://localhost:5176"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setDownloadOpen(false)}
@@ -1131,7 +1130,7 @@ export const Navbar: React.FC = () => {
 
                 {/* Open POS CTA Button */}
                 <a
-                  href="http://localhost:5174"
+                  href="http://localhost:5176"
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -1356,11 +1355,10 @@ export const Navbar: React.FC = () => {
               >
                 {/* 1. ZAMERIA Plugin */}
                 <a
-                  href="#product-powers"
-                  onClick={(e) => {
-                    scrollToSection('product-powers')(e);
-                    setMobileMenuOpen(false);
-                  }}
+                  href="http://localhost:5182"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setMobileMenuOpen(false)}
                   style={{ display: 'block', textDecoration: 'none' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563eb', fontWeight: 700, fontSize: '13px' }}>
@@ -1375,7 +1373,7 @@ export const Navbar: React.FC = () => {
 
                 {/* 2. Desktop App */}
                 <a
-                  href="http://localhost:5174"
+                  href="http://localhost:5176"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}
@@ -1625,7 +1623,7 @@ export const Navbar: React.FC = () => {
 
                 {/* Open POS Link for Mobile */}
                 <a
-                  href="http://localhost:5174"
+                  href="http://localhost:5176"
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}

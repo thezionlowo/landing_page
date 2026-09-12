@@ -440,7 +440,7 @@ export const OverviewTab: React.FC = () => {
                 <span>Choose a Plan</span>
               </button>
               <a
-                href="http://localhost:5174"
+                href="http://localhost:5176"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -458,6 +458,27 @@ export const OverviewTab: React.FC = () => {
                 }}
               >
                 <span>Open POS</span>
+                <ExternalLink size={14} />
+              </a>
+              <a
+                href="http://localhost:5182"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '11px 18px',
+                  backgroundColor: '#ffffff',
+                  color: '#071A31',
+                  fontSize: '13px',
+                  fontWeight: 700,
+                  borderRadius: '12px',
+                  border: '1px solid #cbd5e1',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  textDecoration: 'none',
+                }}
+              >
+                <span>Plugin Dashboard</span>
                 <ExternalLink size={14} />
               </a>
             </>
@@ -504,7 +525,7 @@ export const OverviewTab: React.FC = () => {
                 <span>Manage Plan</span>
               </button>
               <a
-                href="http://localhost:5174"
+                href="http://localhost:5176"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
@@ -522,6 +543,27 @@ export const OverviewTab: React.FC = () => {
                 }}
               >
                 <span>Open POS</span>
+                <ExternalLink size={14} />
+              </a>
+              <a
+                href="http://localhost:5182"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '11px 18px',
+                  backgroundColor: '#ffffff',
+                  color: '#071A31',
+                  fontSize: '13.5px',
+                  fontWeight: 700,
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  textDecoration: 'none',
+                }}
+              >
+                <span>Plugin Dashboard</span>
                 <ExternalLink size={14} />
               </a>
             </>

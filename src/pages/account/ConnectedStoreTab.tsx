@@ -283,7 +283,7 @@ export const ConnectedStoreTab: React.FC = () => {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <a
-              href="http://localhost:5174"
+              href="http://localhost:5176"
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -301,6 +301,27 @@ export const ConnectedStoreTab: React.FC = () => {
               }}
             >
               <span>Open ZAMERIA POS</span>
+              <ExternalLink size={14} />
+            </a>
+            <a
+              href="http://localhost:5182"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 18px',
+                backgroundColor: '#ffffff',
+                color: '#071A31',
+                borderRadius: '10px',
+                fontSize: '13px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                border: '1px solid #cbd5e1',
+              }}
+            >
+              <span>Plugin Dashboard</span>
               <ExternalLink size={14} />
             </a>
             <button

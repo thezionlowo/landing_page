@@ -528,7 +528,7 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                   type="button"
                   onClick={() => {
                     handleClose();
-                    window.open('http://localhost:5174', '_blank', 'noopener,noreferrer');
+                    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer');
                   }}
                   style={{
                     width: '100%',

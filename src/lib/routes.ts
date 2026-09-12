@@ -7,13 +7,27 @@ export const getPosAppUrl = (path: string = ''): string => {
     return `${customAppUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
   }
 
-  // In local development, if running on port 5173 with POS dev server on 5174:
-  if (typeof window !== 'undefined' && window.location.hostname === 'localhost' && window.location.port === '5173') {
-    return `http://localhost:5174${path.startsWith('/') ? path : `/${path}`}`;
+  // In local development, POS is served on port 5176
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return `http://localhost:5176${path.startsWith('/') ? path : `/${path}`}`;
   }
 
   // Production fallback
   return path || '/';
+};
+
+export const getPluginDashboardUrl = (path: string = ''): string => {
+  const customPluginUrl = (import.meta as any).env?.VITE_PLUGIN_URL;
+  if (customPluginUrl) {
+    return `${customPluginUrl.replace(/\/$/, '')}${path.startsWith('/') ? path : `/${path}`}`;
+  }
+
+  // In local development, WooCommerce Plugin Dashboard is served on port 5182
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return `http://localhost:5182${path.startsWith('/') ? path : `/${path}`}`;
+  }
+
+  return 'https://zameria.co/plugin';
 };
 
 export const ROUTES = {
@@ -24,12 +38,17 @@ export const ROUTES = {
   account: '/account',
   accountTab: (tab: string) => `/account?tab=${tab}`,
 
-  // ZAMERIA Point of Sale Application (Separate Application)
+  // ZAMERIA Point of Sale Application (Separate Application on port 5176)
   get pointOfSale(): string {
     return getPosAppUrl('/login?redirect=/dashboard');
   },
   get pos(): string {
     return getPosAppUrl('/login?redirect=/dashboard');
+  },
+
+  // ZAMERIA WooCommerce Plugin Dashboard (on port 5182)
+  get pluginDashboard(): string {
+    return getPluginDashboardUrl();
   },
 
   // Legacy aliases

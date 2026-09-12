@@ -613,12 +613,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             const acc = data.account;
             setCustomer((prev) => {
               if (!prev) return prev;
+              const isCancelled = acc.accountStatus === 'cancelled' || acc.subscription?.status === 'cancelled';
               const isTrialActive = acc.trial?.status === 'active';
-              const isExpired = acc.trial?.status === 'expired';
-              const isPaid = acc.subscription?.status === 'active' || (acc.licenses && acc.licenses.length > 0);
+              const isExpired = acc.trial?.status === 'expired' || acc.accountStatus === 'expired';
+              const isPaid = !isCancelled && !isExpired && (acc.subscription?.status === 'active' || (acc.licenses && acc.licenses.length > 0));
 
               let accountStatus = prev.accountStatus;
-              if (isPaid) accountStatus = 'active_business';
+              if (isCancelled) accountStatus = 'cancelled';
+              else if (isPaid) accountStatus = 'active_business';
               else if (isExpired) accountStatus = 'trial_expired';
               else if (isTrialActive) accountStatus = 'trial_active';
               else if (acc.accountStatus === 'trial_not_started') accountStatus = 'trial_not_started';
@@ -877,9 +879,15 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             accountId = backendData.account.id;
             activationCode = backendData.account.trial?.activationCode || activationCode;
           }
+        } else {
+          const errData = await backendRes.json().catch(() => ({}));
+          return {
+            success: false,
+            error: errData.error || 'An account with this email address already exists in ZAMERIA Cloud.',
+          };
         }
       } catch {
-        // Fallback to offline mode
+        // Fallback to offline mode only if server is completely unreachable
       }
 
       // STATE A: Account Created, Trial Not Started, NO license, NO subscription!
@@ -1155,6 +1163,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const changePassword = (currentPass: string, newPass: string): { success: boolean; error?: string } => {
     if (!customer) return { success: false, error: 'Not authenticated' };
+    if (!currentPass) {
+      return { success: false, error: 'Current password is required.' };
+    }
     if (customer.password && customer.password !== currentPass) {
       return { success: false, error: 'Current password does not match.' };
     }
@@ -1229,6 +1240,19 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       },
     };
     persistSession(updated);
+
+    try {
+      fetch('http://localhost:5190/api/v1/subscription/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId: customer.id,
+          email: customer.email,
+        }),
+      }).catch(() => {});
+    } catch {
+      // Ignore network errors
+    }
   };
 
   const resumeSubscription = () => {
@@ -1495,6 +1519,20 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       licenses: updatedLicenses,
       orders: updatedOrders,
     });
+
+    try {
+      fetch('http://localhost:5190/api/v1/license/bind', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountId: customer.id,
+          licenseId,
+          domain: cleanDomain,
+        }),
+      }).catch(() => {});
+    } catch {
+      // Ignore network errors
+    }
 
     return { success: true };
   };
