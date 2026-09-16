@@ -43,7 +43,7 @@ function LandingPageContent() {
         {/* 7. Getting Started Is Easy: 3 Simple Milestone Steps (< 2 Minutes) */}
         <GettingStarted />
 
-        {/* 8. Transparent Pricing: Starter, Business (In-Card Billing Switch), Business Plus */}
+        {/* 8. Transparent annual pricing: Starter and Business */}
         <PricingSection />
 
         {/* 9. FAQ: Split Editorial Layout with Support Reassurance */}

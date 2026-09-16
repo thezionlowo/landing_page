@@ -36,7 +36,7 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     question: 'What happens when my trial ends?',
     answer:
-      'When your 7-day free trial ends, your account remains intact. You can choose a paid plan (such as the Business plan at ₦30,000/month) to continue using ZAMERIA. If you do not choose a plan, you will not be charged.',
+      'When your 7-day free trial ends, your account remains intact. Choose Starter at ₦200,000/year or Business at ₦300,000/year to continue using ZAMERIA. If you do not choose a plan, you will not be charged.',
   },
   {
     question: 'When do I receive a license?',

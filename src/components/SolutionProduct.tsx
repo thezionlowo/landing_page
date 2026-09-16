@@ -122,7 +122,7 @@ export const SolutionProduct: React.FC = () => {
                       Adunni Okafor • 2x Bluetooth Earbuds
                     </div>
                   </div>
-                  <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--brand-navy)' }}>₦30,000</span>
+                  <span style={{ fontSize: '14px', fontWeight: 800, color: 'var(--brand-navy)' }}>₦300,000/year</span>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 12px', backgroundColor: '#ffffff', borderRadius: '8px', border: '1px solid var(--border-light)' }}>
