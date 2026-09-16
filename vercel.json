@@ -2,5 +2,9 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/pos", "destination": "https://pos.zameria.co/" },
+    { "source": "/pos/:path*", "destination": "https://pos.zameria.co/:path*" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }
