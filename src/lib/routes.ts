@@ -12,10 +12,10 @@ export const getPosAppUrl = (path: string = ''): string => {
     return `http://localhost:5176${path.startsWith('/') ? path : `/${path}`}`;
   }
 
-  // Keep the POS under the public Zameria site for now. Vercel proxies this
-  // prefix to the separately deployed POS app, so visitors stay on /pos.
+  // The public site has no merchant/store context. It therefore opens the
+  // deployed POS application; the WordPress plugin itself uses its own /pos/.
   const suffix = path.startsWith('/') ? path : `/${path}`;
-  return `/pos${suffix}`;
+  return `https://pos.zameria.co${suffix}`;
 };
 
 export const getPluginDashboardUrl = (path: string = ''): string => {
