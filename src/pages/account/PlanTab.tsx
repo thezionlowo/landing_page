@@ -42,9 +42,9 @@ export const PlanTab: React.FC = () => {
   const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? 'September 19, 2026';
   const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || 'October 12, 2026';
   const planName = customer.subscription.planName || 'Business Plan';
-  const price = customer.subscription.price || customer.planPrice || '₦30,000 / month';
+  const price = customer.subscription.price || customer.planPrice || '₦300,000 / year';
 
-  const handleSelectPlan = (plan: 'Starter' | 'Business' | 'Business Plus') => {
+  const handleSelectPlan = (plan: 'Starter' | 'Business') => {
     changePlan(plan, billingCycle);
     setShowChangeModal(false);
   };
@@ -484,12 +484,12 @@ export const PlanTab: React.FC = () => {
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-          {/* Business Plan Card */}
+          {/* Starter Plan Card */}
           <div
             style={{
               backgroundColor: '#ffffff',
               borderRadius: '20px',
-              border: planName.includes('Business Plus') ? '1px solid #e2e8f0' : '2px solid #2563eb',
+              border: planName === 'Starter' ? '2px solid #2563eb' : '1px solid #e2e8f0',
               padding: '24px',
               display: 'flex',
               flexDirection: 'column',
@@ -499,24 +499,81 @@ export const PlanTab: React.FC = () => {
           >
             <div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>Business Plan</span>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>Starter</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#16a34a', backgroundColor: '#f0fdf4', padding: '2px 8px', borderRadius: '9999px' }}>
+                  7-Day Free Trial
+                </span>
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
+                ₦200,000
+                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
+              </div>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Essential Point of Sale and inventory synchronization for growing retail stores.
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <li>✓ 1 WooCommerce store</li>
+                <li>✓ 1 physical store/location</li>
+                <li>✓ Up to 500 products</li>
+                <li>✓ Up to 2 staff members</li>
+                <li>✓ Point of Sale and inventory synchronization</li>
+              </ul>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsUpgradeModalOpen(true)}
+              style={{
+                marginTop: '24px',
+                width: '100%',
+                padding: '12px',
+                backgroundColor: isPaidActive && planName === 'Starter' ? '#f1f5f9' : '#071A31',
+                color: isPaidActive && planName === 'Starter' ? '#64748b' : '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                cursor: isPaidActive && planName === 'Starter' ? 'default' : 'pointer',
+              }}
+              disabled={isPaidActive && planName === 'Starter'}
+            >
+              {isPaidActive && planName === 'Starter' ? 'Current Active Plan' : 'Subscribe to Starter'}
+            </button>
+          </div>
+
+          {/* Business Plan Card */}
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              border: planName === 'Business' ? '2px solid #2563eb' : '1px solid #e2e8f0',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>Business</span>
                 <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', backgroundColor: '#eff6ff', padding: '2px 8px', borderRadius: '9999px' }}>
                   Most Popular
                 </span>
               </div>
               <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
-                ₦30,000
-                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / month</span>
+                ₦300,000
+                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
               </div>
               <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>
-                Complete retail solution for physical shops, boutiques, and pharmacies.
+                Complete retail solution with unlimited products, staff, and real-time inventory synchronization.
               </p>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <li>✓ 1 Till Register Allowance</li>
-                <li>✓ Real-time 2-way WooCommerce stock sync</li>
-                <li>✓ Unlimited products &amp; barcode printing</li>
-                <li>✓ 5 Cashier staff PINs</li>
-                <li>✓ Offline sales caching</li>
+                <li>✓ 1 WooCommerce store</li>
+                <li>✓ 1 physical store/location</li>
+                <li>✓ Unlimited products</li>
+                <li>✓ Unlimited staff members</li>
+                <li>✓ Point of Sale and real-time inventory synchronization</li>
               </ul>
             </div>
 
@@ -538,63 +595,6 @@ export const PlanTab: React.FC = () => {
               disabled={isPaidActive && planName === 'Business'}
             >
               {isPaidActive && planName === 'Business' ? 'Current Active Plan' : 'Subscribe to Business'}
-            </button>
-          </div>
-
-          {/* Business Plus Plan Card */}
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '20px',
-              border: planName.includes('Business Plus') ? '2px solid #2563eb' : '1px solid #e2e8f0',
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>Business Plus</span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#7c3aed', backgroundColor: '#f5f3ff', padding: '2px 8px', borderRadius: '9999px' }}>
-                  Enterprise
-                </span>
-              </div>
-              <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
-                ₦50,000
-                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / month</span>
-              </div>
-              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>
-                Advanced sync and priority infrastructure for multi-location retail brands.
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <li>✓ Multi-store domain routing</li>
-                <li>✓ Unlimited registers &amp; till stations</li>
-                <li>✓ Priority real-time webhook sync</li>
-                <li>✓ Unlimited staff &amp; supervisor accounts</li>
-                <li>✓ 24/7 dedicated engineering support</li>
-              </ul>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsUpgradeModalOpen(true)}
-              style={{
-                marginTop: '24px',
-                width: '100%',
-                padding: '12px',
-                backgroundColor: isPaidActive && planName.includes('Business Plus') ? '#f1f5f9' : '#071A31',
-                color: isPaidActive && planName.includes('Business Plus') ? '#64748b' : '#ffffff',
-                border: 'none',
-                borderRadius: '10px',
-                fontSize: '13.5px',
-                fontWeight: 700,
-                cursor: isPaidActive && planName.includes('Business Plus') ? 'default' : 'pointer',
-              }}
-              disabled={isPaidActive && planName.includes('Business Plus')}
-            >
-              {isPaidActive && planName.includes('Business Plus') ? 'Current Active Plan' : 'Subscribe to Business Plus'}
             </button>
           </div>
         </div>

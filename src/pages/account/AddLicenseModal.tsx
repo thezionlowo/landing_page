@@ -29,10 +29,10 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
   const { customer, subscribeToPlan } = useCustomerAuth();
   const { navigate, setAccountTab } = useRouter();
 
-  const [selectedPlan, setSelectedPlan] = useState<'Business' | 'Business Plus'>(
-    (initialPlan === 'Business Plus' ? 'Business Plus' : 'Business')
+  const [selectedPlan, setSelectedPlan] = useState<'Starter' | 'Business'>(
+    (initialPlan === 'Starter' ? 'Starter' : 'Business')
   );
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [isProcessing, setIsProcessing] = useState(false);
   const [createdResult, setCreatedResult] = useState<{ license: LicenseItem; order: OrderItem } | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
@@ -42,16 +42,11 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
   const isTrial = customer.subscription.status === 'trial' || customer.accountStatus === 'trial_active' || customer.accountStatus === 'trial_expired';
   const defaultPm = customer.paymentMethods.find((p) => p.isDefault) || customer.paymentMethods[0];
 
-  const getPrice = (plan: 'Business' | 'Business Plus', cycle: 'monthly' | 'yearly') => {
-    if (plan === 'Business') {
-      return cycle === 'yearly'
-        ? { amount: '₦25,000', period: 'per month', billedTotal: '₦300,000 billed annually (Save ₦60,000)' }
-        : { amount: '₦30,000', period: 'per month', billedTotal: '₦30,000 billed monthly' };
+  const getPrice = (plan: 'Starter' | 'Business', _cycle: 'monthly' | 'yearly' = 'yearly') => {
+    if (plan === 'Starter') {
+      return { amount: '₦200,000', period: 'per year', billedTotal: '₦200,000 billed annually' };
     }
-    // Business Plus
-    return cycle === 'yearly'
-      ? { amount: '₦42,000', period: 'per month', billedTotal: '₦504,000 billed annually (Save ₦96,000)' }
-      : { amount: '₦50,000', period: 'per month', billedTotal: '₦50,000 billed monthly' };
+    return { amount: '₦300,000', period: 'per year', billedTotal: '₦300,000 billed annually' };
   };
 
   const handlePurchase = async () => {
@@ -195,7 +190,7 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                 </div>
               )}
 
-              {/* Billing Cycle Switcher */}
+              {/* Billing Cycle Badge */}
               <div
                 style={{
                   display: 'flex',
@@ -203,72 +198,65 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                   justifyContent: 'center',
                   gap: '8px',
                   marginBottom: '20px',
-                  padding: '5px',
+                  padding: '8px 16px',
                   backgroundColor: '#f1f5f9',
                   borderRadius: '9999px',
-                  maxWidth: '320px',
+                  maxWidth: '340px',
                   margin: '0 auto 20px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  color: '#071A31',
                 }}
               >
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle('monthly')}
-                  style={{
-                    flex: 1,
-                    padding: '8px 14px',
-                    borderRadius: '9999px',
-                    border: 'none',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    backgroundColor: billingCycle === 'monthly' ? '#ffffff' : 'transparent',
-                    color: billingCycle === 'monthly' ? '#071A31' : '#64748b',
-                    boxShadow: billingCycle === 'monthly' ? '0 2px 6px rgba(0, 0, 0, 0.08)' : 'none',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  Monthly
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setBillingCycle('yearly')}
-                  style={{
-                    flex: 1,
-                    padding: '8px 14px',
-                    borderRadius: '9999px',
-                    border: 'none',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    backgroundColor: billingCycle === 'yearly' ? '#ffffff' : 'transparent',
-                    color: billingCycle === 'yearly' ? '#071A31' : '#64748b',
-                    boxShadow: billingCycle === 'yearly' ? '0 2px 6px rgba(0, 0, 0, 0.08)' : 'none',
-                    transition: 'all 0.15s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <span>Yearly</span>
-                  <span
-                    style={{
-                      fontSize: '10px',
-                      fontWeight: 800,
-                      backgroundColor: '#dcfce7',
-                      color: '#16a34a',
-                      padding: '1px 6px',
-                      borderRadius: '9999px',
-                    }}
-                  >
-                    Save 17%
-                  </span>
-                </button>
+                <span>Annual Billing</span>
+                <span style={{ color: '#94a3b8' }}>•</span>
+                <span style={{ color: '#16a34a', fontWeight: 800 }}>7-Day Free Trial Included</span>
               </div>
 
               {/* Plan Selection Cards */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '24px' }}>
-                {/* 1. Business Plan */}
+                {/* 1. Starter Plan */}
+                <div
+                  onClick={() => setSelectedPlan('Starter')}
+                  style={{
+                    border: selectedPlan === 'Starter' ? '2px solid #2563eb' : '1px solid #e2e8f0',
+                    backgroundColor: selectedPlan === 'Starter' ? '#f0f7ff' : '#ffffff',
+                    borderRadius: '16px',
+                    padding: '18px',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <span style={{ fontSize: '15px', fontWeight: 800, color: '#071A31' }}>Starter</span>
+                    <div
+                      style={{
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        border: selectedPlan === 'Starter' ? '6px solid #2563eb' : '2px solid #cbd5e1',
+                        backgroundColor: '#ffffff',
+                      }}
+                    />
+                  </div>
+                  <div style={{ fontSize: '20px', fontWeight: 900, color: '#071A31' }}>
+                    ₦200,000
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}> / yr</span>
+                  </div>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 10px', lineHeight: 1.4 }}>
+                    Essential POS &amp; inventory sync for growing retail stores.
+                  </p>
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '11.5px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    <li>✓ 1 WooCommerce store</li>
+                    <li>✓ 1 physical store/location</li>
+                    <li>✓ Up to 500 products</li>
+                    <li>✓ Up to 2 staff members</li>
+                    <li>✓ POS &amp; inventory sync</li>
+                  </ul>
+                </div>
+
+                {/* 2. Business Plan */}
                 <div
                   onClick={() => setSelectedPlan('Business')}
                   style={{
@@ -282,7 +270,12 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '15px', fontWeight: 800, color: '#071A31' }}>Business</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 800, color: '#071A31' }}>Business</span>
+                      <span style={{ fontSize: '10px', fontWeight: 800, color: '#2563eb', backgroundColor: '#eff6ff', padding: '1px 6px', borderRadius: '9999px' }}>
+                        POPULAR
+                      </span>
+                    </div>
                     <div
                       style={{
                         width: '20px',
@@ -294,55 +287,18 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                     />
                   </div>
                   <div style={{ fontSize: '20px', fontWeight: 900, color: '#071A31' }}>
-                    {billingCycle === 'yearly' ? '₦25,000' : '₦30,000'}
-                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}> / mo</span>
+                    ₦300,000
+                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}> / yr</span>
                   </div>
                   <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 10px', lineHeight: 1.4 }}>
-                    Ideal for single-location retail stores and boutiques.
+                    Complete retail solution with unlimited capacity and real-time sync.
                   </p>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '11.5px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <li>✓ 1 Till Register</li>
-                    <li>✓ Real-time WooCommerce Sync</li>
-                    <li>✓ 5 Staff PINs</li>
-                  </ul>
-                </div>
-
-                {/* 2. Business Plus Plan */}
-                <div
-                  onClick={() => setSelectedPlan('Business Plus')}
-                  style={{
-                    border: selectedPlan === 'Business Plus' ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                    backgroundColor: selectedPlan === 'Business Plus' ? '#f0f7ff' : '#ffffff',
-                    borderRadius: '16px',
-                    padding: '18px',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '15px', fontWeight: 800, color: '#071A31' }}>Business Plus</span>
-                    <div
-                      style={{
-                        width: '20px',
-                        height: '20px',
-                        borderRadius: '50%',
-                        border: selectedPlan === 'Business Plus' ? '6px solid #2563eb' : '2px solid #cbd5e1',
-                        backgroundColor: '#ffffff',
-                      }}
-                    />
-                  </div>
-                  <div style={{ fontSize: '20px', fontWeight: 900, color: '#071A31' }}>
-                    {billingCycle === 'yearly' ? '₦42,000' : '₦50,000'}
-                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}> / mo</span>
-                  </div>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 10px', lineHeight: 1.4 }}>
-                    For multi-store retailers and high-volume chains.
-                  </p>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '11.5px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    <li>✓ Multi-store Support</li>
-                    <li>✓ Unlimited Registers</li>
-                    <li>✓ Priority Webhook Sync</li>
+                    <li>✓ 1 WooCommerce store</li>
+                    <li>✓ 1 physical store/location</li>
+                    <li>✓ Unlimited products</li>
+                    <li>✓ Unlimited staff members</li>
+                    <li>✓ POS &amp; real-time sync</li>
                   </ul>
                 </div>
               </div>

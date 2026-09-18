@@ -239,14 +239,14 @@ async function runE2ETest() {
     body: JSON.stringify({
       accountId: accountA.id,
       planName: 'Business Plan',
-      price: '₦30,000 / month',
+      price: '₦300,000 / year',
       licenseKey: paidKey,
     }),
   });
   assert(upgradeRes.ok, 'Subscription upgrade must succeed');
   assert(upgradeRes.data.account.accountStatus === 'active_business', 'Account status must be active_business');
   assert(upgradeRes.data.account.subscription.status === 'active', 'Subscription must be active');
-  assert(upgradeRes.data.account.subscription.price === '₦30,000 / month', 'Price must be ₦30,000 / month');
+  assert(upgradeRes.data.account.subscription.price === '₦300,000 / year', 'Price must be ₦300,000 / year');
   assert(upgradeRes.data.account.licenses.length === 1, 'Exactly one active license generated after payment');
   assert(upgradeRes.data.account.licenses[0].licenseKey === paidKey, 'Issued license key must match');
 
@@ -255,7 +255,7 @@ async function runE2ETest() {
   assert(paidPluginRes.ok, 'Paid plugin entitlement must succeed');
   assert(paidPluginRes.data.entitlement.status === 'paid_active', 'WooCommerce plugin must reflect paid_active');
   assert(paidPluginRes.data.entitlement.subscription.status === 'active', 'WooCommerce subscription must be active');
-  assert(paidPluginRes.data.entitlement.subscription.price === '₦30,000 / month', 'WooCommerce subscription price must match');
+  assert(paidPluginRes.data.entitlement.subscription.price === '₦300,000 / year', 'WooCommerce subscription price must match');
   console.log('✓ Paid subscription activated on backend.');
   console.log(`✓ Software license issued: ${paidKey}`);
   console.log('✓ WooCommerce Plugin validates active license and unlocks paid features.\n');

@@ -340,7 +340,7 @@ export const AccountLayout: React.FC = () => {
                         className="scenario-btn"
                       >
                         <strong>State D: Paid Business Plan</strong>
-                        <span>₦30,000/mo • Active ZMR license • Store connected</span>
+                        <span>₦300,000/yr • Active ZMR license • Store connected</span>
                       </button>
                       <button
                         type="button"

@@ -47,7 +47,7 @@ export interface ConnectedStore {
 
 export interface SubscriptionInfo {
   status: SubscriptionStatus;
-  planId: 'Starter' | 'Business' | 'Business Plus' | null;
+  planId: 'Starter' | 'Business' | null;
   planName: string;
   price: string;
   billingCycle: 'monthly' | 'yearly';
@@ -60,7 +60,7 @@ export interface SubscriptionInfo {
 export interface LicenseItem {
   id: string;
   licenseKey: string;
-  plan: 'Starter' | 'Business' | 'Business Plus';
+  plan: 'Starter' | 'Business';
   planName: string;
   billingCycle: 'monthly' | 'yearly';
   price: string;
@@ -132,7 +132,7 @@ export interface CustomerProfile {
   // Direct backwards-compatible aliases
   trialDaysRemaining: number;
   trialEndsAt: string;
-  plan: 'Starter' | 'Business' | 'Business Plus' | null;
+  plan: 'Starter' | 'Business' | null;
   planPrice: string;
   billingCycle: 'monthly' | 'yearly';
   nextBillingDate: string;
@@ -298,18 +298,18 @@ interface CustomerAuthContextType {
   addPaymentMethod: (card: Omit<PaymentMethodItem, 'id' | 'isDefault'>) => void;
   removePaymentMethod: (id: string) => void;
   setDefaultPaymentMethod: (id: string) => void;
-  changePlan: (newPlan: 'Starter' | 'Business' | 'Business Plus', cycle: 'monthly' | 'yearly') => void;
+  changePlan: (newPlan: 'Starter' | 'Business', cycle?: 'monthly' | 'yearly') => void;
   cancelSubscription: () => void;
   resumeSubscription: () => void;
   subscribeToPlan: (data: {
-    plan: 'Business' | 'Business Plus';
-    billingCycle: 'monthly' | 'yearly';
+    plan: 'Starter' | 'Business';
+    billingCycle?: 'monthly' | 'yearly';
     paymentMethodId?: string;
     transactionRef?: string;
   }) => Promise<{ success: boolean; license: LicenseItem; order: OrderItem; isDuplicate?: boolean }>;
   purchaseNewLicense: (data: {
-    plan: 'Business' | 'Business Plus';
-    billingCycle: 'monthly' | 'yearly';
+    plan: 'Starter' | 'Business';
+    billingCycle?: 'monthly' | 'yearly';
     paymentMethodId?: string;
     transactionRef?: string;
   }) => Promise<{ success: boolean; license: LicenseItem; order: OrderItem; isDuplicate?: boolean }>;
@@ -479,20 +479,20 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
     status: 'active',
     planId: 'Business',
     planName: 'Business Plan',
-    price: '₦30,000 / month',
-    billingCycle: 'monthly',
+    price: '₦300,000 / year',
+    billingCycle: 'yearly',
     startDate: 'September 12, 2026',
-    renewsAt: 'October 12, 2026',
+    renewsAt: 'September 12, 2027',
   },
   activationCode: 'ZAM-7F4K-92XP',
   trialDaysRemaining: 0,
   trialEndsAt: 'September 12, 2026',
   plan: 'Business',
-  planPrice: '₦30,000 / month',
-  billingCycle: 'monthly',
-  nextBillingDate: 'October 12, 2026',
+  planPrice: '₦300,000 / year',
+  billingCycle: 'yearly',
+  nextBillingDate: 'September 12, 2027',
   storesCount: 1,
-  staffAllowance: 5,
+  staffAllowance: 999,
   billingAddress: {
     firstName: 'Zion',
     lastName: 'Lowo',
@@ -519,16 +519,16 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
       licenseKey: 'ZMR-88F4-9021-BC44',
       plan: 'Business',
       planName: 'Business Plan',
-      billingCycle: 'monthly',
-      price: '₦30,000 / month',
+      billingCycle: 'yearly',
+      price: '₦300,000 / year',
       status: 'Active',
       connectedDomain: 'brandone.com',
       activationStatus: 'Activated',
       activatedAt: 'September 12, 2026',
-      expiresAt: 'October 12, 2026',
+      expiresAt: 'September 12, 2027',
       orderId: 'ord_1024',
       orderNumber: '#ZM-1024',
-      features: ['1 Till Register', 'Unlimited Products', '5 Staff PINs', 'Real-time WooCommerce Sync'],
+      features: ['1 WooCommerce Store', '1 Physical Location', 'Unlimited Products', 'Unlimited Staff Members', 'Real-time WooCommerce Sync'],
     },
   ],
   orders: [
@@ -537,9 +537,9 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
       orderNumber: '#ZM-1024',
       date: 'Sep 12, 2026',
       status: 'Completed',
-      plan: 'Business Plan (Monthly)',
-      total: '₦30,000',
-      amountNumber: 30000,
+      plan: 'Business Plan (Annual)',
+      total: '₦300,000',
+      amountNumber: 300000,
       invoiceNumber: 'INV-2026-0941',
       paymentMethod: 'Mastercard ending in 4092',
       billingName: 'Zion Lowo • Zion Business Ltd.',
@@ -550,7 +550,7 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
       connectedDomain: 'brandone.com',
       transactionRef: 'txn_init_1024',
       items: [
-        'ZAMERIA Business Plan (Monthly Subscription)',
+        'ZAMERIA Business Plan (Annual Subscription)',
         'WooCommerce Real-time Sync Entitlement',
         'License Key ZMR-88F4-9021-BC44 (Active)',
       ],
@@ -771,7 +771,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             billingCycle: acc.subscription?.billingCycle || localMatch?.billingCycle || 'monthly',
             nextBillingDate: acc.subscription?.renewsAt || localMatch?.nextBillingDate || '',
             storesCount: storeStatus === 'connected' ? 1 : 0,
-            staffAllowance: acc.subscription?.planId === 'Business Plus' ? 999 : 5,
+            staffAllowance: acc.subscription?.planId === 'Starter' ? 2 : 999,
             billingAddress: localMatch?.billingAddress || {
               firstName: (acc.fullName || '').split(' ')[0] || 'Store',
               lastName: (acc.fullName || '').split(' ').slice(1).join(' ') || 'Owner',
@@ -1269,25 +1269,20 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     persistSession(updated);
   };
 
-  const changePlan = (newPlan: 'Starter' | 'Business' | 'Business Plus', cycle: 'monthly' | 'yearly') => {
+  const changePlan = (newPlan: 'Starter' | 'Business', cycle: 'monthly' | 'yearly' = 'yearly') => {
     if (!customer) return;
-    let price = '₦30,000 / month';
-    if (newPlan === 'Business') {
-      price = cycle === 'yearly' ? '₦25,000 / month' : '₦30,000 / month';
-    } else if (newPlan === 'Business Plus') {
-      price = cycle === 'yearly' ? '₦42,000 / month' : '₦50,000 / month';
-    }
+    const price = newPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
     const updated: CustomerProfile = {
       ...customer,
       plan: newPlan,
       planPrice: price,
-      billingCycle: cycle,
+      billingCycle: 'yearly',
       subscription: {
         ...customer.subscription,
         planId: newPlan,
         planName: `${newPlan} Plan`,
         price,
-        billingCycle: cycle,
+        billingCycle: 'yearly',
         status: 'active',
       },
       accountStatus: 'active_business',
@@ -1299,8 +1294,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // A license is ONLY created after successful payment for a paid plan.
   // Idempotent: checks transactionRef to prevent duplicate subscriptions or licenses.
   const subscribeToPlan = async (data: {
-    plan: 'Business' | 'Business Plus';
-    billingCycle: 'monthly' | 'yearly';
+    plan: 'Starter' | 'Business';
+    billingCycle?: 'monthly' | 'yearly';
     paymentMethodId?: string;
     transactionRef?: string;
   }): Promise<{ success: boolean; license: LicenseItem; order: OrderItem; isDuplicate?: boolean }> => {
@@ -1321,40 +1316,24 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const now = new Date();
     const periodEnd = new Date(now);
-    if (data.billingCycle === 'yearly') {
-      periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-    } else {
-      periodEnd.setMonth(periodEnd.getMonth() + 1);
-    }
+    periodEnd.setFullYear(periodEnd.getFullYear() + 1);
 
     const startStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const renewStr = periodEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const orderDateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    let priceStr = '₦30,000 / month';
-    let amountNumber = 30000;
-    let totalStr = '₦30,000';
+    let priceStr = '₦300,000 / year';
+    let amountNumber = 300000;
+    let totalStr = '₦300,000';
 
-    if (data.plan === 'Business') {
-      if (data.billingCycle === 'yearly') {
-        priceStr = '₦25,000 / month';
-        amountNumber = 300000;
-        totalStr = '₦300,000';
-      } else {
-        priceStr = '₦30,000 / month';
-        amountNumber = 30000;
-        totalStr = '₦30,000';
-      }
-    } else if (data.plan === 'Business Plus') {
-      if (data.billingCycle === 'yearly') {
-        priceStr = '₦42,000 / month';
-        amountNumber = 504000;
-        totalStr = '₦504,000';
-      } else {
-        priceStr = '₦50,000 / month';
-        amountNumber = 50000;
-        totalStr = '₦50,000';
-      }
+    if (data.plan === 'Starter') {
+      priceStr = '₦200,000 / year';
+      amountNumber = 200000;
+      totalStr = '₦200,000';
+    } else {
+      priceStr = '₦300,000 / year';
+      amountNumber = 300000;
+      totalStr = '₦300,000';
     }
 
     // Generate strict ZMR-XXXX-XXXX-XXXX key
@@ -1388,7 +1367,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       licenseKey: newLicenseKey,
       plan: data.plan,
       planName: `${data.plan} Plan`,
-      billingCycle: data.billingCycle,
+      billingCycle: 'yearly',
       price: priceStr,
       status: 'Active',
       connectedDomain: null,
@@ -1398,9 +1377,21 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       orderId,
       orderNumber: orderNum,
       features:
-        data.plan === 'Business Plus'
-          ? ['Multi-store Sync', 'Unlimited Registers', 'Unlimited Staff', 'Priority Webhook Dispatch']
-          : ['1 Till Register', 'Unlimited Products', '5 Staff PINs', 'Real-time WooCommerce Sync'],
+        data.plan === 'Starter'
+          ? [
+              '1 WooCommerce store',
+              '1 physical store/location',
+              'Up to 500 products',
+              'Up to 2 staff members',
+              'Point of Sale and inventory synchronization',
+            ]
+          : [
+              '1 WooCommerce store',
+              '1 physical store/location',
+              'Unlimited products',
+              'Unlimited staff members',
+              'Point of Sale and real-time inventory synchronization',
+            ],
     };
 
     const newOrder: OrderItem = {
@@ -1432,7 +1423,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       accountStatus: 'active_business',
       plan: data.plan,
       planPrice: priceStr,
-      billingCycle: data.billingCycle,
+      billingCycle: data.billingCycle || 'yearly',
       nextBillingDate: renewStr,
       paymentMethods: updatedPaymentMethods,
       trial: {
@@ -1446,7 +1437,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         planId: data.plan,
         planName: `${data.plan} Plan`,
         price: priceStr,
-        billingCycle: data.billingCycle,
+        billingCycle: data.billingCycle || 'yearly',
         startDate: startStr,
         renewsAt: renewStr,
         cancelledAt: null,
@@ -1564,10 +1555,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const renewExpiredSubscription = async (): Promise<{ success: boolean }> => {
     if (!customer) return { success: false };
-    const plan = (customer.subscription.planId as 'Business' | 'Business Plus') || 'Business';
+    const plan = (customer.subscription.planId as 'Starter' | 'Business') || 'Business';
     const res = await subscribeToPlan({
       plan,
-      billingCycle: customer.billingCycle || 'monthly',
+      billingCycle: customer.billingCycle || 'yearly',
       transactionRef: `renew_${Date.now()}`,
     });
     return { success: res.success };
