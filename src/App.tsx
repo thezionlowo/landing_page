@@ -19,6 +19,14 @@ import { FinalCta } from './components/FinalCta';
 import { Footer } from './components/Footer';
 import { SEOHead } from './components/SEOHead';
 
+import { WooCommercePosPage } from './pages/seo/WooCommercePosPage';
+import { WooCommerceInventorySyncPage } from './pages/seo/WooCommerceInventorySyncPage';
+import { WooCommercePosNigeriaPage } from './pages/seo/WooCommercePosNigeriaPage';
+import { FashionPosPage } from './pages/seo/FashionPosPage';
+import { BeautyPosPage } from './pages/seo/BeautyPosPage';
+import { ElectronicsPosPage } from './pages/seo/ElectronicsPosPage';
+import { PreventOversellingPage } from './pages/seo/PreventOversellingPage';
+
 function LandingPageContent() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--canvas-bg)' }}>
@@ -77,6 +85,37 @@ function MainAppRoutes() {
 
   if (path === '/account' || path.startsWith('/account')) {
     return <AccountLayout />;
+  }
+
+  // SEO Pillar Pages
+  if (path === '/woocommerce-pos') {
+    return <WooCommercePosPage />;
+  }
+
+  if (path === '/woocommerce-inventory-sync') {
+    return <WooCommerceInventorySyncPage />;
+  }
+
+  if (path === '/woocommerce-pos-nigeria') {
+    return <WooCommercePosNigeriaPage />;
+  }
+
+  // SEO Industry / Use Case Cluster Pages
+  if (path === '/industries/fashion' || path === '/woocommerce-pos-for-fashion') {
+    return <FashionPosPage />;
+  }
+
+  if (path === '/industries/beauty' || path === '/woocommerce-pos-for-beauty') {
+    return <BeautyPosPage />;
+  }
+
+  if (path === '/industries/electronics' || path === '/woocommerce-pos-for-electronics') {
+    return <ElectronicsPosPage />;
+  }
+
+  // SEO Problem-Solution Pages
+  if (path === '/solutions/prevent-overselling' || path === '/how-to-prevent-overselling-woocommerce') {
+    return <PreventOversellingPage />;
   }
 
   return <LandingPageContent />;

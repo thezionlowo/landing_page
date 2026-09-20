@@ -126,11 +126,12 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       // Only handle internal routing paths
       const isInternalPath =
-        href.startsWith('/login') ||
-        href.startsWith('/get-started') ||
-        href.startsWith('/forgot-password') ||
-        href.startsWith('/account') ||
-        href === '/';
+        href.startsWith('/') &&
+        !href.startsWith('//') &&
+        !href.startsWith('/#') &&
+        !href.startsWith('mailto:') &&
+        !href.startsWith('tel:') &&
+        !anchor.getAttribute('download');
 
       if (isInternalPath && !anchor.hasAttribute('target')) {
         e.preventDefault();
