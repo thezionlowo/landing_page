@@ -98,7 +98,7 @@ export const Footer: React.FC = () => {
       >
         {/* Balanced Columns Layout with Dedicated SEO Solutions */}
         <div className="zameria-dark-footer-grid">
-          {/* 1. PRODUCT & SOLUTIONS COLUMN */}
+          {/* 1. PRODUCT & PLATFORM COLUMN */}
           <div className="dark-footer-col">
             <h4 className="dark-footer-col-title">PRODUCT</h4>
             <ul className="dark-footer-links-list">
@@ -140,19 +140,26 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="/solutions/prevent-overselling"
+                  href="/hardware-compatibility"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/solutions/prevent-overselling');
+                    navigate('/hardware-compatibility');
                   }}
                   className="dark-footer-link"
                 >
-                  Prevent Overselling
+                  Hardware Setup Guide
                 </a>
               </li>
               <li>
-                <a href="#pricing" onClick={handleNavScroll('pricing')} className="dark-footer-link">
-                  Pricing
+                <a
+                  href="/woocommerce-pos-vs-traditional-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-pos-vs-traditional-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  POS Comparison
                 </a>
               </li>
             </ul>
@@ -199,19 +206,92 @@ export const Footer: React.FC = () => {
                 </a>
               </li>
               <li>
-                <a href="#faq" onClick={handleNavScroll('faq')} className="dark-footer-link">
-                  FAQ's
+                <a
+                  href="/industries/supermarkets"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/supermarkets');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Supermarkets & Grocery
                 </a>
               </li>
               <li>
                 <a
-                  href="http://localhost:5176"
-                  onClick={handleOpenPos}
+                  href="/industries/pharmacies"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/pharmacies');
+                  }}
                   className="dark-footer-link"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                 >
-                  <span>Launch POS Counter</span>
-                  <ArrowUpRight size={13} style={{ color: '#64748b' }} />
+                  Pharmacies & Health
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/industries/jewelry"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/jewelry');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Jewelry & Luxury
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* 3. SOLUTIONS & GUIDES COLUMN */}
+          <div className="dark-footer-col">
+            <h4 className="dark-footer-col-title">SOLUTIONS</h4>
+            <ul className="dark-footer-links-list">
+              <li>
+                <a
+                  href="/solutions/prevent-overselling"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/prevent-overselling');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Prevent Overselling
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/solutions/stock-mismatch"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/stock-mismatch');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Fix Stock Mismatch
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/solutions/offline-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/offline-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Offline POS System
+                </a>
+              </li>
+              <li>
+                <a href="#pricing" onClick={handleNavScroll('pricing')} className="dark-footer-link">
+                  Pricing Plans
+                </a>
+              </li>
+              <li>
+                <a href="#faq" onClick={handleNavScroll('faq')} className="dark-footer-link">
+                  FAQ's
                 </a>
               </li>
             </ul>
