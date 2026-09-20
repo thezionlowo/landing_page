@@ -24,6 +24,7 @@ export const ConnectedStoreTab: React.FC = () => {
 
   const [copiedCode, setCopiedCode] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const isDevBuild = (import.meta as any).env?.DEV === true;
   const [simError, setSimError] = useState<string | null>(null);
   const [simStoreName, setSimStoreName] = useState('Lagos Beauty & Skincare Store');
   const [simStoreUrl, setSimStoreUrl] = useState('https://lagosbeautystore.ng');
@@ -684,7 +685,8 @@ export const ConnectedStoreTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Simulation Tester (For quick testing without external server) */}
+            {/* Plugin activation simulator — development builds only */}
+            {isDevBuild && (
             <div
               style={{
                 borderTop: '1px solid #f1f5f9',
@@ -758,6 +760,7 @@ export const ConnectedStoreTab: React.FC = () => {
                 </button>
               </div>
             </div>
+            )}
           </div>
         </div>
       )}

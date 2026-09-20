@@ -33,6 +33,7 @@ export const OverviewTab: React.FC = () => {
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
+  const isDevBuild = (import.meta as any).env?.DEV === true;
   const [simError, setSimError] = useState<string | null>(null);
 
   if (!customer) return null;
@@ -804,7 +805,8 @@ export const OverviewTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Test Simulation */}
+            {/* Store activation simulator — development builds only */}
+            {isDevBuild && (
             <div
               style={{
                 backgroundColor: '#f8fafc',
@@ -849,6 +851,7 @@ export const OverviewTab: React.FC = () => {
                 <span>{isSimulating ? 'Verifying...' : 'Simulate Store Activation'}</span>
               </button>
             </div>
+            )}
           </div>
         </div>
       )}
