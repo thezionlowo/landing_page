@@ -94,6 +94,7 @@ export const AccountLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [scenarioMenuOpen, setScenarioMenuOpen] = useState(false);
+  const isDevBuild = (import.meta as any).env?.DEV === true;
   const [targetOrderId, setTargetOrderId] = useState<string | null>(null);
 
   // If not authenticated, redirect to login
@@ -260,7 +261,8 @@ export const AccountLayout: React.FC = () => {
 
           {/* Right Header Navigation & Profile Menu */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {/* Interactive Lifecycle Quick-Tester Pill */}
+            {/* Lifecycle quick-tester — development builds only, never shown to customers */}
+            {isDevBuild && (
             <div style={{ position: 'relative' }}>
               <button
                 type="button"
@@ -379,6 +381,7 @@ export const AccountLayout: React.FC = () => {
                 </>
               )}
             </div>
+            )}
 
             {/* Link back to Main Website */}
             <a

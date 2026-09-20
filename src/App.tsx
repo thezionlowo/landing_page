@@ -5,6 +5,8 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { GetStartedPage } from './pages/auth/GetStartedPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { AccountLayout } from './pages/account/AccountLayout';
+import { SubscribePage } from './pages/SubscribePage';
+import { PaymentCompletePage } from './pages/PaymentCompletePage';
 
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -73,6 +75,9 @@ function MainAppRoutes() {
   if (path === '/forgot-password') {
     return <ForgotPasswordPage />;
   }
+
+  if (path === '/subscribe') return <SubscribePage />;
+  if (path === '/payment/complete') return <PaymentCompletePage />;
 
   if (path === '/account' || path.startsWith('/account')) {
     return <AccountLayout />;
