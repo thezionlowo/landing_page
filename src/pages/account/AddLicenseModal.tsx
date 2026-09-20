@@ -51,18 +51,76 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
 
   const handlePurchase = async () => {
     setIsProcessing(true);
-    try {
-      const res = await subscribeToPlan({
-        plan: selectedPlan,
-        billingCycle,
-        transactionRef: `txn_${Date.now()}`,
-      });
-      setCreatedResult({ license: res.license, order: res.order });
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsProcessing(false);
+    const paystackPublicKey = (import.meta as any).env?.VITE_PAYSTACK_PUBLIC_KEY || '';
+    const amountInKobo = selectedPlan === 'Starter' ? 20000000 : 30000000;
+    const txnRef = `ZMR_TXN_${Date.now()}_${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+
+    // Helper to finalize license subscription
+    const finalizeSubscription = async (ref: string) => {
+      try {
+        const res = await subscribeToPlan({
+          plan: selectedPlan,
+          billingCycle,
+          transactionRef: ref,
+        });
+        setCreatedResult({ license: res.license, order: res.order });
+      } catch (e) {
+        console.error('Subscription error:', e);
+      } finally {
+        setIsProcessing(false);
+      }
+    };
+
+    // If Paystack Public Key is configured, use Paystack Inline Popup
+    if (paystackPublicKey && typeof window !== 'undefined') {
+      try {
+        const loadPaystackScript = (): Promise<void> => {
+          return new Promise((resolve, reject) => {
+            if ((window as any).PaystackPop) {
+              resolve();
+              return;
+            }
+            const script = document.createElement('script');
+            script.src = 'https://js.paystack.co/v1/inline.js';
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load Paystack checkout script.'));
+            document.head.appendChild(script);
+          });
+        };
+
+        await loadPaystackScript();
+        const handler = (window as any).PaystackPop.setup({
+          key: paystackPublicKey,
+          email: customer.email,
+          amount: amountInKobo,
+          currency: 'NGN',
+          ref: txnRef,
+          metadata: {
+            custom_fields: [
+              { display_name: 'Account ID', variable_name: 'account_id', value: customer.id },
+              { display_name: 'Business Name', variable_name: 'business_name', value: customer.businessName },
+              { display_name: 'Plan', variable_name: 'plan', value: selectedPlan },
+              { display_name: 'Billing Cycle', variable_name: 'billing_cycle', value: billingCycle },
+            ],
+          },
+          callback: (response: { reference: string }) => {
+            void finalizeSubscription(response.reference || txnRef);
+          },
+          onClose: () => {
+            setIsProcessing(false);
+          },
+        });
+
+        handler.openIframe();
+        return;
+      } catch (err) {
+        console.warn('Paystack popup error, falling back to direct verification:', err);
+      }
     }
+
+    // Direct subscription flow (for dev / test environment)
+    await finalizeSubscription(txnRef);
   };
 
   const handleCopyKey = () => {

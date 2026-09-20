@@ -115,10 +115,10 @@ export const OverviewTab: React.FC = () => {
             <AlertCircle size={22} style={{ color: '#b91c1c', marginTop: '2px', flexShrink: 0 }} />
             <div>
               <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#991b1b', margin: '0 0 4px' }}>
-                Your trial has ended
+                Your 7-day trial has ended.
               </h3>
               <p style={{ fontSize: '13.5px', color: '#7f1d1d', margin: 0, lineHeight: 1.5 }}>
-                Your 7-day free trial has expired. Your account is still available, but your ZAMERIA access is currently inactive.
+                Your 7-day free trial has expired. Upgrade your plan now to restore full WooCommerce Point of Sale functionality.
               </p>
             </div>
           </div>
@@ -137,7 +137,7 @@ export const OverviewTab: React.FC = () => {
                 cursor: 'pointer',
               }}
             >
-              Choose a Plan
+              Upgrade Now
             </button>
             <button
               type="button"
@@ -302,7 +302,7 @@ export const OverviewTab: React.FC = () => {
                 }}
               >
                 <Clock size={12} />
-                <span>{daysLeft} Days Remaining</span>
+                <span>Trial · {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left</span>
               </span>
             ) : isCancelled ? (
               <span
@@ -352,7 +352,7 @@ export const OverviewTab: React.FC = () => {
                 }}
               >
                 <CheckCircle2 size={12} />
-                <span>Active Subscription</span>
+                <span>{planName} · Active</span>
               </span>
             )}
             <span style={{ fontSize: '12px', color: '#94a3b8' }}>• Account ID: {customer.id}</span>
@@ -373,15 +373,15 @@ export const OverviewTab: React.FC = () => {
           <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
             {isTrialNotStarted ? (
               <span>
-                Your ZAMERIA trial hasn't started yet. Install the ZAMERIA WooCommerce plugin and activate your trial to get 7 days of access.
+                Your 7-day trial starts when you connect your WooCommerce store.
               </span>
             ) : isTrialActive ? (
               <span>
-                Free Trial active for <strong>{customer.businessName}</strong>. Ends <strong>{trialEnd}</strong> ({daysLeft} days remaining).
+                Trial · {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left (Ends <strong>{trialEnd}</strong>).
               </span>
             ) : isPaidActive ? (
               <span>
-                {planName} active for <strong>{customer.businessName}</strong>. Next billing date: <strong>{renewsAt}</strong>.
+                {planName} · Active for <strong>{customer.businessName}</strong>. License expires: <strong>{primaryLicense?.expiresAt || renewsAt}</strong>.
               </span>
             ) : (
               <span>
