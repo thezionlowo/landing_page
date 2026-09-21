@@ -227,3 +227,53 @@ export async function requestZameriaTrial(input: {
   }
   return { trialCode: data.trial_code, trialDays: data.trial_days, storeDomain: data.store_domain };
 }
+
+export type StoreEntitlementState = 'issued' | 'active' | 'expired';
+
+export interface StoreEntitlement {
+  status: StoreEntitlementState;
+  expiresAt: string;
+  daysRemaining: number;
+  plan?: string;
+}
+
+export interface StoreStatus {
+  storeDomain: string;
+  trial: StoreEntitlement | null;
+  license: StoreEntitlement | null;
+}
+
+const toEntitlement = (raw: any): StoreEntitlement | null =>
+  raw && typeof raw.status === 'string'
+    ? {
+        status: raw.status as StoreEntitlementState,
+        expiresAt: typeof raw.expires_at === 'string' ? raw.expires_at : '',
+        daysRemaining: typeof raw.days_remaining === 'number' ? raw.days_remaining : 0,
+        plan: typeof raw.plan === 'string' ? raw.plan : undefined,
+      }
+    : null;
+
+/**
+ * What the plugin has done with this store: whether a trial code is waiting to
+ * be redeemed, a trial is running, or a paid licence is in force. This is how
+ * the account page stays in step with the WooCommerce side of the flow.
+ */
+export async function fetchZameriaStoreStatus(input: {
+  email: string;
+  storeUrl: string;
+}): Promise<StoreStatus> {
+  const query = new URLSearchParams({
+    email: input.email.trim(),
+    store_url: normalizeStoreUrl(input.storeUrl),
+  });
+  const response = await fetch(`${ZAMERIA_API_BASE}/store/status?${query.toString()}`);
+  const data = await response.json().catch(() => ({} as any));
+  if (!response.ok) {
+    throw new Error(data.error || 'We could not check this store.');
+  }
+  return {
+    storeDomain: typeof data.store_domain === 'string' ? data.store_domain : '',
+    trial: toEntitlement(data.trial),
+    license: toEntitlement(data.license),
+  };
+}

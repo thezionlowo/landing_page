@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTrialCode } from '../../lib/useTrialCode';
+import { TrialCodePanel } from '../../components/account/TrialCodePanel';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import {
@@ -23,7 +24,6 @@ export const ConnectedStoreTab: React.FC = () => {
   const { customer, activateTrial, retryStoreConnection, disconnectStore } = useCustomerAuth();
   const { setAccountTab } = useRouter();
 
-  const [copiedCode, setCopiedCode] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const isDevBuild = (import.meta as any).env?.DEV === true;
   const [simError, setSimError] = useState<string | null>(null);
@@ -58,13 +58,6 @@ export const ConnectedStoreTab: React.FC = () => {
   const isConnected = store.status === 'connected';
   const isPending = store.status === 'pending';
   const isError = store.status === 'error';
-
-  const handleCopyCode = () => {
-    if (!activationCode) return;
-    navigator.clipboard.writeText(activationCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2200);
-  };
 
   const handleSimulateActivation = async () => {
     setIsSimulating(true);
@@ -557,7 +550,7 @@ export const ConnectedStoreTab: React.FC = () => {
                   }}
                 >
                   <Download size={14} />
-                  <span>Download Plugin (v1.2.4)</span>
+                  <span>Download Plugin (v0.3.0)</span>
                 </a>
               </div>
             </div>
@@ -589,70 +582,7 @@ export const ConnectedStoreTab: React.FC = () => {
                   Use this code in the ZAMERIA plugin inside your WooCommerce dashboard to activate your trial:
                 </p>
 
-                {/* Activation Code Display Component */}
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '14px',
-                    backgroundColor: '#f8fafc',
-                    border: '2px dashed #94a3b8',
-                    borderRadius: '12px',
-                    padding: '12px 18px',
-                    marginBottom: '8px',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Trial Activation Code
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '20px',
-                        fontWeight: 900,
-                        fontFamily: 'var(--font-mono)',
-                        color: '#071A31',
-                        letterSpacing: '0.08em',
-                      }}
-                    >
-                      {activationCode || 'Not issued yet'}
-                    </div>
-                    {trial.error && (
-                      <div style={{ fontSize: '12px', color: '#b91c1c', marginTop: '4px' }}>{trial.error}</div>
-                    )}
-                  </div>
-
-                  <button
-                    type="button"
-                    disabled={trial.isRequesting}
-                    onClick={activationCode ? handleCopyCode : trial.request}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '8px 14px',
-                      backgroundColor: copiedCode ? '#16a34a' : '#071A31',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '12.5px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                  >
-                    {copiedCode ? <Check size={14} /> : <Copy size={14} />}
-                    <span>
-                      {trial.isRequesting
-                        ? 'Issuing…'
-                        : activationCode
-                          ? copiedCode
-                            ? 'Copied!'
-                            : 'Copy Code'
-                          : 'Get my code'}
-                    </span>
-                  </button>
-                </div>
+                <TrialCodePanel trial={trial} />
                 <div style={{ fontSize: '12px', color: '#64748b' }}>
                   This code is specifically for your store trial activation. It is not a paid license key.
                 </div>
