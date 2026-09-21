@@ -128,6 +128,9 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const isInternalPath =
         href.startsWith('/login') ||
         href.startsWith('/get-started') ||
+        href.startsWith('/start-trial') ||
+        href.startsWith('/subscribe') ||
+        href.startsWith('/payment/complete') ||
         href.startsWith('/forgot-password') ||
         href.startsWith('/account') ||
         href === '/';

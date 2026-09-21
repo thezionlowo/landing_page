@@ -779,10 +779,10 @@ export const Navbar: React.FC = () => {
                 </a>
 
                 <a
-                  href={ROUTES.getStarted}
+                  href={ROUTES.trial}
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate(ROUTES.getStarted);
+                    navigate(ROUTES.trial);
                   }}
                   className="btn btn-get-started"
                   style={{
@@ -1449,11 +1449,11 @@ export const Navbar: React.FC = () => {
               {/* Mobile CTA: Start 7-Day Free Trial */}
               <div style={{ paddingTop: '12px', borderTop: '1px solid var(--border-subtle)' }}>
                 <a
-                  href={ROUTES.getStarted}
+                  href={ROUTES.trial}
                   onClick={(e) => {
                     e.preventDefault();
                     setMobileMenuOpen(false);
-                    navigate(ROUTES.getStarted);
+                    navigate(ROUTES.trial);
                   }}
                   className="btn btn-get-started"
                   style={{
