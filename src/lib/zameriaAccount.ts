@@ -14,6 +14,7 @@ export interface ZameriaAccount {
   email: string;
   fullName: string;
   businessName: string;
+  phone: string;
   createdAt: string;
 }
 
@@ -23,6 +24,7 @@ const toAccount = (raw: any): ZameriaAccount => ({
   email: typeof raw?.email === 'string' ? raw.email : '',
   fullName: typeof raw?.full_name === 'string' ? raw.full_name : '',
   businessName: typeof raw?.business_name === 'string' ? raw.business_name : '',
+  phone: typeof raw?.phone === 'string' ? raw.phone : '',
   createdAt: typeof raw?.created_at === 'string' ? raw.created_at : '',
 });
 
@@ -71,12 +73,14 @@ async function post(path: string, body: unknown): Promise<any> {
 export async function registerZameriaAccount(input: {
   fullName: string;
   businessName: string;
+  phone?: string;
   email: string;
   password: string;
 }): Promise<ZameriaAccount> {
   const data = await post('/account/register', {
     full_name: input.fullName,
     business_name: input.businessName,
+    phone: input.phone || '',
     email: input.email,
     password: input.password,
   });
@@ -109,4 +113,64 @@ export async function fetchZameriaAccount(): Promise<ZameriaAccount | null> {
     // Offline: keep the session and let the cached profile stand.
     return null;
   }
+}
+
+export interface AccountLicense {
+  code: string;
+  plan: string;
+  isTrial: boolean;
+  status: 'issued' | 'active' | 'expired';
+  storeDomain: string;
+  activatedAt: string;
+  expiresAt: string;
+  daysRemaining: number;
+}
+
+const authHeaders = (): HeadersInit => ({ Authorization: `Bearer ${storedAccountToken()}` });
+
+/**
+ * Every trial and licence on the account, with its code. Read on each visit so
+ * the code is there whenever the merchant needs to enter it again, and so a
+ * redeemed trial shows its remaining days rather than reading as new.
+ */
+export async function fetchAccountLicenses(): Promise<AccountLicense[]> {
+  if (!storedAccountToken()) return [];
+  const response = await fetch(`${ZAMERIA_API_BASE}/account/licenses`, { headers: authHeaders() });
+  if (!response.ok) {
+    if (response.status === 401) forgetAccountToken();
+    return [];
+  }
+  const data = await response.json().catch(() => ({}));
+  return (Array.isArray(data.licenses) ? data.licenses : []).map((raw: any) => ({
+    code: typeof raw?.code === 'string' ? raw.code : '',
+    plan: typeof raw?.plan === 'string' ? raw.plan : '',
+    isTrial: Boolean(raw?.is_trial),
+    status: raw?.status === 'active' || raw?.status === 'expired' ? raw.status : 'issued',
+    storeDomain: typeof raw?.store_domain === 'string' ? raw.store_domain : '',
+    activatedAt: typeof raw?.activated_at === 'string' ? raw.activated_at : '',
+    expiresAt: typeof raw?.expires_at === 'string' ? raw.expires_at : '',
+    daysRemaining: typeof raw?.days_remaining === 'number' ? raw.days_remaining : 0,
+  }));
+}
+
+/** Starts a trial for a store. The service takes the owner from the session. */
+export async function requestAccountTrial(input: { businessName: string; storeUrl: string }): Promise<AccountLicense[]> {
+  if (!storedAccountToken()) {
+    throw new Error('Please sign in to start your trial.');
+  }
+  let response: Response;
+  try {
+    response = await fetch(`${ZAMERIA_API_BASE}/trial/request`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ business_name: input.businessName, store_url: input.storeUrl }),
+    });
+  } catch {
+    throw new AccountUnavailableError('We could not reach ZAMERIA. Check your connection and try again.');
+  }
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || 'We could not start a trial for this store.');
+  }
+  return fetchAccountLicenses();
 }

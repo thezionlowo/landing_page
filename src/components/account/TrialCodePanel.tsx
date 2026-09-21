@@ -4,16 +4,22 @@ import { useTrialCode } from '../../lib/useTrialCode';
 
 type Trial = ReturnType<typeof useTrialCode>;
 
+const onDate = (iso: string) =>
+  iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
 const statusLine = (trial: Trial): { text: string; colour: string } | null => {
   if (trial.license?.status === 'active') {
     return { text: 'This store has a paid licence — no trial needed.', colour: '#16a34a' };
   }
   if (trial.trial?.status === 'active') {
     const days = trial.trial.daysRemaining;
-    return { text: `Activated in your plugin — ${days} day${days === 1 ? '' : 's'} left on your trial.`, colour: '#16a34a' };
+    return {
+      text: `Activated ${onDate(trial.trial.activatedAt)} — ${days} day${days === 1 ? '' : 's'} left, ends ${onDate(trial.trial.expiresAt)}.`,
+      colour: '#16a34a',
+    };
   }
   if (trial.trial?.status === 'expired') {
-    return { text: 'This trial has ended. Choose a plan to keep using ZAMERIA.', colour: '#b45309' };
+    return { text: `This trial ended ${onDate(trial.trial.expiresAt)}. Choose a plan to keep using ZAMERIA.`, colour: '#b45309' };
   }
   if (trial.trial?.status === 'issued' || trial.code) {
     return { text: 'Waiting for you to enter this code in the plugin.', colour: '#64748b' };

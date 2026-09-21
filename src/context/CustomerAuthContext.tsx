@@ -320,6 +320,7 @@ interface CustomerAuthContextType {
   register: (data: {
     fullName: string;
     businessName: string;
+    phone?: string;
     email: string;
     password: string;
   }) => Promise<{ success: boolean; error?: string }>;
@@ -931,6 +932,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const register = async (data: {
     fullName: string;
     businessName: string;
+    phone?: string;
     email: string;
     password: string;
   }): Promise<{ success: boolean; error?: string }> => {
@@ -945,12 +947,16 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const account = await registerZameriaAccount({
         fullName: data.fullName,
         businessName: data.businessName,
+        phone: data.phone || '',
         email: trimmedEmail,
         password: data.password,
       });
       const stored = localStorage.getItem(STORAGE_KEY_USERS);
       const known: CustomerProfile[] = stored ? JSON.parse(stored) : [];
-      const profile = blankProfile(account.fullName, account.businessName, account.email, data.password);
+      const profile = {
+        ...blankProfile(account.fullName, account.businessName, account.email, data.password),
+        phone: account.phone || data.phone || '',
+      };
       localStorage.setItem(
         STORAGE_KEY_USERS,
         JSON.stringify([...known.filter((u) => u.email.toLowerCase() !== account.email.toLowerCase()), profile]),

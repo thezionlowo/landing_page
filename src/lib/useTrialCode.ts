@@ -1,72 +1,45 @@
 import { useCallback, useEffect, useState } from 'react';
-import { fetchZameriaStoreStatus, normalizeStoreUrl, requestZameriaTrial, StoreEntitlement } from './zameriaCheckout';
+import { AccountLicense, fetchAccountLicenses, requestAccountTrial } from './zameriaAccount';
 
 /**
- * Keeps the account page and the WooCommerce plugin in step over one store.
+ * The merchant's trials and licences, read from their ZAMERIA account.
  *
- * The code has to come from the licensing service: it is the key the plugin
- * redeems, and only the service can issue one. Once issued, the service is also
- * the only place that knows whether the merchant has redeemed it, so this polls
- * it rather than guessing from anything held in the browser.
+ * Codes are held by the service, not by this browser, so they are still here
+ * after signing out, on another device, or a year later when a store is being
+ * set up again — and a trial that has been redeemed reports the days it has
+ * left rather than reading as though it were new.
  */
-
-const storageKey = (email: string) => `zameria.trial.${email.trim().toLowerCase()}`;
-
-interface Remembered {
-  code: string;
-  storeUrl: string;
-}
-
-const remember = (email: string, value: Remembered) => {
-  try {
-    localStorage.setItem(storageKey(email), JSON.stringify(value));
-  } catch {
-    /* the code is still on screen; storage is a convenience */
-  }
-};
-
-const recall = (email: string): Remembered | null => {
-  try {
-    const raw = localStorage.getItem(storageKey(email));
-    return raw ? (JSON.parse(raw) as Remembered) : null;
-  } catch {
-    return null;
-  }
-};
-
 export function useTrialCode(input: { email: string; businessName: string; storeUrl: string }) {
-  const remembered = recall(input.email);
-
-  const [code, setCode] = useState(remembered?.code || '');
-  const [storeUrl, setStoreUrl] = useState(input.storeUrl || remembered?.storeUrl || '');
+  const [licenses, setLicenses] = useState<AccountLicense[]>([]);
+  const [storeUrl, setStoreUrl] = useState(input.storeUrl || '');
   const [error, setError] = useState<string | null>(null);
   const [isRequesting, setIsRequesting] = useState(false);
-  const [trial, setTrial] = useState<StoreEntitlement | null>(null);
-  const [license, setLicense] = useState<StoreEntitlement | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
-  /** Asks the service what the plugin has done with this store. */
-  const refresh = useCallback(
-    async (url = storeUrl) => {
-      if (!url.trim() || !input.email.trim()) return;
-      try {
-        const status = await fetchZameriaStoreStatus({ email: input.email, storeUrl: url });
-        setTrial(status.trial);
-        setLicense(status.license);
-      } catch {
-        /* a failed check leaves the last known state on screen */
-      }
-    },
-    [input.email, storeUrl],
-  );
+  const refresh = useCallback(async () => {
+    try {
+      setLicenses(await fetchAccountLicenses());
+    } catch {
+      /* leave the last known list on screen */
+    } finally {
+      setLoaded(true);
+    }
+  }, []);
 
-  // Check on load, then keep checking while the merchant is on this page: the
-  // redemption happens in WordPress, in another tab or on another machine.
+  // Read on arrival, then keep watching: the redemption happens in WordPress,
+  // in another tab or on another machine entirely.
   useEffect(() => {
-    if (!storeUrl.trim()) return;
-    void refresh(storeUrl);
-    const timer = window.setInterval(() => void refresh(storeUrl), 20000);
+    void refresh();
+    const timer = window.setInterval(() => void refresh(), 20000);
     return () => window.clearInterval(timer);
-  }, [storeUrl, refresh]);
+  }, [refresh]);
+
+  // Prefer the trial for the store on file, otherwise the newest one.
+  const trial =
+    licenses.find((l) => l.isTrial && storeUrl && l.storeDomain && storeUrl.includes(l.storeDomain)) ||
+    licenses.find((l) => l.isTrial) ||
+    null;
+  const license = licenses.find((l) => !l.isTrial) || null;
 
   const request = async () => {
     setError(null);
@@ -77,35 +50,32 @@ export function useTrialCode(input: { email: string; businessName: string; store
     }
     setIsRequesting(true);
     try {
-      const issued = await requestZameriaTrial({ email: input.email, businessName: input.businessName, storeUrl: url });
-      setCode(issued.trialCode);
-      setStoreUrl(normalizeStoreUrl(url));
-      remember(input.email, { code: issued.trialCode, storeUrl: normalizeStoreUrl(url) });
-      void refresh(url);
+      setLicenses(await requestAccountTrial({ businessName: input.businessName, storeUrl: url }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not issue a trial code.');
+      void refresh();
     } finally {
       setIsRequesting(false);
     }
   };
 
-  const isRedeemed = trial?.status === 'active' || trial?.status === 'expired';
-
   return {
-    code,
+    code: trial?.code || '',
     storeUrl,
     setStoreUrl: (value: string) => {
       setStoreUrl(value);
       setError(null);
     },
-    /** The store address is asked for inline when the account has none on file. */
+    /** The store address is asked for here, in the dashboard, not at sign-up. */
     needsStoreUrl: !input.storeUrl.trim(),
     error,
     isRequesting,
+    loaded,
     request,
     refresh,
+    licenses,
     trial,
     license,
-    isRedeemed,
+    isRedeemed: trial?.status === 'active' || trial?.status === 'expired',
   };
 }
