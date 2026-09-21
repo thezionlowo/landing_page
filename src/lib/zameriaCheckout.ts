@@ -189,3 +189,41 @@ export async function pollZameriaCheckout(
 
   throw lastPending || new CheckoutPendingError('Paystack has not confirmed this payment yet.');
 }
+
+export interface TrialResult {
+  trialCode: string;
+  trialDays: number;
+  storeDomain: string;
+}
+
+/**
+ * Asks the licensing service for a 7-day trial code for a store. The code is
+ * issued dormant: the week starts when the plugin redeems it, so a merchant can
+ * get their code now and install WooCommerce side later.
+ */
+export async function requestZameriaTrial(input: {
+  email: string;
+  businessName: string;
+  storeUrl: string;
+}): Promise<TrialResult> {
+  let response: Response;
+  try {
+    response = await fetch(`${ZAMERIA_API_BASE}/trial/request`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: input.email.trim(),
+        business_name: input.businessName.trim(),
+        store_url: normalizeStoreUrl(input.storeUrl),
+      }),
+    });
+  } catch {
+    throw new Error('We could not reach the ZAMERIA trial service. Check your connection and try again.');
+  }
+
+  const data = await response.json().catch(() => ({} as any));
+  if (!response.ok || !data.trial_code) {
+    throw new Error(data.error || 'We could not start a trial for this store.');
+  }
+  return { trialCode: data.trial_code, trialDays: data.trial_days, storeDomain: data.store_domain };
+}
