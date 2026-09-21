@@ -20,6 +20,22 @@ import { PricingSection } from './components/PricingSection';
 import { FAQSection } from './components/FAQSection';
 import { FinalCta } from './components/FinalCta';
 import { Footer } from './components/Footer';
+import { SEOHead } from './components/SEOHead';
+
+import { WooCommercePosPage } from './pages/seo/WooCommercePosPage';
+import { WooCommerceInventorySyncPage } from './pages/seo/WooCommerceInventorySyncPage';
+import { WooCommercePosNigeriaPage } from './pages/seo/WooCommercePosNigeriaPage';
+import { FashionPosPage } from './pages/seo/FashionPosPage';
+import { BeautyPosPage } from './pages/seo/BeautyPosPage';
+import { ElectronicsPosPage } from './pages/seo/ElectronicsPosPage';
+import { SupermarketPosPage } from './pages/seo/SupermarketPosPage';
+import { PharmacyPosPage } from './pages/seo/PharmacyPosPage';
+import { JewelryPosPage } from './pages/seo/JewelryPosPage';
+import { HardwareCompatibilityPage } from './pages/seo/HardwareCompatibilityPage';
+import { PosComparisonPage } from './pages/seo/PosComparisonPage';
+import { StockMismatchPage } from './pages/seo/StockMismatchPage';
+import { OfflinePosPage } from './pages/seo/OfflinePosPage';
+import { PreventOversellingPage } from './pages/seo/PreventOversellingPage';
 
 function LandingPageContent() {
   return (
@@ -85,6 +101,66 @@ function MainAppRoutes() {
     return <AccountLayout />;
   }
 
+  // SEO Pillar Pages
+  if (path === '/woocommerce-pos') {
+    return <WooCommercePosPage />;
+  }
+
+  if (path === '/woocommerce-inventory-sync') {
+    return <WooCommerceInventorySyncPage />;
+  }
+
+  if (path === '/woocommerce-pos-nigeria') {
+    return <WooCommercePosNigeriaPage />;
+  }
+
+  // SEO Industry / Use Case Cluster Pages
+  if (path === '/industries/fashion' || path === '/woocommerce-pos-for-fashion') {
+    return <FashionPosPage />;
+  }
+
+  if (path === '/industries/beauty' || path === '/woocommerce-pos-for-beauty') {
+    return <BeautyPosPage />;
+  }
+
+  if (path === '/industries/electronics' || path === '/woocommerce-pos-for-electronics') {
+    return <ElectronicsPosPage />;
+  }
+
+  if (path === '/industries/supermarkets' || path === '/woocommerce-pos-for-supermarkets') {
+    return <SupermarketPosPage />;
+  }
+
+  if (path === '/industries/pharmacies' || path === '/woocommerce-pos-for-pharmacies') {
+    return <PharmacyPosPage />;
+  }
+
+  if (path === '/industries/jewelry' || path === '/woocommerce-pos-for-jewelry') {
+    return <JewelryPosPage />;
+  }
+
+  // Technical Guides & Comparisons
+  if (path === '/hardware-compatibility' || path === '/woocommerce-pos-hardware-compatibility') {
+    return <HardwareCompatibilityPage />;
+  }
+
+  if (path === '/woocommerce-pos-vs-traditional-pos' || path === '/comparisons/woocommerce-pos-vs-traditional-pos') {
+    return <PosComparisonPage />;
+  }
+
+  // SEO Problem-Solution Pages
+  if (path === '/solutions/prevent-overselling' || path === '/how-to-prevent-overselling-woocommerce') {
+    return <PreventOversellingPage />;
+  }
+
+  if (path === '/solutions/stock-mismatch' || path === '/how-to-fix-woocommerce-stock-mismatch') {
+    return <StockMismatchPage />;
+  }
+
+  if (path === '/solutions/offline-pos' || path === '/woocommerce-offline-pos-system') {
+    return <OfflinePosPage />;
+  }
+
   return <LandingPageContent />;
 }
 
@@ -92,6 +168,7 @@ export function App() {
   return (
     <CustomerAuthProvider>
       <RouterProvider>
+        <SEOHead />
         <MainAppRoutes />
       </RouterProvider>
     </CustomerAuthProvider>

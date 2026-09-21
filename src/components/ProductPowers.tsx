@@ -28,6 +28,7 @@ export const ProductPowers: React.FC = () => {
         position: 'relative',
       }}
     >
+      <div id="features" style={{ position: 'absolute', top: '0', left: '0', width: '1px', height: '1px', opacity: 0 }} />
       <div className="container">
         {/* Section Header */}
         <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 52px' }}>

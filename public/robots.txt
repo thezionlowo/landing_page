@@ -1,0 +1,13 @@
+# Robots.txt for ZAMERIA (https://zameria.co)
+User-agent: *
+Allow: /
+Allow: /get-started
+Allow: /login
+
+# Disallow private customer account, auth reset, and internal API paths
+Disallow: /account
+Disallow: /account/*
+Disallow: /forgot-password
+
+# Search Engine Sitemaps
+Sitemap: https://zameria.co/sitemap.xml

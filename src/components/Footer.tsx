@@ -96,20 +96,197 @@ export const Footer: React.FC = () => {
           padding: '0 24px',
         }}
       >
-        {/* Four Balanced Columns Layout */}
+        {/* Balanced Columns Layout with Dedicated SEO Solutions */}
         <div className="zameria-dark-footer-grid">
-          {/* 1. MENU COLUMN */}
+          {/* 1. PRODUCT & PLATFORM COLUMN */}
           <div className="dark-footer-col">
-            <h4 className="dark-footer-col-title">MENU</h4>
+            <h4 className="dark-footer-col-title">PRODUCT</h4>
             <ul className="dark-footer-links-list">
               <li>
-                <a href="#features" onClick={handleNavScroll('features')} className="dark-footer-link">
-                  Product
+                <a
+                  href="/woocommerce-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  WooCommerce POS
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/woocommerce-inventory-sync"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-inventory-sync');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Inventory Sync
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/woocommerce-pos-nigeria"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-pos-nigeria');
+                  }}
+                  className="dark-footer-link"
+                >
+                  WooCommerce POS Nigeria
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/hardware-compatibility"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/hardware-compatibility');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Hardware Setup Guide
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/woocommerce-pos-vs-traditional-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-pos-vs-traditional-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  POS Comparison
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* 2. INDUSTRIES COLUMN */}
+          <div className="dark-footer-col">
+            <h4 className="dark-footer-col-title">INDUSTRIES</h4>
+            <ul className="dark-footer-links-list">
+              <li>
+                <a
+                  href="/industries/fashion"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/fashion');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Fashion & Boutiques
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/industries/beauty"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/beauty');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Beauty & Cosmetics
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/industries/electronics"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/electronics');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Electronics & Gadgets
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/industries/supermarkets"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/supermarkets');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Supermarkets & Grocery
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/industries/pharmacies"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/pharmacies');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Pharmacies & Health
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/industries/jewelry"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/industries/jewelry');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Jewelry & Luxury
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* 3. SOLUTIONS & GUIDES COLUMN */}
+          <div className="dark-footer-col">
+            <h4 className="dark-footer-col-title">SOLUTIONS</h4>
+            <ul className="dark-footer-links-list">
+              <li>
+                <a
+                  href="/solutions/prevent-overselling"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/prevent-overselling');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Prevent Overselling
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/solutions/stock-mismatch"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/stock-mismatch');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Fix Stock Mismatch
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/solutions/offline-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/offline-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Offline POS System
                 </a>
               </li>
               <li>
                 <a href="#pricing" onClick={handleNavScroll('pricing')} className="dark-footer-link">
-                  Pricing
+                  Pricing Plans
                 </a>
               </li>
               <li>
@@ -117,21 +294,10 @@ export const Footer: React.FC = () => {
                   FAQ's
                 </a>
               </li>
-              <li>
-                <a
-                  href="http://localhost:5176"
-                  onClick={handleOpenPos}
-                  className="dark-footer-link"
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                >
-                  <span>Point of Sale</span>
-                  <ArrowUpRight size={13} style={{ color: '#64748b' }} />
-                </a>
-              </li>
             </ul>
           </div>
 
-          {/* 2. ACCOUNT COLUMN */}
+          {/* 3. ACCOUNT COLUMN */}
           <div className="dark-footer-col">
             <h4 className="dark-footer-col-title">ACCOUNT</h4>
             <ul className="dark-footer-links-list">
@@ -163,7 +329,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* 3. DOWNLOADS COLUMN (Visually matching MENU and ACCOUNT) */}
+          {/* 4. DOWNLOADS & APPS COLUMN */}
           <div className="dark-footer-col">
             <h4 className="dark-footer-col-title">DOWNLOADS</h4>
             <ul className="dark-footer-links-list">
@@ -204,7 +370,7 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* 4. CONNECT COLUMN */}
+          {/* 5. CONNECT COLUMN */}
           <div className="dark-footer-col">
             <h4 className="dark-footer-col-title">CONNECT</h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -281,8 +447,8 @@ export const Footer: React.FC = () => {
       <style>{`
         .zameria-dark-footer-grid {
           display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 48px;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 36px;
         }
 
         .dark-footer-col-title {
@@ -372,17 +538,24 @@ export const Footer: React.FC = () => {
         }
 
         /* Mobile & Tablet Responsive Layout */
-        @media (max-width: 960px) {
+        @media (max-width: 1024px) {
           .zameria-dark-footer-grid {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 40px 32px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 36px 28px;
           }
         }
 
-        @media (max-width: 540px) {
+        @media (max-width: 680px) {
+          .zameria-dark-footer-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 32px 24px;
+          }
+        }
+
+        @media (max-width: 480px) {
           .zameria-dark-footer-grid {
             grid-template-columns: 1fr;
-            gap: 36px;
+            gap: 32px;
           }
         }
       `}</style>

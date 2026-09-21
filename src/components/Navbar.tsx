@@ -268,10 +268,11 @@ export const Navbar: React.FC = () => {
 
                   {/* 1. ZAMERIA POS */}
                   <a
-                    href="#product-powers"
+                    href="/woocommerce-pos"
                     onClick={(e) => {
-                      scrollToSection('product-powers')(e);
+                      e.preventDefault();
                       setProductOpen(false);
+                      navigate('/woocommerce-pos');
                     }}
                     style={{
                       display: 'flex',
@@ -304,7 +305,7 @@ export const Navbar: React.FC = () => {
                     </div>
                     <div style={{ flex: 1 }}>
                       <span style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--brand-navy)' }}>
-                        ZAMERIA POS
+                        WooCommerce POS
                       </span>
                       <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.4 }}>
                         Fast point of sale checkout for physical store counters.
@@ -312,12 +313,13 @@ export const Navbar: React.FC = () => {
                     </div>
                   </a>
 
-                  {/* 2. Inventory */}
+                  {/* 2. Inventory Sync */}
                   <a
-                    href="#product-powers"
+                    href="/woocommerce-inventory-sync"
                     onClick={(e) => {
-                      scrollToSection('product-powers')(e);
+                      e.preventDefault();
                       setProductOpen(false);
+                      navigate('/woocommerce-inventory-sync');
                     }}
                     style={{
                       display: 'flex',
@@ -351,7 +353,7 @@ export const Navbar: React.FC = () => {
                     </div>
                     <div style={{ flex: 1 }}>
                       <span style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--brand-navy)' }}>
-                        Inventory
+                        Inventory Sync
                       </span>
                       <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.4 }}>
                         Real-time stock synchronization across store and web.
@@ -359,12 +361,13 @@ export const Navbar: React.FC = () => {
                     </div>
                   </a>
 
-                  {/* 3. WooCommerce Integration */}
+                  {/* 3. WooCommerce POS Nigeria */}
                   <a
-                    href="#how-it-works"
+                    href="/woocommerce-pos-nigeria"
                     onClick={(e) => {
-                      scrollToSection('how-it-works')(e);
+                      e.preventDefault();
                       setProductOpen(false);
+                      navigate('/woocommerce-pos-nigeria');
                     }}
                     style={{
                       display: 'flex',
@@ -398,10 +401,10 @@ export const Navbar: React.FC = () => {
                     </div>
                     <div style={{ flex: 1 }}>
                       <span style={{ fontSize: '13.5px', fontWeight: 700, color: 'var(--brand-navy)' }}>
-                        WooCommerce Integration
+                        WooCommerce POS Nigeria
                       </span>
                       <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.4 }}>
-                        Connect your online WooCommerce catalog and orders seamlessly.
+                        Built for Nigerian multi-channel retail businesses.
                       </p>
                     </div>
                   </a>
@@ -1243,57 +1246,60 @@ export const Navbar: React.FC = () => {
                   gap: '12px',
                 }}
               >
-                {/* 1. ZAMERIA POS */}
+                {/* 1. WooCommerce POS */}
                 <a
-                  href="#product-powers"
+                  href="/woocommerce-pos"
                   onClick={(e) => {
-                    scrollToSection('product-powers')(e);
+                    e.preventDefault();
                     setMobileMenuOpen(false);
+                    navigate('/woocommerce-pos');
                   }}
                   style={{ display: 'block', textDecoration: 'none' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563eb', fontWeight: 700, fontSize: '13px' }}>
                     <Store size={15} />
-                    <span>ZAMERIA POS</span>
+                    <span>WooCommerce POS</span>
                   </div>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '4px 0 0 23px', lineHeight: 1.4 }}>
                     Fast checkout for physical store counters.
                   </p>
                 </a>
 
-                {/* 2. Inventory */}
+                {/* 2. Inventory Sync */}
                 <a
-                  href="#product-powers"
+                  href="/woocommerce-inventory-sync"
                   onClick={(e) => {
-                    scrollToSection('product-powers')(e);
+                    e.preventDefault();
                     setMobileMenuOpen(false);
+                    navigate('/woocommerce-inventory-sync');
                   }}
                   style={{ display: 'block', textDecoration: 'none', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#16a34a', fontWeight: 700, fontSize: '13px' }}>
                     <Package size={15} />
-                    <span>Inventory</span>
+                    <span>Inventory Sync</span>
                   </div>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '4px 0 0 23px', lineHeight: 1.4 }}>
                     Real-time stock synchronization across store and web.
                   </p>
                 </a>
 
-                {/* 3. WooCommerce Integration */}
+                {/* 3. WooCommerce POS Nigeria */}
                 <a
-                  href="#how-it-works"
+                  href="/woocommerce-pos-nigeria"
                   onClick={(e) => {
-                    scrollToSection('how-it-works')(e);
+                    e.preventDefault();
                     setMobileMenuOpen(false);
+                    navigate('/woocommerce-pos-nigeria');
                   }}
                   style={{ display: 'block', textDecoration: 'none', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#9333ea', fontWeight: 700, fontSize: '13px' }}>
                     <Plug size={15} />
-                    <span>WooCommerce Integration</span>
+                    <span>WooCommerce POS Nigeria</span>
                   </div>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '4px 0 0 23px', lineHeight: 1.4 }}>
-                    Connect your WooCommerce catalog and orders automatically.
+                    Built for Nigerian retail operations and local payments.
                   </p>
                 </a>
               </div>
