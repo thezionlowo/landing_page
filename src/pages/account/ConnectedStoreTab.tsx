@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTrialCode } from '../../lib/useTrialCode';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import {
@@ -39,18 +40,27 @@ export const ConnectedStoreTab: React.FC = () => {
     customer.accountStatus === 'trial_expired' || customer.trial?.status === 'expired';
   const isPaid = customer.subscription?.status === 'active';
 
-  const activationCode = customer.trial?.activationCode || customer.activationCode || 'ZAM-7F4K-92XP';
   const store = customer.connectedStore || {
     name: 'No store connected',
     url: '',
     status: isPaid || isTrialActive ? 'connected' : 'not_connected',
   };
 
+  // The activation code is issued by the licensing service for this store, not
+  // made up here: only a code the service knows can be redeemed by the plugin.
+  const trial = useTrialCode({
+    email: customer.email,
+    businessName: customer.businessName,
+    storeUrl: customer.connectedStore?.url || '',
+  });
+  const activationCode = trial.code;
+
   const isConnected = store.status === 'connected';
   const isPending = store.status === 'pending';
   const isError = store.status === 'error';
 
   const handleCopyCode = () => {
+    if (!activationCode) return;
     navigator.clipboard.writeText(activationCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2200);
@@ -605,13 +615,17 @@ export const ConnectedStoreTab: React.FC = () => {
                         letterSpacing: '0.08em',
                       }}
                     >
-                      {activationCode}
+                      {activationCode || 'Not issued yet'}
                     </div>
+                    {trial.error && (
+                      <div style={{ fontSize: '12px', color: '#b91c1c', marginTop: '4px' }}>{trial.error}</div>
+                    )}
                   </div>
 
                   <button
                     type="button"
-                    onClick={handleCopyCode}
+                    disabled={trial.isRequesting}
+                    onClick={activationCode ? handleCopyCode : trial.request}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -628,7 +642,15 @@ export const ConnectedStoreTab: React.FC = () => {
                     }}
                   >
                     {copiedCode ? <Check size={14} /> : <Copy size={14} />}
-                    <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
+                    <span>
+                      {trial.isRequesting
+                        ? 'Issuing…'
+                        : activationCode
+                          ? copiedCode
+                            ? 'Copied!'
+                            : 'Copy Code'
+                          : 'Get my code'}
+                    </span>
                   </button>
                 </div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>

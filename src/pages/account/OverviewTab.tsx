@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTrialCode } from '../../lib/useTrialCode';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import { AddLicenseModal } from './AddLicenseModal';
@@ -56,8 +57,14 @@ export const OverviewTab: React.FC = () => {
   const licenses = customer.licenses || [];
   const primaryLicense = licenses[0] || null;
 
-  const activationCode =
-    customer.trial?.activationCode || customer.activationCode || 'ZAM-7F4K-92XP';
+  // Issued by the licensing service for this store; a browser-invented code
+  // cannot be redeemed by the plugin.
+  const trial = useTrialCode({
+    email: customer.email,
+    businessName: customer.businessName,
+    storeUrl: customer.connectedStore?.url || '',
+  });
+  const activationCode = trial.code;
   const store = customer.connectedStore || {
     name: 'No store connected',
     url: '',
@@ -77,6 +84,7 @@ export const OverviewTab: React.FC = () => {
   };
 
   const copyActivationCode = () => {
+    if (!activationCode) return;
     navigator.clipboard.writeText(activationCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2200);
@@ -725,13 +733,17 @@ export const OverviewTab: React.FC = () => {
                         letterSpacing: '0.08em',
                       }}
                     >
-                      {activationCode}
+                      {activationCode || 'Not issued yet'}
                     </div>
+                    {trial.error && (
+                      <div style={{ fontSize: '12px', color: '#b91c1c', marginTop: '4px' }}>{trial.error}</div>
+                    )}
                   </div>
 
                   <button
                     type="button"
-                    onClick={copyActivationCode}
+                    disabled={trial.isRequesting}
+                    onClick={activationCode ? copyActivationCode : trial.request}
                     style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -748,7 +760,15 @@ export const OverviewTab: React.FC = () => {
                     }}
                   >
                     {copiedCode ? <Check size={14} /> : <Copy size={14} />}
-                    <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
+                    <span>
+                      {trial.isRequesting
+                        ? 'Issuing…'
+                        : activationCode
+                          ? copiedCode
+                            ? 'Copied!'
+                            : 'Copy Code'
+                          : 'Get my code'}
+                    </span>
                   </button>
                 </div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>
