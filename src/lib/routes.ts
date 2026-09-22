@@ -53,16 +53,12 @@ export const ROUTES = {
     return getPluginDashboardUrl();
   },
 
-  // The 7-day trial is issued by the licensing service as an activation code
-  // for a specific store; creating a website account is a separate thing.
+  // Legacy aliases
   get trial(): string {
-    return '/start-trial';
+    return '/get-started';
   },
   get businessTrial(): string {
-    return '/start-trial';
-  },
-  get signUp(): string {
-    return '/get-started';
+    return '/get-started?plan=business';
   },
 };
 

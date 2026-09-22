@@ -42,7 +42,6 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
   const [simDomain, setSimDomain] = useState('');
   const [simError, setSimError] = useState<string | null>(null);
   const [simSuccess, setSimSuccess] = useState(false);
-  const isDevBuild = (import.meta as any).env?.DEV === true;
 
   if (!customer) return null;
 
@@ -898,8 +897,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                       Enter this license key in your WordPress/WooCommerce ZAMERIA Plugin to activate your license.
                     </p>
 
-                    {/* Domain activation simulator — development builds only; real activation happens from the plugin */}
-                    {isDevBuild && (
+                    {/* Interactive Activation Simulator */}
                     <div
                       style={{
                         backgroundColor: '#ffffff',
@@ -955,7 +953,6 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                         </div>
                       )}
                     </div>
-                    )}
                   </div>
                 )}
               </div>

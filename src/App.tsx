@@ -5,9 +5,6 @@ import { LoginPage } from './pages/auth/LoginPage';
 import { GetStartedPage } from './pages/auth/GetStartedPage';
 import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
 import { AccountLayout } from './pages/account/AccountLayout';
-import { SubscribePage } from './pages/SubscribePage';
-import { StartTrialPage } from './pages/StartTrialPage';
-import { PaymentCompletePage } from './pages/PaymentCompletePage';
 
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
@@ -21,6 +18,7 @@ import { FAQSection } from './components/FAQSection';
 import { FinalCta } from './components/FinalCta';
 import { Footer } from './components/Footer';
 import { SEOHead } from './components/SEOHead';
+import { ZameriaSupportChatWidget } from './components/ZameriaSupportChatWidget';
 
 import { WooCommercePosPage } from './pages/seo/WooCommercePosPage';
 import { WooCommerceInventorySyncPage } from './pages/seo/WooCommerceInventorySyncPage';
@@ -92,10 +90,6 @@ function MainAppRoutes() {
   if (path === '/forgot-password') {
     return <ForgotPasswordPage />;
   }
-
-  if (path === '/start-trial') return <StartTrialPage />;
-  if (path === '/subscribe') return <SubscribePage />;
-  if (path === '/payment/complete') return <PaymentCompletePage />;
 
   if (path === '/account' || path.startsWith('/account')) {
     return <AccountLayout />;
@@ -170,6 +164,7 @@ export function App() {
       <RouterProvider>
         <SEOHead />
         <MainAppRoutes />
+        <ZameriaSupportChatWidget />
       </RouterProvider>
     </CustomerAuthProvider>
   );

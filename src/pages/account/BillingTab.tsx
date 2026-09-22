@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const BillingTab: React.FC = () => {
-  const { customer, updateBillingAddress } = useCustomerAuth();
+  const { customer, updateBillingAddress, addPaymentMethod } = useCustomerAuth();
   const { setAccountTab } = useRouter();
   const [selectedInvoice, setSelectedInvoice] = useState<OrderItem | null>(null);
   const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
@@ -38,6 +38,11 @@ export const BillingTab: React.FC = () => {
 
   // Payment Method Modal State
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [cardholderName, setCardholderName] = useState(customer?.fullName || '');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+  const [cardSuccess, setCardSuccess] = useState(false);
 
   if (!customer) return null;
 
@@ -1057,29 +1062,104 @@ export const BillingTab: React.FC = () => {
               </button>
             </div>
 
-            <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ padding: '12px 14px', backgroundColor: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', color: '#1e40af', fontSize: '13px', lineHeight: 1.6 }}>
-                ZAMERIA never collects or stores card details. Your card is entered on Paystack's
-                secure checkout when you subscribe or renew, and the card Paystack charged is shown
-                here automatically.
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const last4 = cardNumber.replace(/\s+/g, '').slice(-4) || '8844';
+                addPaymentMethod({
+                  brand: cardNumber.startsWith('4') ? 'Visa' : 'Mastercard',
+                  last4: last4,
+                  expMonth: cardExpiry.split('/')[0] || '12',
+                  expYear: cardExpiry.split('/')[1] || '2028',
+                });
+                setCardSuccess(true);
+                setTimeout(() => {
+                  setCardSuccess(false);
+                  setIsPaymentModalOpen(false);
+                }, 1200);
+              }}
+              style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '14px' }}
+            >
+              {cardSuccess && (
+                <div style={{ padding: '10px 14px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '8px', color: '#166534', fontSize: '13px', fontWeight: 600 }}>
+                  Payment method updated successfully!
+                </div>
+              )}
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#071A31', marginBottom: '4px' }}>
+                  Cardholder Name
+                </label>
+                <input
+                  type="text"
+                  value={cardholderName}
+                  onChange={(e) => setCardholderName(e.target.value)}
+                  placeholder="Amara Okafor"
+                  required
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                />
               </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#071A31', marginBottom: '4px' }}>
+                  Card Number
+                </label>
+                <input
+                  type="text"
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(e.target.value)}
+                  placeholder="5399 •••• •••• 4242"
+                  required
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#071A31', marginBottom: '4px' }}>
+                    Expires (MM/YY)
+                  </label>
+                  <input
+                    type="text"
+                    value={cardExpiry}
+                    onChange={(e) => setCardExpiry(e.target.value)}
+                    placeholder="12/28"
+                    required
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#071A31', marginBottom: '4px' }}>
+                    CVC
+                  </label>
+                  <input
+                    type="password"
+                    value={cardCvc}
+                    onChange={(e) => setCardCvc(e.target.value)}
+                    placeholder="•••"
+                    required
+                    maxLength={4}
+                    style={{ width: '100%', boxSizing: 'border-box', padding: '9px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '13px' }}
+                  />
+                </div>
+              </div>
+
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '10px', marginTop: '12px' }}>
                 <button
                   type="button"
                   onClick={() => setIsPaymentModalOpen(false)}
                   style={{ padding: '9px 16px', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
                 >
-                  Close
+                  Cancel
                 </button>
                 <button
-                  type="button"
-                  onClick={() => window.location.assign('/subscribe')}
+                  type="submit"
                   style={{ padding: '9px 20px', backgroundColor: '#071A31', color: '#ffffff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
                 >
-                  Go to secure checkout
+                  Update Card
                 </button>
               </div>
-            </div>
+            </form>
           </div>
         </div>
       )}

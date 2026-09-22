@@ -1,10 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import {
-  AccountUnavailableError,
-  forgetAccountToken,
-  loginZameriaAccount,
-  registerZameriaAccount,
-} from '../lib/zameriaAccount';
+import { leadCaptureClient, LeadSource, ReferralPartnerInfo } from '../services/leadCaptureClient';
 
 export type LicenseStatus = 'Active' | 'Not Activated' | 'Expired' | 'Suspended' | 'Revoked';
 
@@ -320,9 +315,14 @@ interface CustomerAuthContextType {
   register: (data: {
     fullName: string;
     businessName: string;
-    phone?: string;
     email: string;
     password: string;
+    phone?: string;
+    source?: LeadSource;
+    campaign?: string;
+    referralPartner?: ReferralPartnerInfo;
+    plan?: string;
+    storeUrl?: string;
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -581,59 +581,6 @@ const SCOREFLIP_BACKEND_URL: string =
     ((import.meta as any).env?.VITE_SCOREFLIP_BACKEND_URL || (import.meta as any).env?.VITE_BACKEND_URL)) ||
   '';
 
-/**
- * The local shape of a freshly signed-in account. ZAMERIA holds the account
- * itself; everything below is the browser's working copy of it, rebuilt from
- * scratch when someone signs in on a device that has never seen them.
- */
-const blankProfile = (fullName: string, businessName: string, email: string, password?: string): CustomerProfile => {
-  const parts = fullName.trim().split(' ');
-  return {
-    id: `acc_zm_${hashEmailForId(email)}`,
-    fullName: fullName.trim(),
-    businessName: businessName.trim(),
-    email: email.trim().toLowerCase(),
-    phone: '',
-    password,
-    accountStatus: 'trial_not_started',
-    trial: { status: 'not_started', activationCode: '', startDate: null, endDate: null, totalDays: 7, daysRemaining: 7, activatedStore: null },
-    connectedStore: { name: 'No store connected', url: '', status: 'not_connected', connectedAt: null, lastSyncAt: null },
-    subscription: { status: 'none', planId: null, planName: 'None (Trial Eligible)', price: '₦0', billingCycle: 'yearly', startDate: null, renewsAt: null },
-    activationCode: '',
-    trialDaysRemaining: 7,
-    trialEndsAt: '',
-    plan: null,
-    planPrice: 'None (Trial Eligible)',
-    billingCycle: 'yearly',
-    nextBillingDate: '',
-    storesCount: 0,
-    staffAllowance: 2,
-    billingAddress: {
-      firstName: parts[0] || 'Store',
-      lastName: parts.slice(1).join(' ') || 'Owner',
-      company: businessName.trim(),
-      address: '',
-      city: '',
-      state: '',
-      country: 'Nigeria',
-      phone: '',
-    },
-    paymentMethods: [],
-    orders: [],
-    licenses: [],
-  };
-};
-
-/** A stable local id for an account, so the same person keeps one record. */
-function hashEmailForId(email: string): string {
-  let hash = 0;
-  const value = email.trim().toLowerCase();
-  for (let i = 0; i < value.length; i += 1) {
-    hash = (hash * 31 + value.charCodeAt(i)) | 0;
-  }
-  return Math.abs(hash).toString(36);
-}
-
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
 
 export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -773,28 +720,6 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    // 0. The ZAMERIA licensing service holds the account. It is the only copy
-    //    that exists on more than one device, so it decides whether the sign-in
-    //    succeeds; the local record below is a cache of the richer profile.
-    try {
-      const account = await loginZameriaAccount({ email: trimmedEmail, password: pass });
-      const existing = localStorage.getItem(STORAGE_KEY_USERS);
-      const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
-      const cached = users.find((u) => u.email.toLowerCase() === account.email.toLowerCase());
-      persistSession(
-        cached
-          ? { ...cached, fullName: account.fullName || cached.fullName, businessName: account.businessName || cached.businessName }
-          : blankProfile(account.fullName, account.businessName, account.email, pass),
-      );
-      return { success: true };
-    } catch (err) {
-      // Only fall through when ZAMERIA itself could not be reached; a refused
-      // sign-in is an answer, not a reason to consult the browser's own copy.
-      if (!(err instanceof AccountUnavailableError)) {
-        return { success: false, error: err instanceof Error ? err.message : 'Could not sign you in.' };
-      }
-    }
-
     // 1. Try Authoritative Scoreflip Backend if configured
     if (SCOREFLIP_BACKEND_URL) {
       try {
@@ -932,44 +857,18 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const register = async (data: {
     fullName: string;
     businessName: string;
-    phone?: string;
     email: string;
     password: string;
+    phone?: string;
+    source?: LeadSource;
+    campaign?: string;
+    referralPartner?: ReferralPartnerInfo;
+    plan?: string;
+    storeUrl?: string;
   }): Promise<{ success: boolean; error?: string }> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
 
     const trimmedEmail = data.email.trim().toLowerCase();
-
-    // Register with ZAMERIA first. The browser's own list cannot tell whether
-    // this email already has an account, because it only ever sees the accounts
-    // made on this device — which is how one person ended up with several.
-    try {
-      const account = await registerZameriaAccount({
-        fullName: data.fullName,
-        businessName: data.businessName,
-        phone: data.phone || '',
-        email: trimmedEmail,
-        password: data.password,
-      });
-      const stored = localStorage.getItem(STORAGE_KEY_USERS);
-      const known: CustomerProfile[] = stored ? JSON.parse(stored) : [];
-      const profile = {
-        ...blankProfile(account.fullName, account.businessName, account.email, data.password),
-        phone: account.phone || data.phone || '',
-      };
-      localStorage.setItem(
-        STORAGE_KEY_USERS,
-        JSON.stringify([...known.filter((u) => u.email.toLowerCase() !== account.email.toLowerCase()), profile]),
-      );
-      persistSession(profile);
-      return { success: true };
-    } catch (err) {
-      if (!(err instanceof AccountUnavailableError)) {
-        return { success: false, error: err instanceof Error ? err.message : 'Could not create your account.' };
-      }
-      // ZAMERIA unreachable: fall through and keep the person moving locally.
-    }
-
     try {
       const existing = localStorage.getItem(STORAGE_KEY_USERS);
       const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
@@ -1018,13 +917,15 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       }
 
+      const userPhone = data.phone?.trim() || '+234 800 000 0000';
+
       // STATE A: Account Created, Trial Not Started, NO license, NO subscription!
       const newCustomer: CustomerProfile = {
         id: accountId,
         fullName: data.fullName.trim(),
         businessName: data.businessName.trim(),
         email: trimmedEmail,
-        phone: '+234 800 000 0000',
+        phone: userPhone,
         password: data.password,
         accountStatus: 'trial_not_started',
         trial: {
@@ -1037,8 +938,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           activatedStore: null,
         },
         connectedStore: {
-          name: 'No store connected',
-          url: '',
+          name: data.businessName.trim() || 'No store connected',
+          url: data.storeUrl || '',
           status: 'not_connected',
           connectedAt: null,
           lastSyncAt: null,
@@ -1070,7 +971,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           city: 'Lagos',
           state: 'Lagos State',
           country: 'Nigeria',
-          phone: '+234 800 000 0000',
+          phone: userPhone,
         },
         paymentMethods: [],
         orders: [],
@@ -1080,6 +981,26 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       users.push(newCustomer);
       localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
       persistSession(newCustomer);
+
+      // AUTOMATIC LEAD CAPTURE INTEGRATION
+      // Wrapped in try/catch so any failure in CRM/Lead propagation NEVER blocks customer account creation
+      try {
+        leadCaptureClient.captureSignupLead({
+          name: newCustomer.fullName,
+          businessName: newCustomer.businessName,
+          email: newCustomer.email,
+          phone: userPhone,
+          accountId: newCustomer.id,
+          source: data.source || 'Website Signup',
+          campaign: data.campaign,
+          referralPartner: data.referralPartner,
+          storeUrl: data.storeUrl,
+          plan: data.plan,
+        });
+      } catch (leadErr) {
+        console.warn('[ZAMERIA Auth] Non-blocking lead capture notification error:', leadErr);
+      }
+
       return { success: true };
     } catch {
       return { success: false, error: 'Could not create account. Please try again.' };
@@ -1159,6 +1080,22 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             storesCount: 1,
           };
           persistSession(updated);
+
+          // AUTOMATIC LEAD TRIAL ACTIVATION INTEGRATION
+          try {
+            leadCaptureClient.recordTrialStarted({
+              accountId: updated.id,
+              email: updated.email,
+              startDate: acc.trial?.startDate || undefined,
+              endDate: acc.trial?.endDate || undefined,
+              storeName: acc.connectedStore?.name || storeName,
+              storeUrl: acc.connectedStore?.url || storeUrl,
+              activationCode: expectedCode,
+            });
+          } catch (err) {
+            console.warn('[ZAMERIA Auth] Lead trial activation sync error:', err);
+          }
+
           return { success: true };
         }
       } catch {
@@ -1220,6 +1157,22 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     persistSession(updated);
+
+    // AUTOMATIC LEAD TRIAL ACTIVATION INTEGRATION
+    try {
+      leadCaptureClient.recordTrialStarted({
+        accountId: updated.id,
+        email: updated.email,
+        startDate: startStr,
+        endDate: endStr,
+        storeName,
+        storeUrl,
+        activationCode: updated.trial?.activationCode || expectedCode,
+      });
+    } catch (err) {
+      console.warn('[ZAMERIA Auth] Lead trial activation sync error:', err);
+    }
+
     return { success: true };
   };
 
@@ -1257,7 +1210,6 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   const logout = () => {
-    forgetAccountToken();
     persistSession(null);
   };
 
@@ -1602,6 +1554,23 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
 
     persistSession(updatedCustomer);
+
+    // AUTOMATIC LEAD PAID CONVERSION INTEGRATION
+    try {
+      leadCaptureClient.recordPaidConversion({
+        accountId: updatedCustomer.id,
+        email: updatedCustomer.email,
+        phone: updatedCustomer.phone,
+        plan: `${data.plan} Plan`,
+        licenseKey: newLicenseKey,
+        orderNumber: orderNum,
+        amount: totalStr,
+        billingCycle: data.billingCycle || 'yearly',
+      });
+    } catch (err) {
+      console.warn('[ZAMERIA Auth] Lead paid conversion sync error:', err);
+    }
+
     return { success: true, license: newLicense, order: newOrder, isDuplicate: false };
   };
 

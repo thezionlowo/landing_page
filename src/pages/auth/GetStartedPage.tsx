@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
-import { Eye, EyeOff, User, Store, Mail, Lock, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, User, Store, Mail, Lock, Phone, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { AuthHeader } from './AuthHeader';
+import { LeadSource } from '../../services/leadCaptureClient';
 
 export const GetStartedPage: React.FC = () => {
   const { register } = useCustomerAuth();
   const { navigate } = useRouter();
 
   const [fullName, setFullName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -17,6 +20,24 @@ export const GetStartedPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Auto-fill from query params if present (e.g. from assessment or direct marketing link)
+  useEffect(() => {
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const qEmail = searchParams.get('email');
+      const qName = searchParams.get('name') || searchParams.get('fullName');
+      const qBusiness = searchParams.get('business') || searchParams.get('businessName') || searchParams.get('store');
+      const qPhone = searchParams.get('phone');
+
+      if (qEmail && !email) setEmail(qEmail);
+      if (qName && !fullName) setFullName(qName);
+      if (qBusiness && !businessName) setBusinessName(qBusiness);
+      if (qPhone && !phone) setPhone(qPhone);
+    } catch {
+      // Ignore URL parsing errors
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,12 +64,50 @@ export const GetStartedPage: React.FC = () => {
       return;
     }
 
+    // Extract UTM and source attribution parameters
+    let source: LeadSource = window.location.pathname.includes('/signup') ? 'Website Signup' : 'Trial Signup';
+    let campaign: string | undefined;
+    let referralPartner: { partnerName: string } | undefined;
+    let planParam: string | undefined;
+    let storeUrlParam: string | undefined;
+
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const rawSource = searchParams.get('source') || searchParams.get('utm_source');
+      if (rawSource) {
+        const lower = rawSource.toLowerCase();
+        if (lower.includes('trial')) source = 'Trial Signup';
+        else if (lower.includes('website')) source = 'Website Signup';
+        else if (lower.includes('meta') || lower.includes('facebook') || lower.includes('fb')) source = 'Meta Ads';
+        else if (lower.includes('instagram') || lower.includes('ig')) source = 'Instagram';
+        else if (lower.includes('whatsapp')) source = 'WhatsApp';
+        else if (lower.includes('assessment')) source = 'Assessment';
+        else if (lower.includes('referral') || searchParams.get('ref')) source = 'Referral';
+      }
+
+      campaign = searchParams.get('utm_campaign') || searchParams.get('campaign') || undefined;
+      const refParam = searchParams.get('ref') || searchParams.get('partner') || undefined;
+      if (refParam) {
+        referralPartner = { partnerName: refParam };
+      }
+      planParam = searchParams.get('plan') || undefined;
+      storeUrlParam = searchParams.get('store') || searchParams.get('store_url') || undefined;
+    } catch {
+      // Ignore URL parsing errors
+    }
+
     setIsLoading(true);
     const res = await register({
       fullName: fullName.trim(),
-      businessName: `${fullName.trim()}'s Retail`,
+      businessName: businessName.trim() || `${fullName.trim()}'s Retail`,
       email: email.trim(),
       password,
+      phone: phone.trim() || undefined,
+      source,
+      campaign,
+      referralPartner,
+      plan: planParam,
+      storeUrl: storeUrlParam,
     });
     setIsLoading(false);
 
@@ -138,7 +197,7 @@ export const GetStartedPage: React.FC = () => {
                 htmlFor="reg-name"
                 style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
               >
-                Name
+                Full Name
               </label>
               <div style={{ position: 'relative' }}>
                 <User
@@ -156,6 +215,84 @@ export const GetStartedPage: React.FC = () => {
                   }}
                   placeholder="Amara Okafor"
                   autoComplete="name"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '11px 12px 11px 36px',
+                    fontSize: '13.5px',
+                    color: '#071A31',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '12px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Business Name */}
+            <div>
+              <label
+                htmlFor="reg-business"
+                style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
+              >
+                Business / Store Name
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Store
+                  size={16}
+                  color="#94a3b8"
+                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                />
+                <input
+                  id="reg-business"
+                  type="text"
+                  value={businessName}
+                  onChange={(e) => {
+                    setBusinessName(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="Glow Beauty / Amara's Boutique"
+                  autoComplete="organization"
+                  style={{
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '11px 12px 11px 36px',
+                    fontSize: '13.5px',
+                    color: '#071A31',
+                    backgroundColor: '#ffffff',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '12px',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div>
+              <label
+                htmlFor="reg-phone"
+                style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
+              >
+                Phone Number
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Phone
+                  size={16}
+                  color="#94a3b8"
+                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
+                />
+                <input
+                  id="reg-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (error) setError(null);
+                  }}
+                  placeholder="+234 800 000 0000"
+                  autoComplete="tel"
                   style={{
                     width: '100%',
                     boxSizing: 'border-box',

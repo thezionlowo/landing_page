@@ -18,13 +18,12 @@ const businessFeatures = [
   'Point of Sale and real-time inventory synchronization',
 ];
 
-function PlanCard({ name, price, description, features, featured = false, plan }: {
+function PlanCard({ name, price, description, features, featured = false }: {
   name: string;
   price: string;
   description: string;
   features: string[];
   featured?: boolean;
-  plan: 'starter' | 'business';
 }) {
   return (
     <div className="glass-card" style={{ backgroundColor: featured ? 'var(--brand-navy)' : '#ffffff', color: featured ? '#ffffff' : 'var(--brand-navy)', border: featured ? '1px solid #1a4275' : '1px solid var(--border-subtle)', borderRadius: '24px', padding: '36px 28px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', position: 'relative', boxShadow: featured ? '0 24px 48px -10px rgba(7, 26, 49, 0.35)' : '0 4px 16px rgba(7, 26, 49, 0.04)' }}>
@@ -40,10 +39,7 @@ function PlanCard({ name, price, description, features, featured = false, plan }
           {features.map((item) => <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13.5px' }}><span style={{ width: '18px', height: '18px', borderRadius: '50%', backgroundColor: featured ? 'rgba(96, 165, 250, 0.2)' : '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><Check size={11} strokeWidth={3} /></span><span>{item}</span></div>)}
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-        <a href={`/subscribe?plan=${plan}`} className={featured ? 'btn btn-hero-gradient' : 'btn btn-secondary'} style={{ width: '100%', justifyContent: 'center', padding: '13px', borderRadius: '9999px', fontSize: '14px', fontWeight: 700 }}><span>Subscribe to {name}</span><ArrowRight size={15} /></a>
-        <a href={featured ? ROUTES.businessTrial : ROUTES.trial} style={{ fontSize: '12.5px', fontWeight: 600, color: featured ? '#93c5fd' : 'var(--text-muted)', textDecoration: 'underline' }}>or start the 7-day free trial</a>
-      </div>
+      <a href={featured ? ROUTES.businessTrial : ROUTES.trial} className={featured ? 'btn btn-hero-gradient' : 'btn btn-secondary'} style={{ width: '100%', justifyContent: 'center', padding: '13px', borderRadius: '9999px', fontSize: '14px', fontWeight: 700 }}><span>Start 7-Day Free Trial</span><ArrowRight size={15} /></a>
     </div>
   );
 }
@@ -57,8 +53,8 @@ export const PricingSection: React.FC = () => (
         <p className="lead-text center">Start with a 7-day free trial. All subscriptions are billed annually—there are no monthly plans.</p>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '24px', alignItems: 'stretch' }} className="pricing-two-grid">
-        <PlanCard name="Starter" plan="starter" price="₦200,000" description="For a retailer setting up their first connected store and POS." features={starterFeatures} />
-        <PlanCard name="Business" plan="business" price="₦300,000" description="For growing retailers with unlimited products and staff." features={businessFeatures} featured />
+        <PlanCard name="Starter" price="₦200,000" description="For a retailer setting up their first connected store and POS." features={starterFeatures} />
+        <PlanCard name="Business" price="₦300,000" description="For growing retailers with unlimited products and staff." features={businessFeatures} featured />
       </div>
     </div>
   </section>

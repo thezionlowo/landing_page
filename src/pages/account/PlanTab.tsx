@@ -19,53 +19,15 @@ import {
   Key
 } from 'lucide-react';
 
-const PLAN_CARDS: {
-  name: 'Starter' | 'Business';
-  price: string;
-  badge?: string;
-  featured?: boolean;
-  description: string;
-  features: string[];
-}[] = [
-  {
-    name: 'Starter',
-    price: '₦200,000',
-    description: 'For a retailer setting up their first connected store and POS.',
-    features: [
-      '1 WooCommerce store',
-      '1 physical store/location',
-      'Up to 500 products',
-      'Up to 2 staff members',
-      'Point of Sale and inventory synchronization',
-    ],
-  },
-  {
-    name: 'Business',
-    price: '₦300,000',
-    badge: 'Most Popular',
-    featured: true,
-    description: 'For growing retailers with unlimited products and staff.',
-    features: [
-      '1 WooCommerce store',
-      '1 physical store/location',
-      'Unlimited products',
-      'Unlimited staff members',
-      'Point of Sale and real-time inventory synchronization',
-    ],
-  },
-];
-
 export const PlanTab: React.FC = () => {
-  const { customer, cancelSubscription, resumeSubscription } = useCustomerAuth();
+  const { customer, changePlan, cancelSubscription, resumeSubscription } = useCustomerAuth();
   const { setAccountTab } = useRouter();
+  const [showChangeModal, setShowChangeModal] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [upgradePlan, setUpgradePlan] = useState<'Starter' | 'Business'>('Business');
-
-  const openUpgrade = (plan: 'Starter' | 'Business') => {
-    setUpgradePlan(plan);
-    setIsUpgradeModalOpen(true);
-  };
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(
+    customer?.billingCycle || 'monthly'
+  );
 
   if (!customer) return null;
 
@@ -81,6 +43,11 @@ export const PlanTab: React.FC = () => {
   const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || 'October 12, 2026';
   const planName = customer.subscription.planName || 'Business Plan';
   const price = customer.subscription.price || customer.planPrice || '₦300,000 / year';
+
+  const handleSelectPlan = (plan: 'Starter' | 'Business') => {
+    changePlan(plan, billingCycle);
+    setShowChangeModal(false);
+  };
 
   const handleConfirmCancel = () => {
     cancelSubscription();
@@ -229,7 +196,7 @@ export const PlanTab: React.FC = () => {
                 <>
                   <span>{price}</span>
                   <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>
-                    • billed annually
+                    {customer.billingCycle === 'yearly' ? '• billed yearly' : '• billed monthly'}
                   </span>
                 </>
               )}
@@ -360,7 +327,7 @@ export const PlanTab: React.FC = () => {
               <>
                 <button
                   type="button"
-                  onClick={() => openUpgrade('Business')}
+                  onClick={() => setShowChangeModal(true)}
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#071A31',
@@ -517,65 +484,119 @@ export const PlanTab: React.FC = () => {
         </h3>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-          {PLAN_CARDS.map((card) => {
-            const isCurrent = isPaidActive && planName.includes(card.name);
-            return (
-              <div
-                key={card.name}
-                style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '20px',
-                  border: card.featured ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                  padding: '24px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>{card.name} Plan</span>
-                    {card.badge && (
-                      <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', backgroundColor: '#eff6ff', padding: '2px 8px', borderRadius: '9999px' }}>
-                        {card.badge}
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
-                    {card.price}
-                    <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
-                  </div>
-                  <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>{card.description}</p>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {card.features.map((feature) => (
-                      <li key={feature}>✓ {feature}</li>
-                    ))}
-                  </ul>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => openUpgrade(card.name)}
-                  style={{
-                    marginTop: '24px',
-                    width: '100%',
-                    padding: '12px',
-                    backgroundColor: isCurrent ? '#f1f5f9' : '#071A31',
-                    color: isCurrent ? '#64748b' : '#ffffff',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '13.5px',
-                    fontWeight: 700,
-                    cursor: isCurrent ? 'default' : 'pointer',
-                  }}
-                  disabled={isCurrent}
-                >
-                  {isCurrent ? 'Current Active Plan' : `Subscribe to ${card.name}`}
-                </button>
+          {/* Starter Plan Card */}
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              border: planName === 'Starter' ? '2px solid #2563eb' : '1px solid #e2e8f0',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>Starter</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#16a34a', backgroundColor: '#f0fdf4', padding: '2px 8px', borderRadius: '9999px' }}>
+                  7-Day Free Trial
+                </span>
               </div>
-            );
-          })}
+              <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
+                ₦200,000
+                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
+              </div>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Essential Point of Sale and inventory synchronization for growing retail stores.
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <li>✓ 1 WooCommerce store</li>
+                <li>✓ 1 physical store/location</li>
+                <li>✓ Up to 500 products</li>
+                <li>✓ Up to 2 staff members</li>
+                <li>✓ Point of Sale and inventory synchronization</li>
+              </ul>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsUpgradeModalOpen(true)}
+              style={{
+                marginTop: '24px',
+                width: '100%',
+                padding: '12px',
+                backgroundColor: isPaidActive && planName === 'Starter' ? '#f1f5f9' : '#071A31',
+                color: isPaidActive && planName === 'Starter' ? '#64748b' : '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                cursor: isPaidActive && planName === 'Starter' ? 'default' : 'pointer',
+              }}
+              disabled={isPaidActive && planName === 'Starter'}
+            >
+              {isPaidActive && planName === 'Starter' ? 'Current Active Plan' : 'Subscribe to Starter'}
+            </button>
+          </div>
+
+          {/* Business Plan Card */}
+          <div
+            style={{
+              backgroundColor: '#ffffff',
+              borderRadius: '20px',
+              border: planName === 'Business' ? '2px solid #2563eb' : '1px solid #e2e8f0',
+              padding: '24px',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
+            }}
+          >
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>Business</span>
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', backgroundColor: '#eff6ff', padding: '2px 8px', borderRadius: '9999px' }}>
+                  Most Popular
+                </span>
+              </div>
+              <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
+                ₦300,000
+                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
+              </div>
+              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>
+                Complete retail solution with unlimited products, staff, and real-time inventory synchronization.
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <li>✓ 1 WooCommerce store</li>
+                <li>✓ 1 physical store/location</li>
+                <li>✓ Unlimited products</li>
+                <li>✓ Unlimited staff members</li>
+                <li>✓ Point of Sale and real-time inventory synchronization</li>
+              </ul>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setIsUpgradeModalOpen(true)}
+              style={{
+                marginTop: '24px',
+                width: '100%',
+                padding: '12px',
+                backgroundColor: isPaidActive && planName === 'Business' ? '#f1f5f9' : '#071A31',
+                color: isPaidActive && planName === 'Business' ? '#64748b' : '#ffffff',
+                border: 'none',
+                borderRadius: '10px',
+                fontSize: '13.5px',
+                fontWeight: 700,
+                cursor: isPaidActive && planName === 'Business' ? 'default' : 'pointer',
+              }}
+              disabled={isPaidActive && planName === 'Business'}
+            >
+              {isPaidActive && planName === 'Business' ? 'Current Active Plan' : 'Subscribe to Business'}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -583,7 +604,6 @@ export const PlanTab: React.FC = () => {
       <AddLicenseModal
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
-        initialPlan={upgradePlan}
         onSuccessNavigate={() => setIsUpgradeModalOpen(false)}
       />
 

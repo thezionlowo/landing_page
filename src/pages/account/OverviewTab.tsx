@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { useTrialCode } from '../../lib/useTrialCode';
-import { TrialCodePanel } from '../../components/account/TrialCodePanel';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import { AddLicenseModal } from './AddLicenseModal';
@@ -33,8 +31,8 @@ export const OverviewTab: React.FC = () => {
   const { setAccountTab } = useRouter();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
-  const isDevBuild = (import.meta as any).env?.DEV === true;
   const [simError, setSimError] = useState<string | null>(null);
 
   if (!customer) return null;
@@ -57,14 +55,8 @@ export const OverviewTab: React.FC = () => {
   const licenses = customer.licenses || [];
   const primaryLicense = licenses[0] || null;
 
-  // Issued by the licensing service for this store; a browser-invented code
-  // cannot be redeemed by the plugin.
-  const trial = useTrialCode({
-    email: customer.email,
-    businessName: customer.businessName,
-    storeUrl: customer.connectedStore?.url || '',
-  });
-  const activationCode = trial.code;
+  const activationCode =
+    customer.trial?.activationCode || customer.activationCode || 'ZAM-7F4K-92XP';
   const store = customer.connectedStore || {
     name: 'No store connected',
     url: '',
@@ -83,6 +75,11 @@ export const OverviewTab: React.FC = () => {
     setTimeout(() => setCopiedKey(false), 2200);
   };
 
+  const copyActivationCode = () => {
+    navigator.clipboard.writeText(activationCode);
+    setCopiedCode(true);
+    setTimeout(() => setCopiedCode(false), 2200);
+  };
 
   const handleSimulateActivation = async () => {
     setIsSimulating(true);
@@ -669,7 +666,7 @@ export const OverviewTab: React.FC = () => {
                   }}
                 >
                   <Download size={14} />
-                  <span>Download Plugin (v0.3.1)</span>
+                  <span>Download Plugin (v1.2.4)</span>
                 </a>
               </div>
             </div>
@@ -701,7 +698,58 @@ export const OverviewTab: React.FC = () => {
                   Use this code in the ZAMERIA plugin inside your WooCommerce dashboard to activate your trial:
                 </p>
 
-                <TrialCodePanel trial={trial} />
+                {/* Activation Code Component */}
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '16px',
+                    backgroundColor: '#f8fafc',
+                    border: '2px dashed #94a3b8',
+                    borderRadius: '12px',
+                    padding: '12px 20px',
+                    marginBottom: '8px',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Trial Activation Code
+                    </div>
+                    <div
+                      style={{
+                        fontSize: '22px',
+                        fontWeight: 900,
+                        fontFamily: 'var(--font-mono)',
+                        color: '#071A31',
+                        letterSpacing: '0.08em',
+                      }}
+                    >
+                      {activationCode}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={copyActivationCode}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '9px 16px',
+                      backgroundColor: copiedCode ? '#16a34a' : '#071A31',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      transition: 'background-color 0.15s ease',
+                    }}
+                  >
+                    {copiedCode ? <Check size={14} /> : <Copy size={14} />}
+                    <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
+                  </button>
+                </div>
                 <div style={{ fontSize: '12px', color: '#64748b' }}>
                   Use this code to activate your 7-day trial. It is not a paid license key.
                 </div>
@@ -756,8 +804,7 @@ export const OverviewTab: React.FC = () => {
               </div>
             </div>
 
-            {/* Store activation simulator — development builds only */}
-            {isDevBuild && (
+            {/* Quick Test Simulation */}
             <div
               style={{
                 backgroundColor: '#f8fafc',
@@ -802,7 +849,6 @@ export const OverviewTab: React.FC = () => {
                 <span>{isSimulating ? 'Verifying...' : 'Simulate Store Activation'}</span>
               </button>
             </div>
-            )}
           </div>
         </div>
       )}

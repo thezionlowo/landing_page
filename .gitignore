@@ -25,4 +25,3 @@ dist-ssr
 
 # TypeScript build info
 *.tsbuildinfo
-.vercel
