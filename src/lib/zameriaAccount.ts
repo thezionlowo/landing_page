@@ -174,3 +174,19 @@ export async function requestAccountTrial(input: { businessName: string; storeUr
   }
   return fetchAccountLicenses();
 }
+
+/**
+ * Clears trials whose code was never stored, so the store can start again with
+ * one that stays in the account. The service refuses any trial it can show.
+ */
+export async function resetStuckTrials(storeUrl?: string): Promise<{ cleared: number; kept: number }> {
+  if (!storedAccountToken()) throw new Error('Please sign in first.');
+  const response = await fetch(`${ZAMERIA_API_BASE}/account/trial/reset`, {
+    method: 'POST',
+    headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ store_url: storeUrl || '' }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.error || 'Could not reset this store.');
+  return { cleared: Number(data.cleared) || 0, kept: Number(data.kept) || 0 };
+}

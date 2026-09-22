@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AccountLicense, fetchAccountLicenses, requestAccountTrial } from './zameriaAccount';
+import { AccountLicense, fetchAccountLicenses, requestAccountTrial, resetStuckTrials } from './zameriaAccount';
 
 /**
  * The merchant's trials and licences, read from their ZAMERIA account.
@@ -59,8 +59,26 @@ export function useTrialCode(input: { email: string; businessName: string; store
     }
   };
 
+  /** A trial we cannot show the code for: issued before codes were kept. */
+  const isUnreadable = Boolean(trial && !trial.code);
+
+  const reset = async () => {
+    setError(null);
+    setIsRequesting(true);
+    try {
+      await resetStuckTrials(trial?.storeDomain || storeUrl);
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Could not reset this store.');
+    } finally {
+      setIsRequesting(false);
+    }
+  };
+
   return {
     code: trial?.code || '',
+    isUnreadable,
+    reset,
     storeUrl,
     setStoreUrl: (value: string) => {
       setStoreUrl(value);

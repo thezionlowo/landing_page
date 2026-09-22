@@ -96,15 +96,21 @@ export const TrialCodePanel: React.FC<{ trial: Trial }> = ({ trial }) => {
           </div>
           <div
             style={{
-              fontSize: '20px',
-              fontWeight: 900,
-              fontFamily: 'var(--font-mono)',
-              color: '#071A31',
-              letterSpacing: '0.08em',
+              fontSize: trial.isUnreadable ? '14px' : '20px',
+              fontWeight: trial.isUnreadable ? 700 : 900,
+              fontFamily: trial.isUnreadable ? 'inherit' : 'var(--font-mono)',
+              color: trial.isUnreadable ? '#b45309' : '#071A31',
+              letterSpacing: trial.isUnreadable ? 'normal' : '0.08em',
             }}
           >
-            {trial.code || 'Not issued yet'}
+            {trial.isUnreadable ? 'This code cannot be shown' : trial.code || 'Not issued yet'}
           </div>
+          {trial.isUnreadable && (
+            <div style={{ fontSize: '12px', color: '#78350f', marginTop: '4px', maxWidth: '380px', lineHeight: 1.5 }}>
+              It was issued before ZAMERIA started keeping codes, so only this store holds it. Reset the store to get a
+              fresh code that stays here.
+            </div>
+          )}
           {trial.error && <div style={{ fontSize: '12px', color: '#b91c1c', marginTop: '4px' }}>{trial.error}</div>}
           {!trial.error && status && (
             <div style={{ fontSize: '12px', color: status.colour, marginTop: '4px', fontWeight: 600 }}>{status.text}</div>
@@ -112,9 +118,32 @@ export const TrialCodePanel: React.FC<{ trial: Trial }> = ({ trial }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          {trial.isUnreadable && (
+            <button
+              type="button"
+              disabled={trial.isRequesting}
+              onClick={trial.reset}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                backgroundColor: '#b45309',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                cursor: trial.isRequesting ? 'progress' : 'pointer',
+              }}
+            >
+              <RefreshCw size={13} />
+              <span>{trial.isRequesting ? 'Resetting…' : 'Reset this store'}</span>
+            </button>
+          )}
           <button
             type="button"
-            disabled={trial.isRequesting}
+            disabled={trial.isRequesting || trial.isUnreadable}
             onClick={trial.code ? copy : trial.request}
             style={{
               display: 'inline-flex',
