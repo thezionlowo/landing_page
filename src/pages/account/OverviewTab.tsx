@@ -669,7 +669,7 @@ export const OverviewTab: React.FC = () => {
                   }}
                 >
                   <Download size={14} />
-                  <span>Download Plugin (v0.3.0)</span>
+                  <span>Download Plugin (v0.3.1)</span>
                 </a>
               </div>
             </div>
