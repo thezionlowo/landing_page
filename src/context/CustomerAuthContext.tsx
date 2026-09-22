@@ -237,11 +237,13 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
     };
   }
 
-  // 3. Paid subscription expired (Evaluated before trial to avoid misclassifying paid users)
+  // 3. Paid subscription expired (Evaluated for accounts that actually held a paid subscription or license)
   if (
-    profile.subscription?.status === 'expired' ||
-    profile.accountStatus === 'expired' ||
-    (profile.licenses && profile.licenses.length > 0 && profile.licenses.every((l) => l.status === 'Expired'))
+    profile.accountStatus !== 'trial_expired' &&
+    profile.trial?.status !== 'expired' &&
+    (profile.accountStatus === 'expired' ||
+      (profile.subscription?.status === 'expired' && (profile.subscription?.planId != null || (profile.licenses && profile.licenses.length > 0))) ||
+      (profile.licenses && profile.licenses.length > 0 && profile.licenses.every((l) => l.status === 'Expired')))
   ) {
     return {
       allowed: false,
