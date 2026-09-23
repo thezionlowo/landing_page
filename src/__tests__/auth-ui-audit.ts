@@ -31,7 +31,9 @@ function runAuthUiAudit() {
   console.log(' ZAMERIA LOGIN & SIGN UP UI / RESPONSIVE REFINEMENT AUDIT');
   console.log('================================================================\n');
 
-  const baseDir = path.resolve(process.cwd(), 'src');
+  const baseDir = fs.existsSync(path.resolve(process.cwd(), 'src'))
+    ? path.resolve(process.cwd(), 'src')
+    : path.resolve(process.cwd(), 'landing_page/src');
   const loginPath = path.join(baseDir, 'pages/auth/LoginPage.tsx');
   const signupPath = path.join(baseDir, 'pages/auth/GetStartedPage.tsx');
   const forgotPath = path.join(baseDir, 'pages/auth/ForgotPasswordPage.tsx');

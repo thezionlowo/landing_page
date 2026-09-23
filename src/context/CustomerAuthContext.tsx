@@ -249,11 +249,15 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
   }
 
   // 3. Paid subscription expired (Evaluated for accounts that actually held a paid subscription or license)
+  const hasPaidOrGifted =
+    Boolean(profile.licenses && profile.licenses.length > 0) ||
+    Boolean(profile.subscription && profile.subscription.planId);
+
   if (
     profile.accountStatus !== 'trial_expired' &&
-    profile.trial?.status !== 'expired' &&
+    hasPaidOrGifted &&
     (profile.accountStatus === 'expired' ||
-      (profile.subscription?.status === 'expired' && (profile.subscription?.planId != null || (profile.licenses && profile.licenses.length > 0))) ||
+      profile.subscription?.status === 'expired' ||
       (profile.licenses && profile.licenses.length > 0 && profile.licenses.every((l) => l.status === 'Expired')))
   ) {
     return {
