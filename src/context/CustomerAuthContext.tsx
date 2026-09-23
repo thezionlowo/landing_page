@@ -144,6 +144,15 @@ export interface CustomerProfile {
   paymentMethods: PaymentMethodItem[];
   orders: OrderItem[];
   licenses: LicenseItem[]; // Strictly empty [] for trial/unpaid accounts!
+  accessType?: 'Trial' | 'Paid' | 'Gifted' | 'Complimentary';
+  giftedDetails?: {
+    plan: 'Starter' | 'Business';
+    accessType: 'Gifted';
+    grantedBy: string;
+    grantedAt: string;
+    expiresAt: string;
+    reason: string;
+  };
 }
 
 export type LifecycleScenario =
@@ -195,7 +204,7 @@ export const calculateTrialDaysRemaining = (profile: CustomerProfile | null, cur
       const diffMs = endMs - currentTimeMs;
       if (diffMs <= 0) return 0;
       const days = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-      return Math.min(days, profile.trial.totalDays || 7);
+      return profile.trial.totalDays ? Math.min(days, Math.max(days, profile.trial.totalDays)) : days;
     }
   }
 
@@ -213,16 +222,18 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
     };
   }
 
-  // 1. Paid active user
-  if (profile.subscription?.status === 'active' || (profile.licenses && profile.licenses.some(l => l.status === 'Active'))) {
-    const activeLicense = profile.licenses.find(l => l.status === 'Active' && (!domain || !l.connectedDomain || l.connectedDomain === domain));
+  // 1. Paid or Gifted active user
+  if (profile.subscription?.status === 'active' || (profile.licenses && profile.licenses.some(l => l.status === 'Active')) || profile.accessType === 'Gifted') {
+    const activeLicense = profile.licenses?.find(l => l.status === 'Active' && (!domain || !l.connectedDomain || l.connectedDomain === domain));
     return {
       allowed: true,
       status: 'paid_active',
-      planName: profile.subscription?.planName || 'Business Plan',
+      planName: profile.subscription?.planName || (profile.plan ? `${profile.plan} Plan` : 'Business Plan'),
       licenseRequired: true,
-      licenseKey: activeLicense?.licenseKey || profile.licenses[0]?.licenseKey,
-      message: 'Active subscription and license verified. Full WooCommerce plugin access active.',
+      licenseKey: activeLicense?.licenseKey || profile.licenses?.[0]?.licenseKey,
+      message: profile.accessType === 'Gifted'
+        ? 'Gifted complimentary plan verified. Full WooCommerce plugin access active.'
+        : 'Active subscription and license verified. Full WooCommerce plugin access active.',
     };
   }
 
@@ -1361,18 +1372,20 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const changePlan = (newPlan: 'Starter' | 'Business', cycle: 'monthly' | 'yearly' = 'yearly') => {
     if (!customer) return;
-    const price = newPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
+    const price = newPlan === 'Starter'
+      ? (cycle === 'monthly' ? '₦20,000 / mo' : '₦200,000 / year')
+      : (cycle === 'monthly' ? '₦30,000 / mo' : '₦300,000 / year');
     const updated: CustomerProfile = {
       ...customer,
       plan: newPlan,
       planPrice: price,
-      billingCycle: 'yearly',
+      billingCycle: cycle,
       subscription: {
         ...customer.subscription,
         planId: newPlan,
         planName: `${newPlan} Plan`,
         price,
-        billingCycle: 'yearly',
+        billingCycle: cycle,
         status: 'active',
       },
       accountStatus: 'active_business',
@@ -1678,14 +1691,6 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // --- Scenario Quick-Tester (Validating all 8 Lifecycle Tests) ---
   const simulateLifecycleScenario = (scenario: LifecycleScenario) => {
     if (!customer) return;
-
-    const baseInfo = {
-      fullName: customer.fullName || 'Zion Lowo',
-      businessName: customer.businessName || 'Zion Business Ltd.',
-      email: customer.email || 'zion@business.ng',
-      phone: customer.phone || '+234 802 345 6789',
-      billingAddress: customer.billingAddress,
-    };
 
     switch (scenario) {
       case 'state_a_trial_not_started':
