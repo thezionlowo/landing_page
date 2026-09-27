@@ -29,13 +29,15 @@ export const ZameriaSupportChatWidget: React.FC = () => {
   // Active chat stream composer
   const [messageText, setMessageText] = useState('');
   const [unreadCount, setUnreadCount] = useState(0);
+  const [requestError, setRequestError] = useState('');
+  const [sending, setSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Check for existing conversation ID or customer session
-  const checkExisting = () => {
+  const checkExisting = async () => {
     const convId = supportChatClient.getStoredVisitorConversationId();
     if (convId) {
-      const existing = supportChatClient.getConversation(convId);
+      const existing = await supportChatClient.getConversation(convId).catch(() => null);
       if (existing) {
         setConversation(existing);
         setUnreadCount(existing.unreadByCustomer || 0);
@@ -55,10 +57,10 @@ export const ZameriaSupportChatWidget: React.FC = () => {
   }, [customer]);
 
   useEffect(() => {
-    const handleUpdate = () => {
+    const handleUpdate = async () => {
       const convId = conversation?.id || supportChatClient.getStoredVisitorConversationId();
       if (convId) {
-        const updated = supportChatClient.getConversation(convId);
+        const updated = await supportChatClient.getConversation(convId).catch(() => null);
         if (updated) {
           setConversation(updated);
           setUnreadCount(updated.unreadByCustomer || 0);
@@ -86,17 +88,18 @@ export const ZameriaSupportChatWidget: React.FC = () => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       if (conversation) {
-        supportChatClient.markAsReadByCustomer(conversation.id);
+        void supportChatClient.markAsReadByCustomer(conversation.id).catch(() => {});
         setUnreadCount(0);
       }
     }
   }, [isOpen, conversation?.messages.length]);
 
-  const handleStartConversation = (e: React.FormEvent) => {
+  const handleStartConversation = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !initialMessage.trim()) return;
 
-    const newConv = supportChatClient.createVisitorConversation({
+    setSending(true); setRequestError('');
+    try { const newConv = await supportChatClient.createVisitorConversation({
       customerName: name.trim(),
       email: email.trim(),
       phone: phone.trim() || undefined,
@@ -104,14 +107,15 @@ export const ZameriaSupportChatWidget: React.FC = () => {
     });
 
     setConversation(newConv);
-    setInitialMessage('');
+    setInitialMessage(''); } catch (error) { setRequestError(error instanceof Error ? error.message : 'Could not start support chat'); } finally { setSending(false); }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() || !conversation) return;
 
-    const updated = supportChatClient.sendMessage(
+    setSending(true); setRequestError('');
+    try { const updated = await supportChatClient.sendMessage(
       conversation.id,
       messageText.trim(),
       name || conversation.customerName
@@ -120,14 +124,14 @@ export const ZameriaSupportChatWidget: React.FC = () => {
     if (updated) {
       setConversation(updated);
     }
-    setMessageText('');
+    setMessageText(''); } catch (error) { setRequestError(error instanceof Error ? error.message : 'Could not send message'); } finally { setSending(false); }
   };
 
-  const handleResolve = () => {
+  const handleResolve = async () => {
     if (!conversation) return;
-    supportChatClient.resolveConversation(conversation.id);
-    const updated = supportChatClient.getConversation(conversation.id);
-    if (updated) setConversation(updated);
+    try { await supportChatClient.resolveConversation(conversation.id);
+    const updated = await supportChatClient.getConversation(conversation.id);
+    if (updated) setConversation(updated); } catch (error) { setRequestError(error instanceof Error ? error.message : 'Could not resolve conversation'); }
   };
 
   return (
@@ -138,7 +142,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
           onClick={() => {
             setIsOpen(true);
             if (conversation) {
-              supportChatClient.markAsReadByCustomer(conversation.id);
+              void supportChatClient.markAsReadByCustomer(conversation.id).catch(() => {});
               setUnreadCount(0);
             }
           }}
@@ -254,7 +258,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                   </span>
                 </div>
                 <div style={{ fontSize: '11px', opacity: 0.8 }}>
-                  {conversation ? 'Live conversation' : 'Direct product & support team'}
+                  {conversation ? 'Conversation' : 'Direct product & support team'}
                 </div>
               </div>
             </div>
@@ -308,6 +312,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
             </div>
           </div>
 
+          {requestError && <div role="alert" style={{ padding: '8px 14px', color: '#991b1b', background: '#fef2f2', fontSize: '12px' }}>{requestError}</div>}
           {/* Conversation Stream OR Initial Visitor Inquiry Form */}
           {conversation ? (
             <>
@@ -415,7 +420,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                 />
                 <button
                   type="submit"
-                  disabled={!messageText.trim()}
+                  disabled={!messageText.trim() || sending}
                   style={{
                     background: '#071a31',
                     color: '#ffffff',
