@@ -599,6 +599,10 @@ const SCOREFLIP_BACKEND_URL: string =
     ((import.meta as any).env?.VITE_SCOREFLIP_BACKEND_URL || (import.meta as any).env?.VITE_BACKEND_URL)) ||
   '';
 
+// Merchant accounts are owned by the ZAMERIA service.  The legacy generic
+// ScoreFlip /auth routes are not registered by the live Cloud Run service.
+const ZAMERIA_ACCOUNT_API_BASE = `${SCOREFLIP_BACKEND_URL.replace(/\/$/, '')}/api/v1/zameria`;
+
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
 
 export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -904,17 +908,18 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       let activationCode = generateActivationCode();
       let accountId = `acc_zm_${Date.now().toString().slice(-6)}`;
 
-      // Register with Scoreflip backend if URL is configured
+      // Register with the live ZAMERIA account service if configured.
       if (SCOREFLIP_BACKEND_URL) {
         try {
-          const backendRes = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/auth/register`, {
+          const backendRes = await fetch(`${ZAMERIA_ACCOUNT_API_BASE}/account/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              fullName: data.fullName.trim(),
-              businessName: data.businessName.trim(),
+              full_name: data.fullName.trim(),
+              business_name: data.businessName.trim(),
               email: trimmedEmail,
               password: data.password,
+              phone: data.phone?.trim() || '',
             }),
           });
           if (backendRes.ok) {
@@ -925,10 +930,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             }
           } else {
             const errData = await backendRes.json().catch(() => ({}));
-            return {
-              success: false,
-              error: errData.error || 'An account with this email address already exists in ZAMERIA Cloud.',
-            };
+            if (backendRes.status === 409) {
+              return { success: false, error: errData.error || 'An account with this email already exists. Please log in instead.' };
+            }
+            return { success: false, error: errData.error || 'We could not create your account right now. Please try again.' };
           }
         } catch {
           // Fallback to local storage if server is unreachable
