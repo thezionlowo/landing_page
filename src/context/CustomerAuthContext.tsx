@@ -358,6 +358,7 @@ interface CustomerAuthContextType {
     paymentMethodId?: string;
     transactionRef?: string;
   }) => Promise<{ success: boolean; license: LicenseItem; order: OrderItem; isDuplicate?: boolean }>;
+  recordVerifiedPayment: (receipt: { license_key: string; plan: 'starter' | 'business'; expires_at: string; store_domain?: string; payment_reference?: string }) => void;
   purchaseNewLicense: (data: {
     plan: 'Starter' | 'Business';
     billingCycle?: 'monthly' | 'yearly';
@@ -1397,6 +1398,26 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     persistSession(updated);
   };
 
+  // The dashboard only changes after the server has verified a Paystack receipt.
+  // This deliberately does not create a payment, order, or license in the browser.
+  const recordVerifiedPayment = (receipt: { license_key: string; plan: 'starter' | 'business'; expires_at: string; store_domain?: string; payment_reference?: string }) => {
+    if (!customer || !receipt.license_key) return;
+    if (customer.licenses.some((license) => license.licenseKey === receipt.license_key)) return;
+    const plan: 'Starter' | 'Business' = receipt.plan === 'starter' ? 'Starter' : 'Business';
+    const price = plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
+    const expiresAt = new Date(receipt.expires_at);
+    const expiryLabel = Number.isNaN(expiresAt.getTime()) ? receipt.expires_at : expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const now = new Date();
+    const dateLabel = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const idSuffix = receipt.license_key.replace(/[^a-z0-9]/gi, '').slice(-12).toLowerCase();
+    const licenseId = `lic_${idSuffix}`;
+    const orderId = `ord_${receipt.payment_reference || idSuffix}`;
+    const orderNumber = `#ZM-${(receipt.payment_reference || idSuffix).slice(-8).toUpperCase()}`;
+    const license: LicenseItem = { id: licenseId, licenseKey: receipt.license_key, plan, planName: `${plan} Plan`, billingCycle: 'yearly', price, status: 'Active', connectedDomain: receipt.store_domain || null, activationStatus: receipt.store_domain ? 'Activated' : 'Not Activated', activatedAt: receipt.store_domain ? dateLabel : null, expiresAt: expiryLabel, orderId, orderNumber, features: [] };
+    const order: OrderItem = { id: orderId, orderNumber, date: dateLabel, status: 'Completed', plan: `${plan} Plan (Annual)`, total: plan === 'Starter' ? '₦200,000' : '₦300,000', amountNumber: plan === 'Starter' ? 200000 : 300000, invoiceNumber: `PAYSTACK-${(receipt.payment_reference || idSuffix).slice(-10).toUpperCase()}`, paymentMethod: 'Paystack', billingName: `${customer.fullName} • ${customer.businessName}`, billingEmail: customer.email, items: [`ZAMERIA ${plan} Plan Subscription`, `License Key ${receipt.license_key}`], licenseId, licenseKey: receipt.license_key, licenseStatus: 'Active', connectedDomain: receipt.store_domain || null, transactionRef: receipt.payment_reference };
+    persistSession({ ...customer, accountStatus: 'active_business', plan, planPrice: price, billingCycle: 'yearly', nextBillingDate: expiryLabel, trial: { ...customer.trial, status: 'expired', daysRemaining: 0 }, trialDaysRemaining: 0, subscription: { ...customer.subscription, status: 'active', planId: plan, planName: `${plan} Plan`, price, billingCycle: 'yearly', startDate: dateLabel, renewsAt: expiryLabel, cancelledAt: null }, licenses: [license, ...customer.licenses], orders: [order, ...customer.orders] });
+  };
+
   // --- STATE 4: Paid Subscription & License Generation ---
   // A license is ONLY created after successful payment for a paid plan.
   // Idempotent: checks transactionRef to prevent duplicate subscriptions or licenses.
@@ -1864,6 +1885,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         cancelSubscription,
         resumeSubscription,
         subscribeToPlan,
+        recordVerifiedPayment,
         purchaseNewLicense,
         activateLicenseDomain,
         renewLicense,
