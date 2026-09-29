@@ -47,5 +47,11 @@
       ]
     }
   ],
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/leadcapture1", "destination": "/leadcapture1/index.html" },
+    { "source": "/leadcapture1/", "destination": "/leadcapture1/index.html" },
+    { "source": "/leadcapture2", "destination": "/leadcapture2/index.html" },
+    { "source": "/leadcapture2/", "destination": "/leadcapture2/index.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

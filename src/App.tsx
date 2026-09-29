@@ -36,6 +36,8 @@ import { PosComparisonPage } from './pages/seo/PosComparisonPage';
 import { StockMismatchPage } from './pages/seo/StockMismatchPage';
 import { OfflinePosPage } from './pages/seo/OfflinePosPage';
 import { PreventOversellingPage } from './pages/seo/PreventOversellingPage';
+import { LeadCapture1Page } from './pages/LeadCapture1Page';
+import { LeadCapture2Page } from './pages/LeadCapture2Page';
 
 function LandingPageContent() {
   return (
@@ -80,6 +82,14 @@ function LandingPageContent() {
 
 function MainAppRoutes() {
   const { path } = useRouter();
+
+  if (path === '/leadcapture1' || path === '/leadcapture1/' || path === '/leadcapture1.html') {
+    return <LeadCapture1Page />;
+  }
+
+  if (path === '/leadcapture2' || path === '/leadcapture2/' || path === '/leadcapture2.html') {
+    return <LeadCapture2Page />;
+  }
 
   if (path === '/login') {
     return <LoginPage />;
@@ -168,13 +178,24 @@ function MainAppRoutes() {
   return <LandingPageContent />;
 }
 
+function AppShell() {
+  const { path } = useRouter();
+  const hideChatWidget = path.startsWith('/leadcapture1') || path.startsWith('/leadcapture2');
+
+  return (
+    <>
+      <SEOHead />
+      <MainAppRoutes />
+      {!hideChatWidget && <ZameriaSupportChatWidget />}
+    </>
+  );
+}
+
 export function App() {
   return (
     <CustomerAuthProvider>
       <RouterProvider>
-        <SEOHead />
-        <MainAppRoutes />
-        <ZameriaSupportChatWidget />
+        <AppShell />
       </RouterProvider>
     </CustomerAuthProvider>
   );
