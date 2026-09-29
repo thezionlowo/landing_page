@@ -29,7 +29,7 @@ interface LicensesTabProps {
 }
 
 export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) => {
-  const { customer, activateLicenseDomain, renewLicense } = useCustomerAuth();
+  const { customer, renewLicense } = useCustomerAuth();
   const { setAccountTab } = useRouter();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -38,10 +38,6 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
   const [copiedKeyId, setCopiedKeyId] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  // Activation simulator inside modal
-  const [simDomain, setSimDomain] = useState('');
-  const [simError, setSimError] = useState<string | null>(null);
-  const [simSuccess, setSimSuccess] = useState(false);
 
   if (!customer) return null;
 
@@ -74,35 +70,6 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
 
     return true;
   });
-
-  const handleSimulateActivation = (licenseId: string) => {
-    if (!simDomain.trim()) {
-      setSimError('Please enter a domain name (e.g. brandone.com).');
-      return;
-    }
-
-    const res = activateLicenseDomain(licenseId, simDomain.trim());
-    if (res.success) {
-      setSimSuccess(true);
-      setSimError(null);
-      // Update local selected license state
-      setSelectedLicense((prev) =>
-        prev && prev.id === licenseId
-          ? {
-              ...prev,
-              connectedDomain: simDomain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, ''),
-              status: 'Active',
-              activationStatus: 'Activated',
-              activatedAt: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-            }
-          : prev
-      );
-      setTimeout(() => setSimSuccess(false), 3500);
-      setSimDomain('');
-    } else {
-      setSimError(res.error || 'Failed to activate domain.');
-    }
-  };
 
   const handleViewOrder = (orderId: string) => {
     setSelectedLicense(null);
@@ -898,7 +865,6 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                       Enter this license key in your WordPress/WooCommerce ZAMERIA Plugin to activate your license.
                     </p>
 
-                    {/* Interactive Activation Simulator */}
                     <div
                       style={{
                         backgroundColor: '#ffffff',
@@ -907,52 +873,12 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                         border: '1px solid #fde68a',
                       }}
                     >
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}>
-                        Connect Domain:
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#071A31', marginBottom: '4px' }}>
+                        Store selected at checkout: {selectedLicense.requestedDomain || 'Not recorded'}
                       </div>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <input
-                          type="text"
-                          placeholder="e.g. yourstore.com"
-                          value={simDomain}
-                          onChange={(e) => setSimDomain(e.target.value)}
-                          style={{
-                            flex: 1,
-                            padding: '8px 12px',
-                            fontSize: '13px',
-                            borderRadius: '6px',
-                            border: '1px solid #cbd5e1',
-                            outline: 'none',
-                          }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleSimulateActivation(selectedLicense.id)}
-                          style={{
-                            padding: '8px 14px',
-                            backgroundColor: '#071A31',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          Connect & Activate
-                        </button>
+                      <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
+                        Install the ZAMERIA WooCommerce plugin and enter this license key. The plugin securely detects and confirms the live store domain; it cannot be changed from this dashboard.
                       </div>
-                      {simError && (
-                        <div style={{ fontSize: '11px', color: '#b91c1c', marginTop: '6px' }}>
-                          {simError}
-                        </div>
-                      )}
-                      {simSuccess && (
-                        <div style={{ fontSize: '11px', color: '#16a34a', marginTop: '6px', fontWeight: 600 }}>
-                          Domain connected successfully!
-                        </div>
-                      )}
                     </div>
                   </div>
                 )}
