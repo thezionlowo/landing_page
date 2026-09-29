@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCustomerAuth, LicenseItem, LicenseStatus } from '../../context/CustomerAuthContext';
+import { resolveSubscriptionState, useCustomerAuth, LicenseItem, LicenseStatus } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import { AddLicenseModal } from './AddLicenseModal';
 import {
@@ -113,9 +113,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
     }
   };
 
-  const isTrialNotStarted = customer.accountStatus === 'trial_not_started' || customer.trial?.status === 'not_started';
-  const isTrialActive = (customer.accountStatus === 'trial_active' || customer.trial?.status === 'active' || customer.trial?.status === 'expiring') && !isTrialNotStarted;
-  const isTrialExpired = customer.accountStatus === 'trial_expired' || customer.trial?.status === 'expired' || (isTrialActive && (customer.trial?.daysRemaining ?? 0) <= 0);
+  const subscriptionState = resolveSubscriptionState(customer);
+  const isTrialNotStarted = subscriptionState === 'no_active_plan' && (customer.accountStatus === 'trial_not_started' || customer.trial?.status === 'not_started');
+  const isTrialActive = subscriptionState === 'trial_active';
+  const isTrialExpired = subscriptionState === 'trial_expired';
   const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
 
   return (

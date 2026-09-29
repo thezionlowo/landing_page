@@ -3,9 +3,11 @@ import {
   DEMO_TRIAL_ACTIVE_CUSTOMER,
   DEMO_PAID_CUSTOMER,
   checkPluginEntitlement,
+  calculateTrialDaysRemaining,
   CustomerProfile,
   LicenseStatus,
   generateActivationCode,
+  resolveSubscriptionState,
 } from '../context/CustomerAuthContext';
 
 function assert(condition: boolean, message: string) {
@@ -151,8 +153,18 @@ assert(entitlementD.allowed === true, 'Paid customer must have valid POS access'
 assert(entitlementD.status === 'paid_active', 'Entitlement status must be paid_active');
 assert(entitlementD.licenseRequired === true, 'Paid customer requires license');
 assert(Boolean(entitlementD.licenseKey), 'Entitlement license key must be populated');
+const paidDuringTrial: CustomerProfile = {
+  ...stateD,
+  // Simulate the common transition where payment confirmation arrives before
+  // the old trial fields have been cleaned up.
+  accountStatus: 'trial_expired',
+  trial: { ...stateB.trial, status: 'expired', daysRemaining: 0 },
+};
+assert(resolveSubscriptionState(paidDuringTrial) === 'paid_active', 'Active paid subscription must outrank stale trial state');
+assert(calculateTrialDaysRemaining(paidDuringTrial) === 0, 'Paid subscription must stop the trial countdown');
+assert(checkPluginEntitlement(paidDuringTrial).status === 'paid_active', 'Paid entitlement must not show trial expired');
 console.log(`   ✓ Official license generated ONLY after payment: ${stateD.licenses[0].licenseKey}`);
-console.log('   ✓ Paid customer has active subscription and active license.\n');
+console.log('   ✓ Paid customer has active subscription and active license; stale trial state is ignored.\n');
 
 // 7. Store Connection Failure & Error Recovery
 console.log('7. Testing Store Connection Error State:');

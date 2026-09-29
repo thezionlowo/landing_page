@@ -191,12 +191,47 @@ export interface PluginEntitlementStatus {
   activationCode?: string;
 }
 
+// This is the only ordering used to decide what a merchant sees. A historical
+// trial record is retained for audit purposes, but can never outrank a current
+// paid entitlement.
+export type SubscriptionDisplayState =
+  | 'paid_active'
+  | 'trial_active'
+  | 'trial_expired'
+  | 'no_active_plan'
+  | 'paid_expired'
+  | 'past_due';
+
+export const resolveSubscriptionState = (
+  profile: CustomerProfile | null,
+  currentTimeMs: number = Date.now(),
+): SubscriptionDisplayState => {
+  if (!profile) return 'no_active_plan';
+
+  const activeLicense = profile.licenses?.some((license) => license.status === 'Active') ?? false;
+  if (profile.subscription?.status === 'active' || activeLicense || profile.accessType === 'Gifted') {
+    return 'paid_active';
+  }
+  if (profile.subscription?.status === 'past_due' || profile.accountStatus === 'payment_failed') return 'past_due';
+
+  const hasPaidHistory = Boolean(profile.subscription?.planId) || Boolean(profile.licenses?.length);
+  if (hasPaidHistory && (profile.subscription?.status === 'expired' || profile.accountStatus === 'expired')) {
+    return 'paid_expired';
+  }
+
+  if (profile.trial?.status === 'active' || profile.accountStatus === 'trial_active') {
+    const endMs = profile.trial?.endDate ? new Date(profile.trial.endDate).getTime() : NaN;
+    if (!Number.isNaN(endMs) && endMs <= currentTimeMs) return 'trial_expired';
+    return 'trial_active';
+  }
+  if (profile.trial?.status === 'expired' || profile.accountStatus === 'trial_expired') return 'trial_expired';
+  return 'no_active_plan';
+};
+
 // Calculate mathematically exact remaining days from trial end date
 export const calculateTrialDaysRemaining = (profile: CustomerProfile | null, currentTimeMs: number = Date.now()): number => {
   if (!profile) return 0;
-  if (profile.subscription?.status === 'active' || profile.accountStatus === 'active_business') return 0;
-  if (profile.accountStatus === 'trial_expired' || profile.trial?.status === 'expired') return 0;
-  if (profile.accountStatus === 'trial_not_started' || profile.trial?.status === 'not_started') return 0;
+  if (resolveSubscriptionState(profile, currentTimeMs) !== 'trial_active') return 0;
 
   if (profile.trial?.endDate) {
     const endMs = new Date(profile.trial.endDate).getTime();
@@ -222,8 +257,10 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
     };
   }
 
-  // 1. Paid or Gifted active user
-  if (profile.subscription?.status === 'active' || (profile.licenses && profile.licenses.some(l => l.status === 'Active')) || profile.accessType === 'Gifted') {
+  const state = resolveSubscriptionState(profile);
+
+  // 1. Paid entitlement always wins, even when the historical trial says active or expired.
+  if (state === 'paid_active') {
     const activeLicense = profile.licenses?.find(l => l.status === 'Active' && (!domain || !l.connectedDomain || l.connectedDomain === domain));
     return {
       allowed: true,
@@ -238,7 +275,7 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
   }
 
   // 2. Past due / Grace period
-  if (profile.subscription?.status === 'past_due') {
+  if (state === 'past_due') {
     return {
       allowed: true,
       status: 'past_due',
@@ -249,17 +286,7 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
   }
 
   // 3. Paid subscription expired (Evaluated for accounts that actually held a paid subscription or license)
-  const hasPaidOrGifted =
-    Boolean(profile.licenses && profile.licenses.length > 0) ||
-    Boolean(profile.subscription && profile.subscription.planId);
-
-  if (
-    profile.accountStatus !== 'trial_expired' &&
-    hasPaidOrGifted &&
-    (profile.accountStatus === 'expired' ||
-      profile.subscription?.status === 'expired' ||
-      (profile.licenses && profile.licenses.length > 0 && profile.licenses.every((l) => l.status === 'Expired')))
-  ) {
+  if (state === 'paid_expired') {
     return {
       allowed: false,
       status: 'paid_expired',
@@ -270,7 +297,7 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
   }
 
   // 4. Trial not started (State A)
-  if (profile.trial?.status === 'not_started' || profile.accountStatus === 'trial_not_started') {
+  if (state === 'no_active_plan' && (profile.trial?.status === 'not_started' || profile.accountStatus === 'trial_not_started')) {
     return {
       allowed: false,
       status: 'trial_not_started',
@@ -285,7 +312,7 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
   const daysLeft = calculateTrialDaysRemaining(profile);
 
   // 5a. Trial active (NO license needed!)
-  if (profile.trial?.status === 'active' && daysLeft > 0) {
+  if (state === 'trial_active' && daysLeft > 0) {
     return {
       allowed: true,
       status: 'trial_active',
@@ -297,7 +324,7 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
   }
 
   // 6. Trial expired
-  if (profile.accountStatus === 'trial_expired' || profile.trial?.status === 'expired' || (profile.trial?.status === 'active' && daysLeft <= 0)) {
+  if (state === 'trial_expired') {
     return {
       allowed: false,
       status: 'trial_expired',
@@ -1841,22 +1868,12 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   };
 
+  const subscriptionState = resolveSubscriptionState(customer);
   const isTrialNotStarted = customer
-    ? customer.accountStatus === 'trial_not_started' || customer.trial?.status === 'not_started'
+    ? subscriptionState === 'no_active_plan' && (customer.accountStatus === 'trial_not_started' || customer.trial?.status === 'not_started')
     : false;
-  const isTrial = customer
-    ? customer.subscription?.status === 'trial' ||
-      customer.accountStatus === 'trial_active' ||
-      customer.accountStatus === 'trial_not_started' ||
-      customer.trial?.status === 'active' ||
-      customer.trial?.status === 'not_started'
-    : false;
-  const isPaid = customer
-    ? customer.subscription?.status === 'active' ||
-      customer.subscription?.status === 'cancelled' ||
-      customer.subscription?.status === 'past_due' ||
-      (customer.licenses && customer.licenses.length > 0)
-    : false;
+  const isTrial = subscriptionState === 'trial_active' || isTrialNotStarted;
+  const isPaid = subscriptionState === 'paid_active';
   const daysRemaining = calculateTrialDaysRemaining(customer);
   const planLabel = customer?.subscription?.planName || customer?.plan || 'Business';
 

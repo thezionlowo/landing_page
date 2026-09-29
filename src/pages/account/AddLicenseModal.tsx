@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCustomerAuth, LicenseItem, OrderItem } from '../../context/CustomerAuthContext';
+import { resolveSubscriptionState, useCustomerAuth, LicenseItem, OrderItem } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import {
   X,
@@ -39,7 +39,7 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
 
   if (!isOpen || !customer) return null;
 
-  const isTrial = customer.subscription.status === 'trial' || customer.accountStatus === 'trial_active' || customer.accountStatus === 'trial_expired';
+  const isTrial = resolveSubscriptionState(customer) === 'trial_active';
   const defaultPm = customer.paymentMethods.find((p) => p.isDefault) || customer.paymentMethods[0];
 
   const getPrice = (plan: 'Starter' | 'Business', _cycle: 'monthly' | 'yearly' = 'yearly') => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useCustomerAuth, CustomerProfile, LifecycleScenario } from '../../context/CustomerAuthContext';
+import { resolveSubscriptionState, useCustomerAuth, CustomerProfile, LifecycleScenario } from '../../context/CustomerAuthContext';
 import { useRouter, AccountTab } from '../../router/Router';
 import { OverviewTab } from './OverviewTab';
 import { OrdersTab } from './OrdersTab';
@@ -57,7 +57,8 @@ const ACCOUNT_NAV_ITEMS: NavItem[] = [
     label: 'License',
     icon: Key,
     getBadge: (c) => {
-      const isTrial = c.subscription.status === 'trial' || c.accountStatus === 'trial_active' || c.accountStatus === 'trial_not_started';
+      const state = resolveSubscriptionState(c);
+      const isTrial = state === 'trial_active' || (state === 'no_active_plan' && c.accountStatus === 'trial_not_started');
       if (isTrial || !c.licenses || c.licenses.length === 0) {
         return null;
       }
@@ -133,9 +134,11 @@ export const AccountLayout: React.FC = () => {
     );
   }
 
-  const isTrial = customer.subscription.status === 'trial' || customer.accountStatus === 'trial_active';
+  const subscriptionState = resolveSubscriptionState(customer);
+  const isTrial = subscriptionState === 'trial_active';
+  const isTrialNotStarted = subscriptionState === 'no_active_plan' && (customer.trial?.status === 'not_started' || customer.accountStatus === 'trial_not_started');
   const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
-  const isPaid = customer.subscription.status === 'active';
+  const isPaid = subscriptionState === 'paid_active';
   const planLabel = customer.subscription.planName || 'Business Plan';
 
   const handleLogout = () => {
@@ -451,7 +454,7 @@ export const AccountLayout: React.FC = () => {
                       lineHeight: 1.2,
                     }}
                   >
-                    {customer.trial?.status === 'not_started' || customer.accountStatus === 'trial_not_started'
+                    {isTrialNotStarted
                       ? 'Trial Not Started'
                       : isTrial
                       ? `Free Trial · ${daysLeft} days left`
@@ -497,7 +500,7 @@ export const AccountLayout: React.FC = () => {
                           marginTop: '4px',
                         }}
                       >
-                        {customer.trial?.status === 'not_started' || customer.accountStatus === 'trial_not_started'
+                        {isTrialNotStarted
                           ? 'Trial Not Started'
                           : isTrial
                           ? `Free Trial · ${daysLeft} days left`
@@ -659,7 +662,7 @@ export const AccountLayout: React.FC = () => {
                 marginTop: '4px',
               }}
             >
-              {customer.trial?.status === 'not_started' || customer.accountStatus === 'trial_not_started'
+              {isTrialNotStarted
                 ? 'Trial Not Started'
                 : isTrial
                 ? `Free Trial · ${daysLeft} days left`

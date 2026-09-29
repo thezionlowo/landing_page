@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCustomerAuth, OrderItem } from '../../context/CustomerAuthContext';
+import { resolveSubscriptionState, useCustomerAuth, OrderItem } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import {
   CreditCard,
@@ -46,7 +46,7 @@ export const BillingTab: React.FC = () => {
 
   if (!customer) return null;
 
-  const isTrial = customer.accountStatus === 'trial_active' || customer.plan === 'Starter';
+  const isTrial = resolveSubscriptionState(customer) === 'trial_active';
   const isCancelled = customer.accountStatus === 'cancelled';
 
   const handleDownloadInvoice = (order: OrderItem) => {

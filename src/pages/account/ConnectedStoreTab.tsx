@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useCustomerAuth } from '../../context/CustomerAuthContext';
+import { resolveSubscriptionState, useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import {
   Globe,
@@ -30,13 +30,11 @@ export const ConnectedStoreTab: React.FC = () => {
 
   if (!customer) return null;
 
-  const isTrialNotStarted =
-    customer.accountStatus === 'trial_not_started' || customer.trial?.status === 'not_started';
-  const isTrialActive =
-    customer.accountStatus === 'trial_active' && customer.trial?.status === 'active';
-  const isTrialExpired =
-    customer.accountStatus === 'trial_expired' || customer.trial?.status === 'expired';
-  const isPaid = customer.subscription?.status === 'active';
+  const subscriptionState = resolveSubscriptionState(customer);
+  const isTrialNotStarted = subscriptionState === 'no_active_plan' && (customer.accountStatus === 'trial_not_started' || customer.trial?.status === 'not_started');
+  const isTrialActive = subscriptionState === 'trial_active';
+  const isTrialExpired = subscriptionState === 'trial_expired';
+  const isPaid = subscriptionState === 'paid_active';
 
   const activationCode = customer.trial?.activationCode || customer.activationCode || 'ZAM-7F4K-92XP';
   const store = customer.connectedStore || {
