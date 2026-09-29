@@ -544,7 +544,7 @@ export const ConnectedStoreTab: React.FC = () => {
                   }}
                 >
                   <Download size={14} />
-                  <span>Download Plugin (v1.2.4)</span>
+                  <span>Download Plugin (v0.2.4)</span>
                 </a>
               </div>
             </div>
