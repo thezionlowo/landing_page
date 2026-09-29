@@ -146,6 +146,11 @@ export const AccountLayout: React.FC = () => {
     navigate('/login');
   };
 
+  const handleSelectScenario = (sc: LifecycleScenario) => {
+    simulateLifecycleScenario(sc);
+    setScenarioMenuOpen(false);
+  };
+
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -153,11 +158,6 @@ export const AccountLayout: React.FC = () => {
       .slice(0, 2)
       .join('')
       .toUpperCase();
-  };
-
-  const handleSelectScenario = (sc: LifecycleScenario) => {
-    simulateLifecycleScenario(sc);
-    setScenarioMenuOpen(false);
   };
 
   return (
@@ -263,8 +263,9 @@ export const AccountLayout: React.FC = () => {
 
           {/* Right Header Navigation & Profile Menu */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {/* Interactive Lifecycle Quick-Tester Pill */}
-            <div style={{ position: 'relative' }}>
+            {/* Deliberately disabled in production: lifecycle fixtures must never
+                be visible or able to overwrite a real customer session. */}
+            {false && <div style={{ position: 'relative' }}>
               <button
                 type="button"
                 onClick={() => setScenarioMenuOpen(!scenarioMenuOpen)}
@@ -381,7 +382,7 @@ export const AccountLayout: React.FC = () => {
                   </div>
                 </>
               )}
-            </div>
+            </div>}
 
             {/* Link back to Main Website */}
             <a

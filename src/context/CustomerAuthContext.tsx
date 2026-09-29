@@ -865,25 +865,18 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           return { success: false, error: errData.error || 'Incorrect password. Please try again.' };
         }
       } catch {
-        // Scoreflip backend offline, fallback to local storage
+        return { success: false, error: 'Unable to reach ZAMERIA. Please try again shortly.' };
       }
     }
 
-    // 2. Fallback to localStorage
+    // Never fall back to fixture accounts in production. A real backend session
+    // is required so customer subscription state cannot be fabricated locally.
     try {
       const existing = localStorage.getItem(STORAGE_KEY_USERS);
-      const users: CustomerProfile[] = existing ? JSON.parse(existing) : [DEMO_TRIAL_CUSTOMER, DEMO_PAID_CUSTOMER];
+      const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
       const match = users.find((u) => u.email.toLowerCase() === trimmedEmail);
 
       if (!match) {
-        if (trimmedEmail === DEMO_TRIAL_CUSTOMER.email.toLowerCase()) {
-          persistSession(DEMO_TRIAL_CUSTOMER);
-          return { success: true };
-        }
-        if (trimmedEmail === DEMO_PAID_CUSTOMER.email.toLowerCase()) {
-          persistSession(DEMO_PAID_CUSTOMER);
-          return { success: true };
-        }
         return {
           success: false,
           error: 'No ZAMERIA customer account found with this email. Please click Get Started to start your 7-day free trial.',
@@ -896,10 +889,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       persistSession(match);
       return { success: true };
-    } catch {
-      persistSession(DEMO_TRIAL_CUSTOMER);
-      return { success: true };
-    }
+    } catch { return { success: false, error: 'Unable to load your account. Please sign in again.' }; }
   };
 
   // --- STATE 1: Account Created / Trial Not Started ---
