@@ -799,7 +799,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             else if (isTrialActive) accountStatus = 'trial_active';
 
             const storeName = acc.connectedStore?.name || localMatch?.connectedStore.name || 'No store connected';
-            const storeUrl = acc.connectedStore?.url || localMatch?.connectedStore.url || '';
+            const storeUrl = acc.connectedStore?.url || acc.store_url || localMatch?.connectedStore.url || '';
             const storeStatus = acc.connectedStore?.status || localMatch?.connectedStore.status || 'not_connected';
 
             const profile: CustomerProfile = {
@@ -940,6 +940,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               email: trimmedEmail,
               password: data.password,
               phone: data.phone?.trim() || '',
+              store_url: data.storeUrl?.trim() || '',
             }),
           });
           if (backendRes.ok) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
-import { Eye, EyeOff, User, Store, Mail, Lock, Phone, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, User, Store, Mail, Lock, Phone, Globe, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { AuthHeader } from './AuthHeader';
 import { LeadSource } from '../../services/leadCaptureClient';
 
@@ -12,6 +12,7 @@ export const GetStartedPage: React.FC = () => {
   const [fullName, setFullName] = useState('');
   const [businessName, setBusinessName] = useState('');
   const [phone, setPhone] = useState('');
+  const [storeUrl, setStoreUrl] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -50,6 +51,9 @@ export const GetStartedPage: React.FC = () => {
     if (!email.trim() || !email.includes('@') || !email.includes('.')) {
       setError('Please enter a valid email address.');
       return;
+    }
+    if (storeUrl.trim()) {
+      try { new URL(storeUrl.includes('://') ? storeUrl : `https://${storeUrl}`); } catch { setError('Please enter a valid WooCommerce store URL.'); return; }
     }
     if (!password || password.length < 6) {
       setError('Password must be at least 6 characters long.');
@@ -107,7 +111,7 @@ export const GetStartedPage: React.FC = () => {
       campaign,
       referralPartner,
       plan: planParam,
-      storeUrl: storeUrlParam,
+      storeUrl: storeUrl.trim() || storeUrlParam,
     });
     setIsLoading(false);
 
@@ -345,6 +349,17 @@ export const GetStartedPage: React.FC = () => {
                   }}
                 />
               </div>
+            </div>
+
+            <div>
+              <label htmlFor="reg-store-url" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}>
+                WooCommerce Store URL <span style={{ fontWeight: 500, color: '#64748b' }}>(optional)</span>
+              </label>
+              <div style={{ position: 'relative' }}>
+                <Globe size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                <input id="reg-store-url" type="text" value={storeUrl} onChange={(e) => { setStoreUrl(e.target.value); if (error) setError(null); }} placeholder="https://yourstore.com" autoComplete="url" style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px 11px 36px', fontSize: '13.5px', color: '#071A31', backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', outline: 'none' }} />
+              </div>
+              <p style={{ margin: '5px 0 0', fontSize: '11px', color: '#64748b' }}>Saved as the intended store. The plugin confirms the final licensed domain when installed.</p>
             </div>
 
             {/* Password */}
