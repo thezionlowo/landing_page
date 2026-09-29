@@ -627,7 +627,7 @@ const STORAGE_KEY_USERS = 'zameria_registered_customers_v2';
 const SCOREFLIP_BACKEND_URL: string =
   (typeof import.meta !== 'undefined' &&
     ((import.meta as any).env?.VITE_SCOREFLIP_BACKEND_URL || (import.meta as any).env?.VITE_BACKEND_URL)) ||
-  '';
+  'https://scoreflip-go-hwsgspeycq-uc.a.run.app';
 
 // Merchant accounts are owned by the ZAMERIA service.  The legacy generic
 // ScoreFlip /auth routes are not registered by the live Cloud Run service.
@@ -772,127 +772,148 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    // 1. Try Authoritative Scoreflip Backend if configured
-    if (SCOREFLIP_BACKEND_URL) {
+    // ZAMERIA accounts are authoritative. Do not use the legacy ScoreFlip
+    // login route or fall back to browser-only accounts when the API rejects.
+    try {
+      const res = await fetch(`${ZAMERIA_ACCOUNT_API_BASE}/account/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmedEmail, password: pass }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return { success: false, error: data.error || (res.status === 401
+          ? 'We could not find an account with that email and password.'
+          : 'We could not sign you in right now. Please try again.') };
+      }
+      if (!data.account || !data.token) {
+        return { success: false, error: 'The sign-in service returned an invalid response. Please try again.' };
+      }
+
+      const acc = data.account;
+      const existing = localStorage.getItem(STORAGE_KEY_USERS);
+      const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
+      const localMatch = users.find((u) => u.email.toLowerCase() === trimmedEmail);
+      let backendLicenses: any[] = [];
       try {
-        const res = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/auth/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: trimmedEmail, password: pass }),
+        const licensesRes = await fetch(`${ZAMERIA_ACCOUNT_API_BASE}/account/licenses`, {
+          headers: { Authorization: `Bearer ${data.token}` },
         });
+        if (licensesRes.ok) {
+          const licensesData = await licensesRes.json();
+          backendLicenses = Array.isArray(licensesData.licenses) ? licensesData.licenses : [];
+        }
+      } catch {
+        // Account sign-in remains valid if the optional licence list is unavailable.
+      }
+      const licenseItems: LicenseItem[] = backendLicenses.map((license, index) => {
+        const plan = String(license.plan || '').toLowerCase().includes('starter') ? 'Starter' : 'Business';
+        const status = license.status === 'active' ? 'Active'
+          : license.status === 'issued' ? 'Not Activated'
+            : license.status === 'suspended' ? 'Suspended'
+              : license.status === 'revoked' ? 'Revoked' : 'Expired';
+        return {
+          id: String(license.id || `${trimmedEmail}-${index}`),
+          licenseKey: license.code || '',
+          plan,
+          planName: `${plan} Plan`,
+          billingCycle: 'monthly',
+          price: plan === 'Starter' ? '₦5,000' : '₦15,000',
+          status,
+          connectedDomain: license.activated_domain || null,
+          requestedDomain: license.requested_domain || null,
+          activationStatus: license.activated_domain ? 'Activated' : 'Not Activated',
+          activatedAt: license.activated_at || null,
+          expiresAt: license.expires_at || '',
+          orderId: '',
+          orderNumber: '',
+          features: [],
+        };
+      });
+      const activePaidLicense = backendLicenses.find((license) => !license.is_trial && license.status === 'active');
+      const activeTrialLicense = backendLicenses.find((license) => license.is_trial && license.status === 'active');
+      const issuedTrialLicense = backendLicenses.find((license) => license.is_trial && license.status === 'issued');
+      const trialEnd = activeTrialLicense?.expires_at || issuedTrialLicense?.expires_at || null;
+      const parsedTrialEnd = trialEnd ? new Date(trialEnd).getTime() : NaN;
+      const trialDaysRemaining = activeTrialLicense
+        ? Math.max(0, Number(activeTrialLicense.days_remaining) || (Number.isNaN(parsedTrialEnd) ? 0 : Math.ceil((parsedTrialEnd - Date.now()) / 86400000)))
+        : issuedTrialLicense ? 7 : 0;
+      const isPaid = Boolean(activePaidLicense);
+      const isTrialActive = Boolean(activeTrialLicense) && trialDaysRemaining > 0;
+      const isTrialExpired = Boolean(issuedTrialLicense || activeTrialLicense) && !isTrialActive && !isPaid;
+      const trialCode = activeTrialLicense?.code || issuedTrialLicense?.code || '';
+      const storeName = acc.business_name || localMatch?.businessName || 'ZAMERIA Store';
+      const storeUrl = acc.store_url || localMatch?.connectedStore.url || '';
+      const fullName = acc.full_name || localMatch?.fullName || 'Store Owner';
+      const phone = acc.phone || localMatch?.phone || '+234 800 000 0000';
+      const paidPlan = activePaidLicense ? (String(activePaidLicense.plan).toLowerCase().includes('starter') ? 'Starter' : 'Business') : null;
 
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.account) {
-            const acc = data.account;
-            const existing = localStorage.getItem(STORAGE_KEY_USERS);
-            const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
-            const localMatch = users.find((u) => u.email.toLowerCase() === trimmedEmail);
-
-            const isTrialActive = acc.trial?.status === 'active';
-            const isExpired = acc.trial?.status === 'expired';
-            const isPaid = acc.subscription?.status === 'active' || (acc.licenses && acc.licenses.length > 0);
-
-            let accountStatus: AccountStatus = 'trial_not_started';
-            if (isPaid) accountStatus = 'active_business';
-            else if (isExpired) accountStatus = 'trial_expired';
-            else if (isTrialActive) accountStatus = 'trial_active';
-
-            const storeName = acc.connectedStore?.name || localMatch?.connectedStore.name || 'No store connected';
-            const storeUrl = acc.connectedStore?.url || acc.store_url || localMatch?.connectedStore.url || '';
-            const storeStatus = acc.connectedStore?.status || localMatch?.connectedStore.status || 'not_connected';
-
-            const profile: CustomerProfile = {
-              id: acc.id || localMatch?.id || `acc_${Date.now()}`,
-              fullName: acc.fullName || localMatch?.fullName || 'Store Owner',
-              businessName: acc.businessName || localMatch?.businessName || 'ZAMERIA Store',
+      const accountStatus: AccountStatus = isPaid ? 'active_business'
+        : isTrialActive ? 'trial_active'
+          : isTrialExpired ? 'trial_expired' : 'trial_not_started';
+      const profile: CustomerProfile = {
+              id: localMatch?.id || `acc_${encodeURIComponent(trimmedEmail)}`,
+              fullName,
+              businessName: storeName,
               email: trimmedEmail,
-              phone: acc.phone || localMatch?.phone || '+234 800 000 0000',
+              phone,
               password: pass,
               accountStatus,
               trial: {
-                status: acc.trial?.status || localMatch?.trial.status || 'not_started',
-                activationCode: acc.trial?.activationCode || localMatch?.trial.activationCode || generateActivationCode(),
-                startDate: acc.trial?.startDate || localMatch?.trial.startDate || null,
-                endDate: acc.trial?.endDate || localMatch?.trial.endDate || null,
+                status: isTrialActive ? 'active' : isTrialExpired ? 'expired' : 'not_started',
+                activationCode: trialCode || localMatch?.trial.activationCode || '',
+                startDate: activeTrialLicense?.activated_at || localMatch?.trial.startDate || null,
+                endDate: trialEnd || localMatch?.trial.endDate || null,
                 totalDays: 7,
-                daysRemaining: acc.trial?.daysRemaining ?? localMatch?.trial.daysRemaining ?? 7,
-                activatedStore: acc.trial?.activatedStore || (storeStatus === 'connected' ? { name: storeName, url: storeUrl } : null),
+                daysRemaining: isTrialActive ? trialDaysRemaining : 0,
+                activatedStore: isTrialActive && storeUrl ? { name: storeName, url: storeUrl } : null,
               },
               connectedStore: {
                 name: storeName,
                 url: storeUrl,
-                status: storeStatus,
-                connectedAt: acc.connectedStore?.connectedAt || localMatch?.connectedStore.connectedAt || null,
-                lastSyncAt: acc.connectedStore?.lastSyncAt || localMatch?.connectedStore.lastSyncAt || null,
+                status: storeUrl ? 'connected' : 'not_connected',
+                connectedAt: localMatch?.connectedStore.connectedAt || null,
+                lastSyncAt: localMatch?.connectedStore.lastSyncAt || null,
                 errorMessage: null,
               },
               subscription: {
-                status: acc.subscription?.status || localMatch?.subscription.status || 'none',
-                planId: acc.subscription?.planId || localMatch?.subscription.planId || null,
-                planName: acc.subscription?.planName || localMatch?.subscription.planName || 'None (Trial Eligible)',
-                price: acc.subscription?.price || localMatch?.subscription.price || '₦0',
-                billingCycle: acc.subscription?.billingCycle || localMatch?.subscription.billingCycle || 'monthly',
-                startDate: acc.subscription?.startDate || localMatch?.subscription.startDate || null,
-                renewsAt: acc.subscription?.renewsAt || localMatch?.subscription.renewsAt || null,
+                status: isPaid ? 'active' : isTrialActive ? 'trial' : 'none',
+                planId: paidPlan,
+                planName: paidPlan ? `${paidPlan} Plan` : isTrialActive ? 'Free Trial' : 'None (Trial Eligible)',
+                price: paidPlan ? (paidPlan === 'Starter' ? '₦5,000' : '₦15,000') : '₦0',
+                billingCycle: 'monthly',
+                startDate: activePaidLicense?.activated_at || activeTrialLicense?.activated_at || null,
+                renewsAt: activePaidLicense?.expires_at || activeTrialLicense?.expires_at || null,
               },
-              activationCode: acc.trial?.activationCode || localMatch?.activationCode || generateActivationCode(),
-              trialDaysRemaining: acc.trial?.daysRemaining ?? localMatch?.trialDaysRemaining ?? 7,
-              trialEndsAt: acc.trial?.endDate || localMatch?.trialEndsAt || '',
-              plan: acc.subscription?.planId || localMatch?.plan || null,
-              planPrice: acc.subscription?.price || localMatch?.planPrice || 'None (Trial Eligible)',
-              billingCycle: acc.subscription?.billingCycle || localMatch?.billingCycle || 'monthly',
-              nextBillingDate: acc.subscription?.renewsAt || localMatch?.nextBillingDate || '',
-              storesCount: storeStatus === 'connected' ? 1 : 0,
-              staffAllowance: acc.subscription?.planId === 'Starter' ? 2 : 999,
+              activationCode: trialCode || localMatch?.activationCode || '',
+              trialDaysRemaining: isTrialActive ? trialDaysRemaining : 0,
+              trialEndsAt: trialEnd || '',
+              plan: paidPlan,
+              planPrice: paidPlan ? (paidPlan === 'Starter' ? '₦5,000' : '₦15,000') : 'None (Trial Eligible)',
+              billingCycle: 'monthly',
+              nextBillingDate: activePaidLicense?.expires_at || '',
+              storesCount: storeUrl ? 1 : 0,
+              staffAllowance: paidPlan === 'Starter' ? 2 : 999,
               billingAddress: localMatch?.billingAddress || {
-                firstName: (acc.fullName || '').split(' ')[0] || 'Store',
-                lastName: (acc.fullName || '').split(' ').slice(1).join(' ') || 'Owner',
-                company: acc.businessName || 'Business',
+                firstName: fullName.split(' ')[0] || 'Store',
+                lastName: fullName.split(' ').slice(1).join(' ') || 'Owner',
+                company: storeName || 'Business',
                 address: 'Lekki Phase 1',
                 city: 'Lagos',
                 state: 'Lagos State',
                 country: 'Nigeria',
-                phone: '+234 800 000 0000',
+                phone,
               },
               paymentMethods: localMatch?.paymentMethods || [],
               orders: localMatch?.orders || [],
-              licenses: acc.licenses || localMatch?.licenses || [],
+              licenses: licenseItems,
             };
 
-            persistSession(profile);
-            return { success: true };
-          }
-        } else if (res.status === 401) {
-          const errData = await res.json().catch(() => ({}));
-          return { success: false, error: errData.error || 'Incorrect password. Please try again.' };
-        }
-      } catch {
-        return { success: false, error: 'Unable to reach ZAMERIA. Please try again shortly.' };
-      }
-    }
-
-    // Never fall back to fixture accounts in production. A real backend session
-    // is required so customer subscription state cannot be fabricated locally.
-    try {
-      const existing = localStorage.getItem(STORAGE_KEY_USERS);
-      const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
-      const match = users.find((u) => u.email.toLowerCase() === trimmedEmail);
-
-      if (!match) {
-        return {
-          success: false,
-          error: 'No ZAMERIA customer account found with this email. Please click Get Started to start your 7-day free trial.',
-        };
-      }
-
-      if (match.password && match.password !== pass) {
-        return { success: false, error: 'Incorrect password. Please try again.' };
-      }
-
-      persistSession(match);
+      persistSession(profile);
       return { success: true };
-    } catch { return { success: false, error: 'Unable to load your account. Please sign in again.' }; }
+    } catch {
+      return { success: false, error: 'Unable to reach ZAMERIA. Please try again shortly.' };
+    }
   };
 
   // --- STATE 1: Account Created / Trial Not Started ---
@@ -940,7 +961,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           if (backendRes.ok) {
             const backendData = await backendRes.json();
             if (backendData.account) {
-              accountId = backendData.account.id;
+              accountId = `acc_${encodeURIComponent(trimmedEmail)}`;
               activationCode = backendData.account.trial?.activationCode || activationCode;
               const trialRes = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/zameria/trial/request`, {
                 method: 'POST',
