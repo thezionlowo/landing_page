@@ -942,6 +942,16 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             if (backendData.account) {
               accountId = backendData.account.id;
               activationCode = backendData.account.trial?.activationCode || activationCode;
+              const trialRes = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/zameria/trial/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${backendData.token}` },
+                body: JSON.stringify({ business_name: data.businessName.trim(), store_url: data.storeUrl?.trim() || '' }),
+              });
+              const trialData = await trialRes.json().catch(() => ({}));
+              if (!trialRes.ok || !trialData.trial_code) {
+                return { success: false, error: trialData.error || 'Could not issue your trial activation code.' };
+              }
+              activationCode = trialData.trial_code;
             }
           } else {
             const errData = await backendRes.json().catch(() => ({}));

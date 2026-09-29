@@ -52,9 +52,8 @@ export const GetStartedPage: React.FC = () => {
       setError('Please enter a valid email address.');
       return;
     }
-    if (storeUrl.trim()) {
-      try { new URL(storeUrl.includes('://') ? storeUrl : `https://${storeUrl}`); } catch { setError('Please enter a valid WooCommerce store URL.'); return; }
-    }
+    if (!storeUrl.trim()) { setError('Please enter your WooCommerce store URL so we can issue your trial code.'); return; }
+    try { new URL(storeUrl.includes('://') ? storeUrl : `https://${storeUrl}`); } catch { setError('Please enter a valid WooCommerce store URL.'); return; }
     if (!password || password.length < 6) {
       setError('Password must be at least 6 characters long.');
       return;
@@ -353,7 +352,7 @@ export const GetStartedPage: React.FC = () => {
 
             <div>
               <label htmlFor="reg-store-url" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}>
-                WooCommerce Store URL <span style={{ fontWeight: 500, color: '#64748b' }}>(optional)</span>
+                WooCommerce Store URL
               </label>
               <div style={{ position: 'relative' }}>
                 <Globe size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
