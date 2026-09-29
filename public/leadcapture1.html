@@ -1231,13 +1231,13 @@ var ZAMERIA_VSL_POSTER    = null;
    * VALIDATION
    * ---------------------------------------------------------------- */
 
-  var EMAIL_RE = /^[^s@]+@[^s@]+.[^s@]{2,}$/;
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
   function normaliseWhatsApp(input) {
     var trimmed = (input || '').trim();
     if (!trimmed) return null;
     var hadPlus = trimmed.charAt(0) === '+';
-    var digits = trimmed.replace(/[^d]/g, '');
+    var digits = trimmed.replace(/[^\d]/g, '');
     if (!digits) return null;
     if (hadPlus && digits.indexOf('234') !== 0) return (digits.length >= 8 && digits.length <= 15) ? '+' + digits : null;
     if (digits.indexOf('234') === 0) return digits.length === 13 ? '+' + digits : null;
@@ -1249,14 +1249,14 @@ var ZAMERIA_VSL_POSTER    = null;
   function normaliseWebsite(input) {
     var trimmed = (input || '').trim();
     if (!trimmed) return null;
-    var withProtocol = /^https?:///i.test(trimmed) ? trimmed : 'https://' + trimmed;
+    var withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : 'https://' + trimmed;
     try {
       var u = new URL(withProtocol);
       if (!u.hostname || u.hostname.indexOf('.') === -1) return null;
       var parts = u.hostname.split('.');
       var tld = parts[parts.length - 1];
       if (!tld || tld.length < 2) return null;
-      return u.href.replace(//$/, '');
+      return u.href.replace(/\/$/, '');
     } catch (e) { return null; }
   }
 
@@ -1345,7 +1345,7 @@ var ZAMERIA_VSL_POSTER    = null;
     var wrap = app.querySelector('[data-vsl]');
     if (!wrap || wrap.getAttribute('data-loaded') === 'true') return;
     var src = ZAMERIA_VSL_EMBED_URL;
-    var isFile = /.(mp4|webm|ogg)(?.*)?$/i.test(src);
+    var isFile = /\.(mp4|webm|ogg)(\?.*)?$/i.test(src);
     var el;
     if (isFile) {
       el = document.createElement('video');
