@@ -84,6 +84,18 @@ export const ZameriaSupportChatWidget: React.FC = () => {
     };
   }, [conversation?.id]);
 
+  // Admin and customer run on different origins, so BroadcastChannel alone
+  // cannot synchronize them. Refresh the persisted thread while it is open.
+  useEffect(() => {
+    if (!isOpen || !conversation?.id) return;
+    const timer = window.setInterval(() => {
+      void supportChatClient.getConversation(conversation.id).then((updated) => {
+        if (updated) { setConversation(updated); setUnreadCount(updated.unreadByCustomer || 0); }
+      }).catch(() => {});
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [isOpen, conversation?.id]);
+
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

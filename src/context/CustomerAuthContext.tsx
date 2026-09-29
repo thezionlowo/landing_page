@@ -914,12 +914,6 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       const existing = localStorage.getItem(STORAGE_KEY_USERS);
       const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
-      if (users.some((u) => u.email.toLowerCase() === trimmedEmail)) {
-        return {
-          success: false,
-          error: 'A ZAMERIA account with this email already exists. Please log in instead.',
-        };
-      }
 
       const nameParts = data.fullName.trim().split(' ');
       const firstName = nameParts[0] || 'Store';
@@ -956,9 +950,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             }
             return { success: false, error: errData.error || 'We could not create your account right now. Please try again.' };
           }
-        } catch {
-          // Fallback to local storage if server is unreachable
-        }
+        } catch { return { success: false, error: 'Unable to reach ZAMERIA. Please try again shortly.' }; }
       }
 
       const userPhone = data.phone?.trim() || '+234 800 000 0000';
