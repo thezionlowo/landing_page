@@ -41,10 +41,28 @@ export const PlanTab: React.FC = () => {
   const isPaidActive = subscriptionState === 'paid_active';
 
   const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
-  const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? 'September 19, 2026';
-  const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || 'October 12, 2026';
-  const planName = customer.subscription.planName || 'Business Plan';
-  const isBusiness = planName.toLowerCase().includes('business') || String(customer.plan || '').toLowerCase().includes('business');
+  const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? '';
+
+  const dynamicAnnualExpiry = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  })();
+  const primaryLicense = customer.licenses?.[0] || null;
+  const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || primaryLicense?.expiresAt || dynamicAnnualExpiry;
+
+  const isGifted = customer.accessType === 'Gifted' || customer.accessType === 'Complimentary' || Boolean(customer.giftedDetails);
+  const rawPlanStr = String(customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || '').toLowerCase();
+  const isStarter = rawPlanStr.includes('starter') || (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
+  const isBusiness = rawPlanStr.includes('business') && !isStarter;
+  const effectivePlan = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
+  const planName = isPaidActive
+    ? (customer.subscription.planName || `${effectivePlan} Plan`)
+    : isTrialActive
+      ? 'Free Trial'
+      : isTrialNotStarted
+        ? '7-Day Free Trial'
+        : `${effectivePlan} Plan`;
   
   const targetCountry = customer.country || (customer.currency === 'USD' ? 'US' : 'NG');
   const authoritativePrice = getAuthoritativePlanPrice(targetCountry, isBusiness ? 'Business' : 'Starter');
@@ -52,7 +70,7 @@ export const PlanTab: React.FC = () => {
   const businessCardPrice = getAuthoritativePlanPrice(targetCountry, 'Business').split(' /')[0];
   const freeTrialZeroPrice = (customer.currency === 'USD' || !isNigerianCountry(targetCountry)) ? '$0 (7-Day Trial)' : '₦0 (7-Day Trial)';
 
-  const rawPrice = customer.subscription.price || customer.planPrice || authoritativePrice;
+  const rawPrice = isGifted ? 'Complimentary' : (customer.subscription.price || customer.planPrice || authoritativePrice);
   const price = (rawPrice.includes('15,000') || rawPrice.includes('5,000') || rawPrice.includes('20,000') || rawPrice.includes('30,000'))
     ? authoritativePrice
     : rawPrice;
@@ -182,7 +200,7 @@ export const PlanTab: React.FC = () => {
                 ) : (
                   <>
                     <CheckCircle2 size={12} />
-                    <span>Active Paid Subscription</span>
+                    <span>{isGifted ? 'Gifted / Complimentary Plan (Active)' : 'Active Paid Subscription'}</span>
                   </>
                 )}
               </span>
@@ -205,6 +223,13 @@ export const PlanTab: React.FC = () => {
                 <span>{freeTrialZeroPrice}</span>
               ) : isTrialExpired ? (
                 <span style={{ color: '#dc2626' }}>Trial Ended</span>
+              ) : isGifted ? (
+                <>
+                  <span>Complimentary</span>
+                  <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}>
+                    • 12 months full access
+                  </span>
+                </>
               ) : (
                 <>
                   <span>{price}</span>

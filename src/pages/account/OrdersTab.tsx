@@ -371,7 +371,15 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
         const keyToShow = matchingLicense?.licenseKey || selectedOrder.licenseKey || 'ZAM-88F4-9021-BC44-1024';
         const licenseStatus = matchingLicense?.status || selectedOrder.licenseStatus || 'Active';
         const connectedDomain = matchingLicense?.connectedDomain || selectedOrder.connectedDomain || null;
-        const expiryDate = matchingLicense?.expiresAt || 'September 12, 2027';
+        const dynamicExpiry = (() => {
+          const d = selectedOrder.date ? new Date(selectedOrder.date) : new Date();
+          if (!isNaN(d.getTime())) {
+            d.setFullYear(d.getFullYear() + 1);
+            return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+          }
+          return '1 Year from Purchase';
+        })();
+        const expiryDate = matchingLicense?.expiresAt || dynamicExpiry;
 
         return (
           <div

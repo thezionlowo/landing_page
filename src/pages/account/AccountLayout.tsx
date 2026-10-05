@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { resolveSubscriptionState, useCustomerAuth, CustomerProfile, LifecycleScenario } from '../../context/CustomerAuthContext';
+import { resolveSubscriptionState, useCustomerAuth, CustomerProfile } from '../../context/CustomerAuthContext';
 import { useRouter, AccountTab } from '../../router/Router';
 import { OverviewTab } from './OverviewTab';
 import { OrdersTab } from './OrdersTab';
@@ -31,7 +31,6 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  Beaker,
   Store
 } from 'lucide-react';
 
@@ -90,11 +89,10 @@ const STORE_NAV_ITEMS: NavItem[] = [
 ];
 
 export const AccountLayout: React.FC = () => {
-  const { customer, isAuthenticated, logout, simulateLifecycleScenario } = useCustomerAuth();
+  const { customer, isAuthenticated, logout } = useCustomerAuth();
   const { activeTab, setAccountTab, navigate } = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [scenarioMenuOpen, setScenarioMenuOpen] = useState(false);
   const [targetOrderId, setTargetOrderId] = useState<string | null>(null);
 
   // If not authenticated, redirect to login
@@ -139,16 +137,16 @@ export const AccountLayout: React.FC = () => {
   const isTrialNotStarted = subscriptionState === 'no_active_plan' && (customer.trial?.status === 'not_started' || customer.accountStatus === 'trial_not_started');
   const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
   const isPaid = subscriptionState === 'paid_active';
-  const planLabel = customer.subscription.planName || 'Business Plan';
+
+  const rawPlanStr = String(customer.giftedDetails?.plan || customer.licenses?.[0]?.plan || customer.plan || customer.subscription?.planId || '').toLowerCase();
+  const isStarter = rawPlanStr.includes('starter') || (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
+  const isBusiness = rawPlanStr.includes('business') && !isStarter;
+  const effectivePlan = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
+  const planLabel = customer.subscription.planName || `${effectivePlan} Plan`;
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const handleSelectScenario = (sc: LifecycleScenario) => {
-    simulateLifecycleScenario(sc);
-    setScenarioMenuOpen(false);
   };
 
   const getInitials = (name: string) => {
@@ -263,127 +261,6 @@ export const AccountLayout: React.FC = () => {
 
           {/* Right Header Navigation & Profile Menu */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {/* Deliberately disabled in production: lifecycle fixtures must never
-                be visible or able to overwrite a real customer session. */}
-            {false && <div style={{ position: 'relative' }}>
-              <button
-                type="button"
-                onClick={() => setScenarioMenuOpen(!scenarioMenuOpen)}
-                style={{
-                  backgroundColor: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '9999px',
-                  padding: '5px 12px',
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  color: '#071A31',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  transition: 'all 0.15s ease',
-                }}
-                title="Quickly switch between customer lifecycle scenarios for testing"
-              >
-                <Beaker size={13} style={{ color: '#2563eb' }} />
-                <span>Test Scenarios</span>
-                <ChevronDown size={12} style={{ color: '#64748b' }} />
-              </button>
-
-              {scenarioMenuOpen && (
-                <>
-                  <div
-                    style={{ position: 'fixed', inset: 0, zIndex: 60 }}
-                    onClick={() => setScenarioMenuOpen(false)}
-                  />
-                  <div
-                    style={{
-                      position: 'absolute',
-                      right: 0,
-                      top: 'calc(100% + 8px)',
-                      width: '320px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '16px',
-                      border: '1px solid #cbd5e1',
-                      boxShadow: '0 16px 36px -6px rgba(7, 26, 49, 0.16)',
-                      padding: '10px',
-                      zIndex: 70,
-                    }}
-                  >
-                    <div style={{ padding: '6px 10px', fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', borderBottom: '1px solid #f1f5f9', marginBottom: '6px' }}>
-                      Lifecycle Scenario Switcher
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectScenario('test1_new_trial')}
-                        className="scenario-btn"
-                      >
-                        <strong>State A: Trial Not Started</strong>
-                        <span>Account created • Store not connected • 0 licenses</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectScenario('test2_active_trial')}
-                        className="scenario-btn"
-                      >
-                        <strong>State B: Trial Active</strong>
-                        <span>WooCommerce connected • 6 days left • 0 licenses</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectScenario('test8_expired_trial')}
-                        className="scenario-btn"
-                      >
-                        <strong>State C: Trial Expired</strong>
-                        <span>Trial ended • 0 licenses • Choose Plan CTA</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectScenario('test3_paid_business')}
-                        className="scenario-btn"
-                      >
-                        <strong>State D: Paid Business Plan</strong>
-                        <span>₦300,000/yr • Active ZMR license • Store connected</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectScenario('test4_cancelled_business')}
-                        className="scenario-btn"
-                      >
-                        <strong>Test 5: Cancelled Plan</strong>
-                        <span>Cancelled • Access until period end</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectScenario('test5_expired_subscription')}
-                        className="scenario-btn"
-                      >
-                        <strong>Test 6: Expired Subscription</strong>
-                        <span>License expired • Renew CTA</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectScenario('test6_renewed_business')}
-                        className="scenario-btn"
-                      >
-                        <strong>Test 7: Renewed Subscription</strong>
-                        <span>Reactivated • Active license</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleSelectScenario('test7_duplicate_webhook')}
-                        className="scenario-btn"
-                      >
-                        <strong>Test 8: Webhook Idempotency</strong>
-                        <span>No duplicate subscriptions or keys</span>
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>}
-
             {/* Link back to Main Website */}
             <a
               href="/"

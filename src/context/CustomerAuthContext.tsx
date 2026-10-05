@@ -232,7 +232,12 @@ export const resolveSubscriptionState = (
   if (!profile) return 'no_active_plan';
 
   const activeLicense = profile.licenses?.some((license) => license.status === 'Active') ?? false;
-  if (profile.subscription?.status === 'active' || activeLicense || profile.accessType === 'Gifted') {
+  const isGifted =
+    profile.accessType === 'Gifted' ||
+    profile.accessType === 'Complimentary' ||
+    Boolean(profile.giftedDetails) ||
+    Boolean((profile as any).gifted_details);
+  if (profile.subscription?.status === 'active' || activeLicense || isGifted) {
     return 'paid_active';
   }
   if (profile.subscription?.status === 'past_due' || profile.accountStatus === 'payment_failed') return 'past_due';
@@ -285,13 +290,14 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
   // 1. Paid entitlement always wins, even when the historical trial says active or expired.
   if (state === 'paid_active') {
     const activeLicense = profile.licenses?.find(l => l.status === 'Active' && (!domain || !l.connectedDomain || l.connectedDomain === domain));
+    const resolvedPlanTitle = profile.subscription?.planName || (profile.plan ? `${profile.plan} Plan` : profile.licenses?.[0]?.plan ? `${profile.licenses[0].plan} Plan` : 'Starter Plan');
     return {
       allowed: true,
       status: 'paid_active',
-      planName: profile.subscription?.planName || (profile.plan ? `${profile.plan} Plan` : 'Business Plan'),
+      planName: resolvedPlanTitle,
       licenseRequired: true,
       licenseKey: activeLicense?.licenseKey || profile.licenses?.[0]?.licenseKey,
-      message: profile.accessType === 'Gifted'
+      message: (profile.accessType === 'Gifted' || profile.accessType === 'Complimentary')
         ? 'Gifted complimentary plan verified. Full WooCommerce plugin access active.'
         : 'Active subscription and license verified. Full WooCommerce plugin access active.',
     };
@@ -643,27 +649,41 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
 const STORAGE_KEY_AUTH = 'zameria_customer_session_v3';
 const STORAGE_KEY_USERS = 'zameria_registered_customers_v3';
 
-// Helper: strictly enforce annual pricing (₦200k / ₦300k) and 1-year expiry on any customer profile
+// Helper: strictly enforce authoritative plan resolution, annual pricing, and store connection truth
 export function normalizeCustomerProfile(profile: CustomerProfile | null): CustomerProfile | null {
   if (!profile) return null;
 
+  const giftedPlan = String(profile.giftedDetails?.plan || (profile as any).gifted_details?.plan || '').toLowerCase();
+  const rawLicenses = Array.isArray(profile.licenses) ? profile.licenses : [];
+  const licensePlans = rawLicenses.map((l) => `${l.plan || ''} ${l.licenseKey || ''}`).join(' ').toLowerCase();
+
   // Determine effective plan (Starter or Business)
   const rawPlanStr = String(
+    giftedPlan ||
     profile.plan ||
     profile.subscription?.planId ||
     profile.subscription?.planName ||
-    (profile.licenses && profile.licenses[0]?.plan) ||
+    licensePlans ||
     ''
   ).toLowerCase();
 
-  const isBusiness = rawPlanStr.includes('business');
-  const isStarter = rawPlanStr.includes('starter');
-  const resolvedPlan: 'Starter' | 'Business' | null = isBusiness ? 'Business' : isStarter ? 'Starter' : null;
+  const isStarter = rawPlanStr.includes('starter') || rawPlanStr.includes('zm-str') || (!rawPlanStr.includes('business') && giftedPlan === 'starter');
+  const isBusiness = rawPlanStr.includes('business') && !isStarter;
+  const resolvedPlan: 'Starter' | 'Business' | null = isStarter ? 'Starter' : isBusiness ? 'Business' : null;
 
-  // Normalize licenses: enforce ₦200,000 / year (Starter) or ₦300,000 / year (Business) and 1-year expiry
-  const normalizedLicenses = (profile.licenses || []).map((lic, idx) => {
-    const licPlan: 'Starter' | 'Business' = String(lic.plan || resolvedPlan || '').toLowerCase().includes('starter') ? 'Starter' : 'Business';
-    const licPrice = licPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
+  const isGifted =
+    profile.accessType === 'Gifted' ||
+    profile.accessType === 'Complimentary' ||
+    Boolean(profile.giftedDetails) ||
+    Boolean((profile as any).gifted_details) ||
+    rawLicenses.some((l) => (l as any).access_type === 'gifted' || l.price === 'Gifted Plan');
+
+  // Normalize licenses: enforce authoritative pricing and 1-year expiry
+  const normalizedLicenses = rawLicenses.map((lic, idx) => {
+    const rawLicStr = String(lic.plan || lic.licenseKey || resolvedPlan || '').toLowerCase();
+    const licPlan: 'Starter' | 'Business' = rawLicStr.includes('starter') || rawLicStr.includes('zm-str') ? 'Starter' : (rawLicStr.includes('business') ? 'Business' : (resolvedPlan || 'Starter'));
+    const isLicGifted = isGifted || (lic as any).access_type === 'gifted' || lic.price === 'Gifted Plan';
+    const licPrice = isLicGifted ? 'Gifted Plan' : licPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
 
     let exp = lic.expiresAt || '';
     if (!exp || exp.includes('month') || exp.toLowerCase().includes('invalid')) {
@@ -689,7 +709,7 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
   });
 
   const hasPaidLicense = normalizedLicenses.some((l) => l.status === 'Active');
-  const isPaid = profile.subscription?.status === 'active' || hasPaidLicense || profile.accessType === 'Gifted';
+  const isPaid = profile.subscription?.status === 'active' || hasPaidLicense || isGifted;
 
   let renewsAt = profile.subscription?.renewsAt || profile.nextBillingDate || normalizedLicenses[0]?.expiresAt;
   if (isPaid && (!renewsAt || renewsAt.includes('month') || renewsAt.toLowerCase().includes('invalid'))) {
@@ -700,27 +720,55 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
     }
   }
 
-  const finalPlan = isPaid ? (resolvedPlan || 'Business') : resolvedPlan;
-  const finalPrice = isPaid && finalPlan ? (finalPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : (profile.planPrice?.includes('15,000') || profile.planPrice?.includes('5,000') ? (resolvedPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : profile.planPrice);
+  // Never fall back to 'Business' when a plan is unknown; default to 'Starter' as lowest tier if paid
+  const finalPlan = isPaid ? (resolvedPlan || 'Starter') : resolvedPlan;
+  const finalPrice = isGifted
+    ? 'Gifted Plan'
+    : isPaid && finalPlan
+      ? (finalPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year')
+      : profile.planPrice;
 
   let finalAccountStatus = profile.accountStatus;
   if (isPaid) {
     finalAccountStatus = finalPlan === 'Business' ? 'active_business' : 'active_starter';
   }
 
+  // Authoritative Store Connection: strictly bound to active domain or active trial
+  const boundLicense = normalizedLicenses.find((l) => Boolean(l.connectedDomain));
+  const trialHasStore = Boolean(profile.trial?.activatedStore?.url);
+  const isStoreActuallyConnected = Boolean(boundLicense?.connectedDomain || (profile.trial?.status === 'active' && trialHasStore));
+
+  const resolvedStoreName = boundLicense?.connectedDomain
+    ? boundLicense.connectedDomain
+    : (profile.connectedStore?.name && profile.connectedStore.name !== 'No store connected'
+      ? profile.connectedStore.name
+      : (profile.trial?.activatedStore?.name || (isStoreActuallyConnected ? (profile.businessName || 'WooCommerce Store') : 'No store connected')));
+
+  const resolvedStoreUrl = boundLicense?.connectedDomain
+    ? (boundLicense.connectedDomain.startsWith('http') ? boundLicense.connectedDomain : `https://${boundLicense.connectedDomain}`)
+    : (profile.connectedStore?.url || profile.trial?.activatedStore?.url || '');
+
   return {
     ...profile,
+    accessType: isGifted ? 'Gifted' : profile.accessType || (isPaid ? 'Paid' : 'Trial'),
     accountStatus: finalAccountStatus,
     plan: finalPlan,
     planPrice: finalPrice || 'None (Trial Eligible)',
     billingCycle: 'yearly',
     nextBillingDate: renewsAt || profile.nextBillingDate || '',
+    connectedStore: {
+      ...profile.connectedStore,
+      name: resolvedStoreName,
+      url: resolvedStoreUrl,
+      status: isStoreActuallyConnected ? 'connected' : 'not_connected',
+      connectedAt: boundLicense?.activatedAt || profile.connectedStore?.connectedAt || (isStoreActuallyConnected ? 'Active' : null),
+    },
     subscription: {
       ...profile.subscription,
       status: isPaid ? 'active' : profile.subscription?.status || 'none',
       planId: finalPlan,
       planName: finalPlan ? `${finalPlan} Plan` : (profile.subscription?.planName || 'None (Trial Eligible)'),
-      price: isPaid && finalPlan ? (finalPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : (profile.subscription?.price?.includes('15,000') || profile.subscription?.price?.includes('5,000') ? '₦0' : profile.subscription?.price || '₦0'),
+      price: isGifted ? '₦0 (Gifted)' : (isPaid && finalPlan ? (finalPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : profile.subscription?.price || '₦0'),
       billingCycle: 'yearly',
       renewsAt: renewsAt || profile.subscription?.renewsAt || null,
     },
@@ -804,7 +852,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const syncWithBackend = async () => {
       try {
         const queryId = customer.id || customer.email;
-        const res = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/account/${encodeURIComponent(queryId)}`);
+        let res = await fetch(`${ZAMERIA_ACCOUNT_API_BASE}/account/${encodeURIComponent(queryId)}`);
+        if (!res.ok) {
+          res = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/account/${encodeURIComponent(queryId)}`);
+        }
         if (res.ok) {
           const data = await res.json();
           if (data.account) {
@@ -818,28 +869,35 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               const activePaidLicense = rawLicenses.find(
                 (l: any) => (l.status || '').toLowerCase() === 'active' && (l.plan || '').toLowerCase() !== 'trial'
               );
-              const isPaid = !isCancelled && !isExpired && (acc.subscription?.status === 'active' || Boolean(activePaidLicense));
+              const isGifted = acc.access_type === 'Gifted' || acc.accessType === 'Gifted' || Boolean(acc.gifted_details || acc.giftedDetails) || prev.accessType === 'Gifted';
+              const giftedDetails = acc.gifted_details || acc.giftedDetails || prev.giftedDetails;
+              const isPaid = !isCancelled && !isExpired && (acc.subscription?.status === 'active' || Boolean(activePaidLicense) || isGifted);
 
               // Authoritative plan resolution: Starter (₦200,000/yr) or Business (₦300,000/yr)
-              const detectedPlanStr = String(acc.plan || activePaidLicense?.plan || prev.plan || '').toLowerCase();
-              const isBusiness = detectedPlanStr.includes('business');
-              const activePlan: 'Starter' | 'Business' = isBusiness ? 'Business' : 'Starter';
-              const activePrice = isBusiness ? '₦300,000 / year' : '₦200,000 / year';
+              const rawGiftedPlan = String(giftedDetails?.plan || '').toLowerCase();
+              const detectedPlanStr = String(rawGiftedPlan || acc.plan || activePaidLicense?.plan || prev.plan || '').toLowerCase();
+              const isStarter = detectedPlanStr.includes('starter') || (!detectedPlanStr.includes('business') && rawGiftedPlan === 'starter');
+              const isBusiness = detectedPlanStr.includes('business') && !isStarter;
+              const activePlan: 'Starter' | 'Business' = isStarter ? 'Starter' : isBusiness ? 'Business' : (prev.plan || 'Starter');
+              const activePrice = isGifted ? 'Gifted Plan' : isBusiness ? '₦300,000 / year' : '₦200,000 / year';
 
               let accountStatus = prev.accountStatus;
               if (isCancelled) accountStatus = 'cancelled';
-              else if (isPaid) accountStatus = isBusiness ? 'active_business' : 'active_starter';
+              else if (isPaid) accountStatus = activePlan === 'Business' ? 'active_business' : 'active_starter';
               else if (isExpired) accountStatus = 'trial_expired';
               else if (isTrialActive) accountStatus = 'trial_active';
               else if (acc.accountStatus === 'trial_not_started') accountStatus = 'trial_not_started';
 
-              // Normalize licenses with strict 1-year expiry and annual pricing
+              // Normalize licenses with strict 1-year expiry and authoritative pricing
               const normalizedLicenses: LicenseItem[] = rawLicenses
                 .filter((lic: any) => (lic.plan || '').toLowerCase() !== 'trial')
                 .map((lic: any, idx: number) => {
-                  const isLicBusiness = (lic.plan || '').toLowerCase().includes('business');
-                  const licPlan: 'Starter' | 'Business' = isLicBusiness ? 'Business' : 'Starter';
-                  const licPrice = isLicBusiness ? '₦300,000 / year' : '₦200,000 / year';
+                  const rawLicPlan = String(lic.plan || '').toLowerCase();
+                  const isLicStarter = rawLicPlan.includes('starter') || (!rawLicPlan.includes('business') && activePlan === 'Starter');
+                  const isLicBusiness = rawLicPlan.includes('business') && !isLicStarter;
+                  const licPlan: 'Starter' | 'Business' = isLicStarter ? 'Starter' : isLicBusiness ? 'Business' : activePlan;
+                  const isLicGifted = isGifted || (lic as any).access_type === 'gifted' || lic.price === 'Gifted Plan';
+                  const licPrice = isLicGifted ? 'Gifted Plan' : isLicBusiness ? '₦300,000 / year' : '₦200,000 / year';
 
                   // Calculate 1-year expiration accurately
                   let formattedExpiry = '';
@@ -890,7 +948,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     expiresAt: formattedExpiry,
                     orderId: lic.orderId || `ord_${paymentRef || licenseId}`,
                     orderNumber: lic.orderNumber || (paymentRef ? `#ZM-${paymentRef.slice(-8).toUpperCase()}` : `#ZM-LIC-${idx + 1}`),
-                    features: isLicBusiness
+                    features: licPlan === 'Business'
                       ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
                       : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
                   };
@@ -899,15 +957,27 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               // Primary expiry date from license or 1-year future timestamp
               const primaryExpiry = normalizedLicenses[0]?.expiresAt || (activePaidLicense?.expires_at ? new Date(activePaidLicense.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null);
 
-              // Only update if something changed
-              const storeName = acc.connectedStore?.name || prev.connectedStore.name;
-              const storeUrl = acc.connectedStore?.url || prev.connectedStore.url;
-              const storeStatus = acc.connectedStore?.status || prev.connectedStore.status;
+              // Authoritative store connection resolution
+              const boundLicense = normalizedLicenses.find((l) => Boolean(l.connectedDomain));
+              const trialHasStore = Boolean(acc.trial?.activatedStore?.url || (isTrialActive && acc.connectedStore?.status === 'connected' && acc.connectedStore?.url));
+              const isStoreActuallyConnected = Boolean(boundLicense?.connectedDomain || trialHasStore);
+
+              const storeName = boundLicense?.connectedDomain
+                ? boundLicense.connectedDomain
+                : (acc.connectedStore?.name && acc.connectedStore.name !== 'No store connected'
+                  ? acc.connectedStore.name
+                  : (prev.connectedStore.name !== 'No store connected' ? prev.connectedStore.name : 'No store connected'));
+
+              const storeUrl = boundLicense?.connectedDomain
+                ? (boundLicense.connectedDomain.startsWith('http') ? boundLicense.connectedDomain : `https://${boundLicense.connectedDomain}`)
+                : (acc.connectedStore?.url || prev.connectedStore.url || '');
 
               const next: CustomerProfile = {
                 ...prev,
                 id: acc.id || prev.id,
                 fullName: acc.fullName || prev.fullName,
+                accessType: isGifted ? 'Gifted' : prev.accessType,
+                giftedDetails: giftedDetails || prev.giftedDetails,
                 accountStatus,
                 plan: isPaid ? activePlan : prev.plan,
                 planPrice: isPaid ? activePrice : prev.planPrice,
@@ -920,21 +990,21 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                   startDate: acc.trial?.startDate || prev.trial.startDate,
                   endDate: acc.trial?.endDate || prev.trial.endDate,
                   daysRemaining: acc.trial?.daysRemaining ?? prev.trial.daysRemaining,
-                  activatedStore: acc.trial?.activatedStore || (storeStatus === 'connected' ? { name: storeName, url: storeUrl } : null),
+                  activatedStore: acc.trial?.activatedStore || (isStoreActuallyConnected && isTrialActive ? { name: storeName, url: storeUrl } : null),
                 },
                 connectedStore: {
                   ...prev.connectedStore,
                   name: storeName,
                   url: storeUrl,
-                  status: storeStatus,
-                  connectedAt: acc.connectedStore?.connectedAt || prev.connectedStore.connectedAt,
+                  status: isStoreActuallyConnected ? 'connected' : 'not_connected',
+                  connectedAt: boundLicense?.activatedAt || acc.connectedStore?.connectedAt || prev.connectedStore.connectedAt,
                 },
                 subscription: {
                   ...prev.subscription,
                   status: isPaid ? 'active' : acc.subscription?.status || prev.subscription.status,
                   planId: isPaid ? activePlan : prev.subscription.planId,
                   planName: isPaid ? `${activePlan} Plan` : prev.subscription.planName,
-                  price: isPaid ? activePrice : prev.subscription.price,
+                  price: isGifted ? '₦0 (Gifted)' : isPaid ? activePrice : prev.subscription.price,
                   billingCycle: 'yearly',
                   renewsAt: primaryExpiry || prev.subscription.renewsAt,
                 },
@@ -1075,19 +1145,32 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const trialDaysRemaining = activeTrialLicense
         ? Math.max(0, Number(activeTrialLicense.days_remaining) || (Number.isNaN(parsedTrialEnd) ? 0 : Math.ceil((parsedTrialEnd - Date.now()) / 86400000)))
         : issuedTrialLicense ? 7 : 0;
-      const isPaid = Boolean(activePaidLicense);
-      const isTrialActive = Boolean(activeTrialLicense) && trialDaysRemaining > 0;
-      const isTrialExpired = Boolean(issuedTrialLicense || activeTrialLicense) && !isTrialActive && !isPaid;
+      const isGifted = acc.access_type === 'Gifted' || acc.accessType === 'Gifted' || Boolean(acc.gifted_details || acc.giftedDetails) || localMatch?.accessType === 'Gifted';
+      const giftedDetails = acc.gifted_details || acc.giftedDetails || localMatch?.giftedDetails;
+      const isPaid = Boolean(activePaidLicense) || isGifted;
+      const isTrialActive = !isPaid && Boolean(activeTrialLicense) && trialDaysRemaining > 0;
+      const isTrialExpired = !isPaid && Boolean(issuedTrialLicense || activeTrialLicense) && !isTrialActive;
       const trialCode = activeTrialLicense?.code || issuedTrialLicense?.code || '';
       const storeName = acc.business_name || localMatch?.businessName || 'ZAMERIA Store';
       const storeUrl = acc.store_url || localMatch?.connectedStore.url || '';
       const fullName = acc.full_name || localMatch?.fullName || 'Store Owner';
       const phone = acc.phone || localMatch?.phone || '+234 800 000 0000';
-      const paidPlan = activePaidLicense ? (String(activePaidLicense.plan).toLowerCase().includes('starter') ? 'Starter' : 'Business') : null;
+      const rawPlanStr = String(giftedDetails?.plan || activePaidLicense?.plan || acc.plan || localMatch?.plan || '').toLowerCase();
+      const paidPlan = rawPlanStr.includes('starter') ? 'Starter' : rawPlanStr.includes('business') ? 'Business' : 'Starter';
 
-      const accountStatus: AccountStatus = isPaid ? 'active_business'
+      const accountStatus: AccountStatus = isPaid
+        ? (paidPlan === 'Starter' ? 'active_starter' : 'active_business')
         : isTrialActive ? 'trial_active'
           : isTrialExpired ? 'trial_expired' : 'trial_not_started';
+
+      const boundLicense = licenseItems.find((license) => Boolean(license.connectedDomain));
+      const isActuallyConnected = Boolean(boundLicense?.connectedDomain || (isTrialActive && Boolean(acc.trial?.activatedStore?.url)));
+      const storeStatus: 'connected' | 'not_connected' = isActuallyConnected ? 'connected' : 'not_connected';
+      const resolvedStoreName = boundLicense?.connectedDomain || (isActuallyConnected ? storeName : 'No store connected');
+      const resolvedStoreUrl = boundLicense?.connectedDomain
+        ? (boundLicense.connectedDomain.startsWith('http') ? boundLicense.connectedDomain : `https://${boundLicense.connectedDomain}`)
+        : (isActuallyConnected ? storeUrl : '');
+
       const profile: CustomerProfile = {
               id: localMatch?.id || `acc_${encodeURIComponent(trimmedEmail)}`,
               fullName,
@@ -1095,6 +1178,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               email: trimmedEmail,
               phone,
               password: pass,
+              accessType: isGifted ? 'Gifted' : localMatch?.accessType || (isPaid ? 'Paid' : 'Trial'),
+              giftedDetails,
               accountStatus,
               trial: {
                 status: isTrialActive ? 'active' : isTrialExpired ? 'expired' : 'not_started',
@@ -1103,21 +1188,21 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 endDate: trialEnd || localMatch?.trial.endDate || null,
                 totalDays: 7,
                 daysRemaining: isTrialActive ? trialDaysRemaining : 0,
-                activatedStore: isTrialActive && storeUrl ? { name: storeName, url: storeUrl } : null,
+                activatedStore: isTrialActive && isActuallyConnected ? { name: resolvedStoreName, url: resolvedStoreUrl } : null,
               },
               connectedStore: {
-                name: storeName,
-                url: storeUrl,
-                status: storeUrl ? 'connected' : 'not_connected',
-                connectedAt: localMatch?.connectedStore.connectedAt || null,
-                lastSyncAt: localMatch?.connectedStore.lastSyncAt || null,
+                name: resolvedStoreName,
+                url: resolvedStoreUrl,
+                status: storeStatus,
+                connectedAt: boundLicense?.activatedAt || localMatch?.connectedStore.connectedAt || (isActuallyConnected ? 'Active' : null),
+                lastSyncAt: isActuallyConnected ? 'Just now' : null,
                 errorMessage: null,
               },
               subscription: {
                 status: isPaid ? 'active' : isTrialActive ? 'trial' : 'none',
                 planId: paidPlan,
                 planName: paidPlan ? `${paidPlan} Plan` : isTrialActive ? 'Free Trial' : 'None (Trial Eligible)',
-                price: paidPlan ? (paidPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : '₦0',
+                price: isGifted ? '₦0 (Gifted)' : (paidPlan ? (paidPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : '₦0'),
                 billingCycle: 'yearly',
                 startDate: activePaidLicense?.activated_at || activeTrialLicense?.activated_at || null,
                 renewsAt: activePaidLicense?.expires_at || (activePaidLicense ? (() => {
@@ -1130,7 +1215,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               trialDaysRemaining: isTrialActive ? trialDaysRemaining : 0,
               trialEndsAt: trialEnd || '',
               plan: paidPlan,
-              planPrice: paidPlan ? (paidPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : 'None (Trial Eligible)',
+              planPrice: isGifted ? 'Gifted Plan' : (paidPlan ? (paidPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : 'None (Trial Eligible)'),
               billingCycle: 'yearly',
               nextBillingDate: activePaidLicense?.expires_at || (activePaidLicense ? (() => {
                 const d = new Date(activePaidLicense.activated_at || Date.now());
@@ -2107,6 +2192,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     persistSession({
       ...customer,
+      connectedStore: {
+        name: cleanDomain,
+        url: cleanDomain.startsWith('http') ? cleanDomain : `https://${cleanDomain}`,
+        status: 'connected',
+        connectedAt: activatedAtStr,
+        lastSyncAt: 'Just now',
+        errorMessage: null,
+      },
       licenses: updatedLicenses,
       orders: updatedOrders,
     });

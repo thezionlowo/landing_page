@@ -19,14 +19,10 @@ import {
 } from 'lucide-react';
 
 export const ConnectedStoreTab: React.FC = () => {
-  const { customer, activateTrial, retryStoreConnection, disconnectStore } = useCustomerAuth();
+  const { customer, retryStoreConnection, disconnectStore } = useCustomerAuth();
   const { setAccountTab } = useRouter();
 
   const [copiedCode, setCopiedCode] = useState(false);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simError, setSimError] = useState<string | null>(null);
-  const [simStoreName, setSimStoreName] = useState('Lagos Beauty & Skincare Store');
-  const [simStoreUrl, setSimStoreUrl] = useState('https://lagosbeautystore.ng');
 
   if (!customer) return null;
 
@@ -35,35 +31,43 @@ export const ConnectedStoreTab: React.FC = () => {
   const isTrialActive = subscriptionState === 'trial_active';
   const isTrialExpired = subscriptionState === 'trial_expired';
   const isPaid = subscriptionState === 'paid_active';
+  const isGifted = customer.accessType === 'Gifted' || customer.accessType === 'Complimentary' || Boolean(customer.giftedDetails);
 
-  const activationCode = customer.trial?.activationCode || customer.activationCode || 'ZAM-7F4K-92XP';
-  const store = customer.connectedStore || {
-    name: 'No store connected',
-    url: '',
-    status: isPaid || isTrialActive ? 'connected' : 'not_connected',
+  const licenses = customer.licenses || [];
+  const primaryLicense = licenses[0] || null;
+  const boundLicense = licenses.find((l) => Boolean(l.connectedDomain));
+  const isActuallyConnected = Boolean(boundLicense?.connectedDomain || (isTrialActive && Boolean(customer.trial?.activatedStore?.url)) || (customer.connectedStore?.status === 'connected' && Boolean(customer.connectedStore?.url)));
+
+  const activationCode = customer.trial?.activationCode || customer.activationCode || '';
+  const store = {
+    name: boundLicense?.connectedDomain || customer.connectedStore?.name || (isActuallyConnected ? (customer.businessName || 'WooCommerce Store') : 'No store connected'),
+    url: boundLicense?.connectedDomain ? (boundLicense.connectedDomain.startsWith('http') ? boundLicense.connectedDomain : `https://${boundLicense.connectedDomain}`) : (customer.connectedStore?.url || ''),
+    status: isActuallyConnected ? ('connected' as const) : ('not_connected' as const),
+    connectionError: customer.connectedStore?.errorMessage,
+    lastSyncAt: isActuallyConnected ? (customer.connectedStore?.lastSyncAt || 'Just now') : null,
   };
 
   const isConnected = store.status === 'connected';
-  const isPending = store.status === 'pending';
-  const isError = store.status === 'error';
+  const isPending = customer.connectedStore?.status === 'pending';
+  const isError = customer.connectedStore?.status === 'error';
+
+  const rawPlanStr = String(customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || '').toLowerCase();
+  const isStarter = rawPlanStr.includes('starter') || (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
+  const isBusiness = rawPlanStr.includes('business') && !isStarter;
+  const effectivePlan = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
+
+  const displayedAccountStatus = isGifted
+    ? `Gifted ${effectivePlan} Plan (Active)`
+    : isPaid
+      ? `Active ${effectivePlan} Plan`
+      : isTrialActive
+        ? '7-Day Free Trial (Active)'
+        : 'Trial Expired';
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(activationCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2200);
-  };
-
-  const handleSimulateActivation = async () => {
-    setIsSimulating(true);
-    setSimError(null);
-    const res = await activateTrial(activationCode, {
-      name: simStoreName.trim() || 'My WooCommerce Store',
-      url: simStoreUrl.trim() || 'https://mystore.ng',
-    });
-    setIsSimulating(false);
-    if (!res.success) {
-      setSimError(res.error || 'Failed to activate trial.');
-    }
   };
 
   return (
@@ -274,7 +278,7 @@ export const ConnectedStoreTab: React.FC = () => {
                 Your 7-day ZAMERIA trial has started.
               </h3>
               <p style={{ fontSize: '13.5px', color: '#166534', margin: 0, lineHeight: 1.4 }}>
-                Trial ends <strong>{customer.trial?.endDate || 'September 19, 2026'}</strong>. Your WooCommerce store is now connected.
+                Trial ends <strong>{customer.trial?.endDate || 'in 7 days'}</strong>. Your WooCommerce store is now connected.
               </p>
             </div>
           </div>
@@ -426,15 +430,17 @@ export const ConnectedStoreTab: React.FC = () => {
             <div>
               <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Account Status</div>
               <div style={{ fontSize: '14px', fontWeight: 700, color: '#071A31' }}>
-                {isPaid ? 'Active Business Plan' : isTrialActive ? '7-Day Free Trial (Active)' : 'Trial Expired'}
+                {displayedAccountStatus}
               </div>
             </div>
             <div>
               <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Entitlement Period</div>
               <div style={{ fontSize: '14px', fontWeight: 700, color: '#071A31' }}>
-                {isPaid
-                  ? `Renews ${customer.subscription.renewsAt || 'Next Month'}`
-                  : `Ends ${customer.trial?.endDate || 'September 19, 2026'}`}
+                {isGifted
+                  ? `Expires ${customer.subscription.renewsAt || primaryLicense?.expiresAt || 'in 12 Months'}`
+                  : isPaid
+                    ? `Renews ${customer.subscription.renewsAt || primaryLicense?.expiresAt || 'Annually'}`
+                    : `Ends ${customer.trial?.endDate || 'in 7 Days'}`}
               </div>
             </div>
             <div>
@@ -673,87 +679,11 @@ export const ConnectedStoreTab: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                marginBottom: '28px',
               }}
             >
               <ShieldCheck size={20} style={{ color: '#2563eb', flexShrink: 0 }} />
               <div style={{ fontSize: '13px', color: '#1e40af', lineHeight: 1.45 }}>
                 <strong>Important:</strong> Your 7-day free trial does not start until activation is completed on your WooCommerce store.
-              </div>
-            </div>
-
-            {/* Simulation Tester (For quick testing without external server) */}
-            <div
-              style={{
-                borderTop: '1px solid #f1f5f9',
-                paddingTop: '20px',
-                backgroundColor: '#f8fafc',
-                borderRadius: '12px',
-                padding: '18px 20px',
-                border: '1px solid #e2e8f0',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                <Sparkles size={16} color="#d97706" />
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#071A31' }}>
-                  Quick Interactive Activation Simulator
-                </span>
-                <span style={{ fontSize: '11px', color: '#64748b' }}>(For local testing & verification)</span>
-              </div>
-
-              {simError && (
-                <div style={{ fontSize: '12.5px', color: '#dc2626', marginBottom: '10px' }}>
-                  {simError}
-                </div>
-              )}
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '10px', alignItems: 'center' }}>
-                <input
-                  type="text"
-                  value={simStoreName}
-                  onChange={(e) => setSimStoreName(e.target.value)}
-                  placeholder="Store Name"
-                  style={{
-                    padding: '8px 12px',
-                    fontSize: '13px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    outline: 'none',
-                    backgroundColor: '#ffffff',
-                  }}
-                />
-                <input
-                  type="text"
-                  value={simStoreUrl}
-                  onChange={(e) => setSimStoreUrl(e.target.value)}
-                  placeholder="https://mystore.ng"
-                  style={{
-                    padding: '8px 12px',
-                    fontSize: '13px',
-                    borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
-                    outline: 'none',
-                    backgroundColor: '#ffffff',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={handleSimulateActivation}
-                  disabled={isSimulating}
-                  style={{
-                    padding: '8px 16px',
-                    backgroundColor: '#16a34a',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    cursor: isSimulating ? 'not-allowed' : 'pointer',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {isSimulating ? 'Verifying...' : 'Simulate Plugin Activation'}
-                </button>
               </div>
             </div>
           </div>

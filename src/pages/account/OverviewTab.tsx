@@ -27,13 +27,11 @@ import {
 } from 'lucide-react';
 
 export const OverviewTab: React.FC = () => {
-  const { customer, cancelSubscription, resumeSubscription, activateTrial } = useCustomerAuth();
+  const { customer, cancelSubscription, resumeSubscription } = useCustomerAuth();
   const { setAccountTab } = useRouter();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [simError, setSimError] = useState<string | null>(null);
 
   if (!customer) return null;
 
@@ -48,28 +46,49 @@ export const OverviewTab: React.FC = () => {
   const isExpired =
     customer.accountStatus === 'expired' || customer.subscription.status === 'expired';
   const isPaidActive = subscriptionState === 'paid_active';
+  const isGifted = customer.accessType === 'Gifted' || customer.accessType === 'Complimentary' || Boolean(customer.giftedDetails);
 
   const licenses = customer.licenses || [];
   const primaryLicense = licenses[0] || null;
 
-  const activationCode =
-    customer.trial?.activationCode || customer.activationCode || 'ZAM-7F4K-92XP';
-  const store = customer.connectedStore || {
-    name: 'No store connected',
-    url: '',
-    status: isPaidActive || isTrialActive ? 'connected' : 'not_connected',
+  const activationCode = customer.trial?.activationCode || customer.activationCode || '';
+  const isStoreActuallyConnected = customer.connectedStore?.status === 'connected' && Boolean(customer.connectedStore?.url || primaryLicense?.connectedDomain);
+  const store = {
+    name: customer.connectedStore?.name && customer.connectedStore.name !== 'No store connected'
+      ? customer.connectedStore.name
+      : (isStoreActuallyConnected ? (customer.businessName || 'WooCommerce Store') : 'No store connected'),
+    url: customer.connectedStore?.url || '',
+    status: isStoreActuallyConnected ? ('connected' as const) : ('not_connected' as const),
   };
 
   const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
-  const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? 'September 19, 2026';
-  const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || 'October 12, 2026';
-  const planName = customer.subscription.planName || 'Business Plan';
-  const isBusiness = planName.toLowerCase().includes('business') || String(customer.plan || '').toLowerCase().includes('business');
+  const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? '';
+
+  const dynamicAnnualExpiry = (() => {
+    const d = new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  })();
+  const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || primaryLicense?.expiresAt || dynamicAnnualExpiry;
+
+  const rawPlanStr = String(customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || '').toLowerCase();
+  const isStarter = rawPlanStr.includes('starter') || (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
+  const isBusiness = rawPlanStr.includes('business') && !isStarter;
+  const planTier = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
+  const planName = isPaidActive
+    ? (customer.subscription?.planName || `${planTier} Plan`)
+    : isTrialActive
+      ? 'Free Trial'
+      : isTrialNotStarted
+        ? 'Trial Eligible'
+        : `${planTier} Plan`;
+
   const authoritativePrice = isBusiness ? '₦300,000 / year' : '₦200,000 / year';
-  const rawPrice = customer.subscription.price || customer.planPrice || authoritativePrice;
-  const price = (rawPrice.includes('15,000') || rawPrice.includes('5,000') || rawPrice.includes('20,000') || rawPrice.includes('30,000'))
-    ? authoritativePrice
-    : rawPrice;
+  const price = isGifted
+    ? 'Gifted Plan (Complimentary)'
+    : isPaidActive
+      ? authoritativePrice
+      : '₦0';
 
   const copyLicenseKey = (key: string) => {
     navigator.clipboard.writeText(key);
@@ -81,19 +100,6 @@ export const OverviewTab: React.FC = () => {
     navigator.clipboard.writeText(activationCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2200);
-  };
-
-  const handleSimulateActivation = async () => {
-    setIsSimulating(true);
-    setSimError(null);
-    const res = await activateTrial(activationCode, {
-      name: `${customer.businessName || 'My Store'} (WooCommerce)`,
-      url: 'https://mystore.ng',
-    });
-    setIsSimulating(false);
-    if (!res.success) {
-      setSimError(res.error || 'Failed to activate trial.');
-    }
   };
 
   return (
@@ -797,59 +803,12 @@ export const OverviewTab: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                marginBottom: '20px',
               }}
             >
               <ShieldCheck size={20} style={{ color: '#2563eb', flexShrink: 0 }} />
               <div style={{ fontSize: '13.5px', color: '#1e40af', lineHeight: 1.45 }}>
-                <strong>Important:</strong> Your 7-day trial does not start until activation is completed.
+                <strong>Important:</strong> Your 7-day trial does not start until activation is completed on your WooCommerce store.
               </div>
-            </div>
-
-            {/* Quick Test Simulation */}
-            <div
-              style={{
-                backgroundColor: '#f8fafc',
-                border: '1px dashed #cbd5e1',
-                borderRadius: '12px',
-                padding: '14px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: '12px',
-              }}
-            >
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#071A31' }}>
-                  Testing without WordPress?
-                </div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>
-                  Simulate instant store activation to evaluate the 7-day active trial dashboard.
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={handleSimulateActivation}
-                disabled={isSimulating}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '8px 16px',
-                  backgroundColor: '#16a34a',
-                  color: '#ffffff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
-                  cursor: isSimulating ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Sparkles size={14} />
-                <span>{isSimulating ? 'Verifying...' : 'Simulate Store Activation'}</span>
-              </button>
             </div>
           </div>
         </div>
@@ -1336,8 +1295,8 @@ export const OverviewTab: React.FC = () => {
                     width: '36px',
                     height: '36px',
                     borderRadius: '10px',
-                    backgroundColor: '#f0fdf4',
-                    color: '#16a34a',
+                    backgroundColor: store.status === 'connected' ? '#f0fdf4' : '#fffbeb',
+                    color: store.status === 'connected' ? '#16a34a' : '#d97706',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1349,17 +1308,24 @@ export const OverviewTab: React.FC = () => {
               <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.1 }}>
                 {store.name}
               </div>
-              <div style={{ fontSize: '12.5px', color: '#16a34a', marginTop: '6px', fontWeight: 600 }}>
-                ● Connected &amp; Synced
+              <div
+                style={{
+                  fontSize: '12.5px',
+                  color: store.status === 'connected' ? '#16a34a' : '#d97706',
+                  marginTop: '6px',
+                  fontWeight: 600,
+                }}
+              >
+                {store.status === 'connected' ? '● Connected & Synced' : '● Activation Required'}
               </div>
               <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                Store Settings &rarr;
+                {store.status === 'connected' ? 'Store Settings \u2192' : 'Connect Store \u2192'}
               </div>
             </div>
 
-            {/* Card 4: Renewal Date */}
+            {/* Card 4: Renewal / Access Expiry */}
             <div
-              onClick={() => setAccountTab('billing')}
+              onClick={() => setAccountTab(isGifted ? 'licenses' : 'billing')}
               style={{
                 backgroundColor: '#ffffff',
                 borderRadius: '20px',
@@ -1373,14 +1339,16 @@ export const OverviewTab: React.FC = () => {
               onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>Next Billing</span>
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>
+                  {isGifted ? 'Access Expiry' : 'Next Billing'}
+                </span>
                 <div
                   style={{
                     width: '36px',
                     height: '36px',
                     borderRadius: '10px',
-                    backgroundColor: '#f8fafc',
-                    color: '#64748b',
+                    backgroundColor: isGifted ? '#eff6ff' : '#f8fafc',
+                    color: isGifted ? '#2563eb' : '#64748b',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1393,10 +1361,10 @@ export const OverviewTab: React.FC = () => {
                 {renewsAt}
               </div>
               <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '6px' }}>
-                Auto-renews with default card
+                {isGifted ? 'Gifted Plan · 12 Months Access' : 'Auto-renews with default card'}
               </div>
               <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                Billing History &rarr;
+                {isGifted ? 'License Details \u2192' : 'Billing History \u2192'}
               </div>
             </div>
           </>
