@@ -64,7 +64,12 @@ export const OverviewTab: React.FC = () => {
   const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? 'September 19, 2026';
   const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || 'October 12, 2026';
   const planName = customer.subscription.planName || 'Business Plan';
-  const price = customer.subscription.price || customer.planPrice || '₦300,000 / year';
+  const isBusiness = planName.toLowerCase().includes('business') || String(customer.plan || '').toLowerCase().includes('business');
+  const authoritativePrice = isBusiness ? '₦300,000 / year' : '₦200,000 / year';
+  const rawPrice = customer.subscription.price || customer.planPrice || authoritativePrice;
+  const price = (rawPrice.includes('15,000') || rawPrice.includes('5,000') || rawPrice.includes('20,000') || rawPrice.includes('30,000'))
+    ? authoritativePrice
+    : rawPrice;
 
   const copyLicenseKey = (key: string) => {
     navigator.clipboard.writeText(key);

@@ -9,6 +9,7 @@ export type AccountStatus =
   | 'trial_expiring'
   | 'trial_expired'
   | 'active_business'
+  | 'active_starter'
   | 'payment_failed'
   | 'cancelled'
   | 'expired';
@@ -620,8 +621,93 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
   ],
 };
 
-const STORAGE_KEY_AUTH = 'zameria_customer_session_v2';
-const STORAGE_KEY_USERS = 'zameria_registered_customers_v2';
+const STORAGE_KEY_AUTH = 'zameria_customer_session_v3';
+const STORAGE_KEY_USERS = 'zameria_registered_customers_v3';
+
+// Helper: strictly enforce annual pricing (₦200k / ₦300k) and 1-year expiry on any customer profile
+export function normalizeCustomerProfile(profile: CustomerProfile | null): CustomerProfile | null {
+  if (!profile) return null;
+
+  // Determine effective plan (Starter or Business)
+  const rawPlanStr = String(
+    profile.plan ||
+    profile.subscription?.planId ||
+    profile.subscription?.planName ||
+    (profile.licenses && profile.licenses[0]?.plan) ||
+    ''
+  ).toLowerCase();
+
+  const isBusiness = rawPlanStr.includes('business');
+  const isStarter = rawPlanStr.includes('starter');
+  const resolvedPlan: 'Starter' | 'Business' | null = isBusiness ? 'Business' : isStarter ? 'Starter' : null;
+
+  // Normalize licenses: enforce ₦200,000 / year (Starter) or ₦300,000 / year (Business) and 1-year expiry
+  const normalizedLicenses = (profile.licenses || []).map((lic, idx) => {
+    const licPlan: 'Starter' | 'Business' = String(lic.plan || resolvedPlan || '').toLowerCase().includes('starter') ? 'Starter' : 'Business';
+    const licPrice = licPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
+
+    let exp = lic.expiresAt || '';
+    if (!exp || exp.includes('month') || exp.toLowerCase().includes('invalid')) {
+      const base = lic.activatedAt ? new Date(lic.activatedAt) : new Date();
+      if (!isNaN(base.getTime())) {
+        base.setFullYear(base.getFullYear() + 1);
+        exp = base.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      }
+    }
+
+    return {
+      ...lic,
+      plan: licPlan,
+      planName: `${licPlan} Plan`,
+      price: licPrice,
+      billingCycle: 'yearly' as const,
+      expiresAt: exp,
+      orderNumber: lic.orderNumber || `#ZM-LIC-${idx + 1}`,
+      features: licPlan === 'Business'
+        ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
+        : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
+    };
+  });
+
+  const hasPaidLicense = normalizedLicenses.some((l) => l.status === 'Active');
+  const isPaid = profile.subscription?.status === 'active' || hasPaidLicense || profile.accessType === 'Gifted';
+
+  let renewsAt = profile.subscription?.renewsAt || profile.nextBillingDate || normalizedLicenses[0]?.expiresAt;
+  if (isPaid && (!renewsAt || renewsAt.includes('month') || renewsAt.toLowerCase().includes('invalid'))) {
+    const base = profile.subscription?.startDate ? new Date(profile.subscription.startDate) : new Date();
+    if (!isNaN(base.getTime())) {
+      base.setFullYear(base.getFullYear() + 1);
+      renewsAt = base.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    }
+  }
+
+  const finalPlan = isPaid ? (resolvedPlan || 'Business') : resolvedPlan;
+  const finalPrice = isPaid && finalPlan ? (finalPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : (profile.planPrice?.includes('15,000') || profile.planPrice?.includes('5,000') ? (resolvedPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : profile.planPrice);
+
+  let finalAccountStatus = profile.accountStatus;
+  if (isPaid) {
+    finalAccountStatus = finalPlan === 'Business' ? 'active_business' : 'active_starter';
+  }
+
+  return {
+    ...profile,
+    accountStatus: finalAccountStatus,
+    plan: finalPlan,
+    planPrice: finalPrice || 'None (Trial Eligible)',
+    billingCycle: 'yearly',
+    nextBillingDate: renewsAt || profile.nextBillingDate || '',
+    subscription: {
+      ...profile.subscription,
+      status: isPaid ? 'active' : profile.subscription?.status || 'none',
+      planId: finalPlan,
+      planName: finalPlan ? `${finalPlan} Plan` : (profile.subscription?.planName || 'None (Trial Eligible)'),
+      price: isPaid && finalPlan ? (finalPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : (profile.subscription?.price?.includes('15,000') || profile.subscription?.price?.includes('5,000') ? '₦0' : profile.subscription?.price || '₦0'),
+      billingCycle: 'yearly',
+      renewsAt: renewsAt || profile.subscription?.renewsAt || null,
+    },
+    licenses: normalizedLicenses,
+  };
+}
 
 // Configurable external Scoreflip backend URL (provided via environment variables)
 const SCOREFLIP_BACKEND_URL: string =
@@ -638,9 +724,24 @@ const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(u
 export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [customer, setCustomer] = useState<CustomerProfile | null>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_AUTH);
+      // Check current key or legacy storage keys
+      const saved =
+        localStorage.getItem(STORAGE_KEY_AUTH) ||
+        localStorage.getItem('zameria_customer_session_v2') ||
+        localStorage.getItem('zameria_customer_session');
+
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        const normalized = normalizeCustomerProfile(parsed);
+        if (normalized) {
+          localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(normalized));
+          // Clean up old legacy keys that may contain stale mock pricing
+          try {
+            localStorage.removeItem('zameria_customer_session_v2');
+            localStorage.removeItem('zameria_customer_session');
+          } catch {}
+        }
+        return normalized;
       }
     } catch {
       // ignore
@@ -650,19 +751,25 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   });
 
   const persistSession = (c: CustomerProfile | null) => {
-    setCustomer(c);
+    const normalized = normalizeCustomerProfile(c);
+    setCustomer(normalized);
     try {
-      if (c) {
-        localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(c));
-        const existing = localStorage.getItem(STORAGE_KEY_USERS);
+      if (normalized) {
+        localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(normalized));
+        const existing = localStorage.getItem(STORAGE_KEY_USERS) || localStorage.getItem('zameria_registered_customers_v2');
         let users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
-        const index = users.findIndex((u) => u.email.toLowerCase() === c.email.toLowerCase());
+        const index = users.findIndex((u) => u.email.toLowerCase() === normalized.email.toLowerCase());
         if (index >= 0) {
-          users[index] = c;
+          users[index] = normalized;
         } else {
-          users.push(c);
+          users.push(normalized);
         }
-        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+        // Normalize all stored users to purge any legacy mock price
+        const cleanedUsers = users.map((u) => normalizeCustomerProfile(u)).filter(Boolean) as CustomerProfile[];
+        localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(cleanedUsers));
+        try {
+          localStorage.removeItem('zameria_registered_customers_v2');
+        } catch {}
       } else {
         localStorage.removeItem(STORAGE_KEY_AUTH);
       }
@@ -688,14 +795,90 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               const isCancelled = acc.accountStatus === 'cancelled' || acc.subscription?.status === 'cancelled';
               const isTrialActive = acc.trial?.status === 'active';
               const isExpired = acc.trial?.status === 'expired' || acc.accountStatus === 'expired';
-              const isPaid = !isCancelled && !isExpired && (acc.subscription?.status === 'active' || (acc.licenses && acc.licenses.length > 0));
+              const rawLicenses: any[] = Array.isArray(acc.licenses) ? acc.licenses : [];
+              const activePaidLicense = rawLicenses.find(
+                (l: any) => (l.status || '').toLowerCase() === 'active' && (l.plan || '').toLowerCase() !== 'trial'
+              );
+              const isPaid = !isCancelled && !isExpired && (acc.subscription?.status === 'active' || Boolean(activePaidLicense));
+
+              // Authoritative plan resolution: Starter (₦200,000/yr) or Business (₦300,000/yr)
+              const detectedPlanStr = String(acc.plan || activePaidLicense?.plan || prev.plan || '').toLowerCase();
+              const isBusiness = detectedPlanStr.includes('business');
+              const activePlan: 'Starter' | 'Business' = isBusiness ? 'Business' : 'Starter';
+              const activePrice = isBusiness ? '₦300,000 / year' : '₦200,000 / year';
 
               let accountStatus = prev.accountStatus;
               if (isCancelled) accountStatus = 'cancelled';
-              else if (isPaid) accountStatus = 'active_business';
+              else if (isPaid) accountStatus = isBusiness ? 'active_business' : 'active_starter';
               else if (isExpired) accountStatus = 'trial_expired';
               else if (isTrialActive) accountStatus = 'trial_active';
               else if (acc.accountStatus === 'trial_not_started') accountStatus = 'trial_not_started';
+
+              // Normalize licenses with strict 1-year expiry and annual pricing
+              const normalizedLicenses: LicenseItem[] = rawLicenses
+                .filter((lic: any) => (lic.plan || '').toLowerCase() !== 'trial')
+                .map((lic: any, idx: number) => {
+                  const isLicBusiness = (lic.plan || '').toLowerCase().includes('business');
+                  const licPlan: 'Starter' | 'Business' = isLicBusiness ? 'Business' : 'Starter';
+                  const licPrice = isLicBusiness ? '₦300,000 / year' : '₦200,000 / year';
+
+                  // Calculate 1-year expiration accurately
+                  let formattedExpiry = '';
+                  const rawExp = lic.expires_at || lic.expiresAt;
+                  const rawAct = lic.activated_at || lic.activatedAt || lic.created_at || lic.createdAt || acc.created_at;
+
+                  if (rawExp) {
+                    const d = new Date(rawExp);
+                    if (!isNaN(d.getTime())) {
+                      formattedExpiry = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                    } else {
+                      formattedExpiry = String(rawExp);
+                    }
+                  } else if (rawAct) {
+                    const d = new Date(rawAct);
+                    if (!isNaN(d.getTime())) {
+                      d.setFullYear(d.getFullYear() + 1);
+                      formattedExpiry = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                    }
+                  }
+
+                  if (!formattedExpiry) {
+                    const oneYear = new Date();
+                    oneYear.setFullYear(oneYear.getFullYear() + 1);
+                    formattedExpiry = oneYear.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                  }
+
+                  const licenseId = String(lic.id || `lic_${(lic.license_key || lic.licenseKey || lic.code || '').replace(/[^a-z0-9]/gi, '').slice(-8) || idx}`);
+                  const licenseKey = String(lic.license_key || lic.licenseKey || lic.code || '');
+                  const rawStatus = (lic.status || 'Active').toLowerCase();
+                  const status: LicenseStatus = rawStatus === 'active' ? 'Active' : rawStatus === 'expired' ? 'Expired' : 'Not Activated';
+                  const domain = lic.store_domain || lic.connectedDomain || null;
+                  const reqDomain = lic.requested_domain || lic.requestedDomain || null;
+                  const paymentRef = lic.payment_reference || lic.orderNumber || lic.orderId || '';
+
+                  return {
+                    id: licenseId,
+                    licenseKey,
+                    plan: licPlan,
+                    planName: `${licPlan} Plan`,
+                    billingCycle: 'yearly' as const,
+                    price: licPrice,
+                    status,
+                    connectedDomain: domain,
+                    requestedDomain: reqDomain,
+                    activationStatus: domain || lic.activated_at ? 'Activated' : 'Not Activated',
+                    activatedAt: lic.activated_at || lic.activatedAt || null,
+                    expiresAt: formattedExpiry,
+                    orderId: lic.orderId || `ord_${paymentRef || licenseId}`,
+                    orderNumber: lic.orderNumber || (paymentRef ? `#ZM-${paymentRef.slice(-8).toUpperCase()}` : `#ZM-LIC-${idx + 1}`),
+                    features: isLicBusiness
+                      ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
+                      : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
+                  };
+                });
+
+              // Primary expiry date from license or 1-year future timestamp
+              const primaryExpiry = normalizedLicenses[0]?.expiresAt || (activePaidLicense?.expires_at ? new Date(activePaidLicense.expires_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : null);
 
               // Only update if something changed
               const storeName = acc.connectedStore?.name || prev.connectedStore.name;
@@ -707,6 +890,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 id: acc.id || prev.id,
                 fullName: acc.fullName || prev.fullName,
                 accountStatus,
+                plan: isPaid ? activePlan : prev.plan,
+                planPrice: isPaid ? activePrice : prev.planPrice,
+                billingCycle: 'yearly',
+                nextBillingDate: primaryExpiry || prev.nextBillingDate,
                 trial: {
                   ...prev.trial,
                   status: acc.trial?.status || prev.trial.status,
@@ -725,12 +912,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 },
                 subscription: {
                   ...prev.subscription,
-                  status: acc.subscription?.status || prev.subscription.status,
-                  planName: acc.subscription?.planName || prev.subscription.planName,
-                  price: acc.subscription?.price || prev.subscription.price,
-                  renewsAt: acc.subscription?.renewsAt || prev.subscription.renewsAt,
+                  status: isPaid ? 'active' : acc.subscription?.status || prev.subscription.status,
+                  planId: isPaid ? activePlan : prev.subscription.planId,
+                  planName: isPaid ? `${activePlan} Plan` : prev.subscription.planName,
+                  price: isPaid ? activePrice : prev.subscription.price,
+                  billingCycle: 'yearly',
+                  renewsAt: primaryExpiry || prev.subscription.renewsAt,
                 },
-                licenses: acc.licenses && acc.licenses.length > 0 ? acc.licenses : prev.licenses,
+                licenses: normalizedLicenses.length > 0 ? normalizedLicenses : prev.licenses,
               };
 
               // Persist synchronized state so refreshes and re-logins retain backend state
@@ -812,22 +1001,51 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           : license.status === 'issued' ? 'Not Activated'
             : license.status === 'suspended' ? 'Suspended'
               : license.status === 'revoked' ? 'Revoked' : 'Expired';
+
+        // Calculate 1-year expiration accurately
+        let formattedExpiry = '';
+        const rawExp = license.expires_at || license.expiresAt;
+        const rawAct = license.activated_at || license.activatedAt || license.created_at || license.createdAt;
+
+        if (rawExp) {
+          const d = new Date(rawExp);
+          if (!isNaN(d.getTime())) {
+            formattedExpiry = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+          } else {
+            formattedExpiry = String(rawExp);
+          }
+        } else if (rawAct) {
+          const d = new Date(rawAct);
+          if (!isNaN(d.getTime())) {
+            d.setFullYear(d.getFullYear() + 1);
+            formattedExpiry = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+          }
+        }
+
+        if (!formattedExpiry) {
+          const oneYear = new Date();
+          oneYear.setFullYear(oneYear.getFullYear() + 1);
+          formattedExpiry = oneYear.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+        }
+
         return {
           id: String(license.id || `${trimmedEmail}-${index}`),
-          licenseKey: license.code || '',
+          licenseKey: license.code || license.license_key || license.licenseKey || '',
           plan,
           planName: `${plan} Plan`,
-          billingCycle: 'monthly',
-          price: plan === 'Starter' ? '₦5,000' : '₦15,000',
+          billingCycle: 'yearly',
+          price: plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year',
           status,
-          connectedDomain: license.activated_domain || null,
+          connectedDomain: license.activated_domain || license.store_domain || null,
           requestedDomain: license.requested_domain || null,
-          activationStatus: license.activated_domain ? 'Activated' : 'Not Activated',
+          activationStatus: license.activated_domain || license.store_domain ? 'Activated' : 'Not Activated',
           activatedAt: license.activated_at || null,
-          expiresAt: license.expires_at || '',
+          expiresAt: formattedExpiry,
           orderId: '',
           orderNumber: '',
-          features: [],
+          features: plan === 'Business'
+            ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
+            : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
         };
       });
       const activePaidLicense = backendLicenses.find((license) => !license.is_trial && license.status === 'active');
@@ -880,18 +1098,26 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 status: isPaid ? 'active' : isTrialActive ? 'trial' : 'none',
                 planId: paidPlan,
                 planName: paidPlan ? `${paidPlan} Plan` : isTrialActive ? 'Free Trial' : 'None (Trial Eligible)',
-                price: paidPlan ? (paidPlan === 'Starter' ? '₦5,000' : '₦15,000') : '₦0',
-                billingCycle: 'monthly',
+                price: paidPlan ? (paidPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : '₦0',
+                billingCycle: 'yearly',
                 startDate: activePaidLicense?.activated_at || activeTrialLicense?.activated_at || null,
-                renewsAt: activePaidLicense?.expires_at || activeTrialLicense?.expires_at || null,
+                renewsAt: activePaidLicense?.expires_at || (activePaidLicense ? (() => {
+                  const d = new Date(activePaidLicense.activated_at || Date.now());
+                  d.setFullYear(d.getFullYear() + 1);
+                  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                })() : activeTrialLicense?.expires_at || null),
               },
               activationCode: trialCode || localMatch?.activationCode || '',
               trialDaysRemaining: isTrialActive ? trialDaysRemaining : 0,
               trialEndsAt: trialEnd || '',
               plan: paidPlan,
-              planPrice: paidPlan ? (paidPlan === 'Starter' ? '₦5,000' : '₦15,000') : 'None (Trial Eligible)',
-              billingCycle: 'monthly',
-              nextBillingDate: activePaidLicense?.expires_at || '',
+              planPrice: paidPlan ? (paidPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : 'None (Trial Eligible)',
+              billingCycle: 'yearly',
+              nextBillingDate: activePaidLicense?.expires_at || (activePaidLicense ? (() => {
+                const d = new Date(activePaidLicense.activated_at || Date.now());
+                d.setFullYear(d.getFullYear() + 1);
+                return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+              })() : ''),
               storesCount: storeUrl ? 1 : 0,
               staffAllowance: paidPlan === 'Starter' ? 2 : 999,
               billingAddress: localMatch?.billingAddress || {
@@ -912,7 +1138,23 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       persistSession(profile);
       return { success: true };
     } catch {
-      return { success: false, error: 'Unable to reach ZAMERIA. Please try again shortly.' };
+      // In local testing or during backend maintenance, allow existing local customer profiles to authenticate
+      try {
+        const existing = localStorage.getItem(STORAGE_KEY_USERS);
+        const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
+        const localMatch = users.find((u) => u.email.toLowerCase() === trimmedEmail);
+        if (localMatch && (!localMatch.password || localMatch.password === pass)) {
+          persistSession(localMatch);
+          return { success: true };
+        }
+      } catch {
+        // Continue to user-friendly maintenance message
+      }
+
+      return {
+        success: false,
+        error: 'ZAMERIA authentication service is temporarily undergoing maintenance. Please try again shortly or contact support@zameria.co.',
+      };
     }
   };
 
@@ -981,7 +1223,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             }
             return { success: false, error: errData.error || 'We could not create your account right now. Please try again.' };
           }
-        } catch { return { success: false, error: 'Unable to reach ZAMERIA. Please try again shortly.' }; }
+        } catch {
+          return { success: false, error: 'ZAMERIA registration service is temporarily undergoing scheduled maintenance. Please try again shortly.' };
+        }
       }
 
       const userPhone = data.phone?.trim() || '+234 800 000 0000';
@@ -1424,22 +1668,20 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     persistSession(updated);
   };
 
-  const changePlan = (newPlan: 'Starter' | 'Business', cycle: 'monthly' | 'yearly' = 'yearly') => {
+  const changePlan = (newPlan: 'Starter' | 'Business', _cycle: 'monthly' | 'yearly' = 'yearly') => {
     if (!customer) return;
-    const price = newPlan === 'Starter'
-      ? (cycle === 'monthly' ? '₦20,000 / mo' : '₦200,000 / year')
-      : (cycle === 'monthly' ? '₦30,000 / mo' : '₦300,000 / year');
+    const price = newPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
     const updated: CustomerProfile = {
       ...customer,
       plan: newPlan,
       planPrice: price,
-      billingCycle: cycle,
+      billingCycle: 'yearly',
       subscription: {
         ...customer.subscription,
         planId: newPlan,
         planName: `${newPlan} Plan`,
         price,
-        billingCycle: cycle,
+        billingCycle: 'yearly',
         status: 'active',
       },
       accountStatus: 'active_business',

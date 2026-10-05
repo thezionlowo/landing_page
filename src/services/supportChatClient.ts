@@ -40,15 +40,29 @@ export interface SupportConversation {
   messages: SupportMessage[];
 }
 
-const apiBase = (((import.meta as any).env?.VITE_SCOREFLIP_BACKEND_URL || (import.meta as any).env?.VITE_BACKEND_URL || '') as string).replace(/\/$/, '');
+const apiBase = (
+  (typeof import.meta !== 'undefined' &&
+    ((import.meta as any).env?.VITE_SCOREFLIP_BACKEND_URL || (import.meta as any).env?.VITE_BACKEND_URL || '')) ||
+  'https://scoreflip-go-hwsgspeycq-uc.a.run.app'
+).replace(/\/$/, '');
 const sessionKey = 'zameria_website_support_session';
 type VisitorSession = { id: string; token: string };
 function getSession(): VisitorSession | null { try { return JSON.parse(localStorage.getItem(sessionKey) || 'null'); } catch { return null; } }
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  if (!apiBase) throw new Error('Support is not configured');
-  const response = await fetch(`${apiBase}/api/v1/zameria/support/${path}`, init);
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || 'Support request failed');
+  if (!apiBase) throw new Error('Live support chat is temporarily unavailable due to scheduled maintenance.');
+  let response: Response;
+  try {
+    response = await fetch(`${apiBase}/api/v1/zameria/support/${path}`, init);
+  } catch {
+    throw new Error('Our support service is temporarily undergoing scheduled maintenance. Please reach out to us at support@zameria.co or try again shortly.');
+  }
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 503) {
+      throw new Error('Our support service is temporarily undergoing scheduled maintenance. Please check back shortly.');
+    }
+    throw new Error(result.error || 'Support request could not be completed right now.');
+  }
   return result as T;
 }
 export const supportChatClient = {

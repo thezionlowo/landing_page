@@ -324,7 +324,24 @@ export const ZameriaSupportChatWidget: React.FC = () => {
             </div>
           </div>
 
-          {requestError && <div role="alert" style={{ padding: '8px 14px', color: '#991b1b', background: '#fef2f2', fontSize: '12px' }}>{requestError}</div>}
+          {requestError && (
+            <div
+              role="alert"
+              style={{
+                padding: '10px 14px',
+                color: '#991b1b',
+                background: '#fef2f2',
+                fontSize: '12px',
+                lineHeight: 1.5,
+                borderBottom: '1px solid #fee2e2',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '8px',
+              }}
+            >
+              <div style={{ flex: 1 }}>{requestError}</div>
+            </div>
+          )}
           {/* Conversation Stream OR Initial Visitor Inquiry Form */}
           {conversation ? (
             <>

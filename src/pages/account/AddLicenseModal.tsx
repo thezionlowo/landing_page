@@ -309,7 +309,7 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13.5px' }}>
                   <span style={{ color: '#64748b' }}>Billing frequency:</span>
                   <span style={{ fontWeight: 700, color: '#071A31' }}>
-                    {billingCycle === 'yearly' ? 'Annual (Yearly)' : 'Monthly'}
+                    Annual (Yearly)
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '14px', fontSize: '13.5px' }}>

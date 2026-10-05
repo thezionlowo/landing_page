@@ -737,7 +737,9 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   <div style={{ fontSize: '14px', fontWeight: 800, color: '#071A31', marginTop: '4px' }}>
                     {selectedLicense.plan}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>{selectedLicense.price}</div>
+                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                    {selectedLicense.plan.toLowerCase().includes('business') ? '₦300,000 / year' : '₦200,000 / year'}
+                  </div>
                 </div>
 
                 <div>
