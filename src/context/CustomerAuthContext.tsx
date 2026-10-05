@@ -429,8 +429,16 @@ interface CustomerAuthContextType {
 
 // Generate strict ZMR-XXXX-XXXX-XXXX license keys
 export const generateLicenseKey = (): string => {
-  const seg = () => Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `ZMR-${seg()}-${seg()}-${seg()}`;
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const getSeg = () => {
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      const buf = new Uint8Array(4);
+      crypto.getRandomValues(buf);
+      return Array.from(buf).map((b) => chars[b % chars.length]).join('');
+    }
+    return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  };
+  return `ZMR-${getSeg()}-${getSeg()}-${getSeg()}`;
 };
 
 // Generate strict ZAM-XXXX-XXXX Trial Activation Codes
@@ -678,8 +686,24 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
     Boolean((profile as any).gifted_details) ||
     rawLicenses.some((l) => (l as any).access_type === 'gifted' || l.price === 'Gifted Plan');
 
-  // Normalize licenses: enforce authoritative pricing and 1-year expiry
-  const normalizedLicenses = rawLicenses.map((lic, idx) => {
+  // Normalize licenses: enforce authoritative pricing and 1-year expiry, filter out trials and deduplicate
+  const filteredRawLicenses = rawLicenses.filter(
+    (lic: any) => !lic.is_trial && (lic.plan || '').toLowerCase() !== 'trial'
+  );
+
+  const seenLicenseKeys = new Set<string>();
+  const normalizedLicenses: LicenseItem[] = [];
+
+  for (let idx = 0; idx < filteredRawLicenses.length; idx++) {
+    const lic = filteredRawLicenses[idx];
+    const key = String(lic.licenseKey || (lic as any).code || lic.id || '').trim().toUpperCase();
+    if (key && seenLicenseKeys.has(key)) {
+      continue;
+    }
+    if (key) {
+      seenLicenseKeys.add(key);
+    }
+
     const rawLicStr = String(lic.plan || lic.licenseKey || resolvedPlan || '').toLowerCase();
     const licPlan: 'Starter' | 'Business' = rawLicStr.includes('starter') || rawLicStr.includes('zm-str') ? 'Starter' : (rawLicStr.includes('business') ? 'Business' : (resolvedPlan || 'Starter'));
     const isLicGifted = isGifted || (lic as any).access_type === 'gifted' || lic.price === 'Gifted Plan';
@@ -694,7 +718,7 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
       }
     }
 
-    return {
+    normalizedLicenses.push({
       ...lic,
       plan: licPlan,
       planName: `${licPlan} Plan`,
@@ -705,8 +729,8 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
       features: licPlan === 'Business'
         ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
         : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
-    };
-  });
+    });
+  }
 
   const hasPaidLicense = normalizedLicenses.some((l) => l.status === 'Active');
   const isPaid = profile.subscription?.status === 'active' || hasPaidLicense || isGifted;
@@ -1084,8 +1108,49 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       } catch {
         // Account sign-in remains valid if the optional licence list is unavailable.
       }
-      const licenseItems: LicenseItem[] = backendLicenses.map((license, index) => {
-        const plan = String(license.plan || '').toLowerCase().includes('starter') ? 'Starter' : 'Business';
+      const activePaidLicense = backendLicenses.find((license) => !license.is_trial && (license.plan || '').toLowerCase() !== 'trial' && license.status === 'active');
+      const activeTrialLicense = backendLicenses.find((license) => (license.is_trial || (license.plan || '').toLowerCase() === 'trial') && license.status === 'active');
+      const issuedTrialLicense = backendLicenses.find((license) => (license.is_trial || (license.plan || '').toLowerCase() === 'trial') && license.status === 'issued');
+      const trialEnd = activeTrialLicense?.expires_at || issuedTrialLicense?.expires_at || null;
+      const parsedTrialEnd = trialEnd ? new Date(trialEnd).getTime() : NaN;
+      const trialDaysRemaining = activeTrialLicense
+        ? Math.max(0, Number(activeTrialLicense.days_remaining) || (Number.isNaN(parsedTrialEnd) ? 0 : Math.ceil((parsedTrialEnd - Date.now()) / 86400000)))
+        : issuedTrialLicense ? 7 : 0;
+      const isGifted = acc.access_type === 'Gifted' || acc.accessType === 'Gifted' || Boolean(acc.gifted_details || acc.giftedDetails) || localMatch?.accessType === 'Gifted';
+      const giftedDetails = acc.gifted_details || acc.giftedDetails || localMatch?.giftedDetails;
+      const isPaid = Boolean(activePaidLicense) || isGifted;
+      const isTrialActive = !isPaid && Boolean(activeTrialLicense) && trialDaysRemaining > 0;
+      const isTrialExpired = !isPaid && Boolean(issuedTrialLicense || activeTrialLicense) && !isTrialActive;
+      const trialCode = activeTrialLicense?.code || issuedTrialLicense?.code || '';
+      const storeName = acc.business_name || localMatch?.businessName || 'ZAMERIA Store';
+      const storeUrl = acc.store_url || localMatch?.connectedStore.url || '';
+      const fullName = acc.full_name || localMatch?.fullName || 'Store Owner';
+      const phone = acc.phone || localMatch?.phone || '+234 800 000 0000';
+      const rawPlanStr = String(giftedDetails?.plan || activePaidLicense?.plan || acc.plan || localMatch?.plan || '').toLowerCase();
+      const paidPlan = rawPlanStr.includes('starter') ? 'Starter' : rawPlanStr.includes('business') ? 'Business' : 'Starter';
+
+      const accountStatus: AccountStatus = isPaid
+        ? (paidPlan === 'Starter' ? 'active_starter' : 'active_business')
+        : isTrialActive ? 'trial_active'
+          : isTrialExpired ? 'trial_expired' : 'trial_not_started';
+
+      const nonTrialLicenses = backendLicenses.filter((lic) => !lic.is_trial && (lic.plan || '').toLowerCase() !== 'trial');
+      const seenLoginKeys = new Set<string>();
+      const licenseItems: LicenseItem[] = [];
+
+      for (let index = 0; index < nonTrialLicenses.length; index++) {
+        const license = nonTrialLicenses[index];
+        const rawCode = license.code || license.license_key || license.licenseKey || '';
+        const normKey = rawCode.trim().toUpperCase();
+        if (normKey && seenLoginKeys.has(normKey)) continue;
+        if (normKey) seenLoginKeys.add(normKey);
+
+        const rawLicPlan = String(license.plan || '').toLowerCase();
+        const plan: 'Starter' | 'Business' = rawLicPlan.includes('starter')
+          ? 'Starter'
+          : rawLicPlan.includes('business')
+            ? 'Business'
+            : paidPlan;
         const status = license.status === 'active' ? 'Active'
           : license.status === 'issued' ? 'Not Activated'
             : license.status === 'suspended' ? 'Suspended'
@@ -1117,13 +1182,15 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           formattedExpiry = oneYear.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
         }
 
-        return {
+        const isLicGifted = isGifted || (license as any).access_type === 'gifted' || license.price === 'Gifted Plan';
+
+        licenseItems.push({
           id: String(license.id || `${trimmedEmail}-${index}`),
-          licenseKey: license.code || license.license_key || license.licenseKey || '',
+          licenseKey: rawCode,
           plan,
           planName: `${plan} Plan`,
           billingCycle: 'yearly',
-          price: plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year',
+          price: isLicGifted ? 'Gifted Plan' : plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year',
           status,
           connectedDomain: license.activated_domain || license.store_domain || null,
           requestedDomain: license.requested_domain || null,
@@ -1135,33 +1202,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           features: plan === 'Business'
             ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
             : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
-        };
-      });
-      const activePaidLicense = backendLicenses.find((license) => !license.is_trial && license.status === 'active');
-      const activeTrialLicense = backendLicenses.find((license) => license.is_trial && license.status === 'active');
-      const issuedTrialLicense = backendLicenses.find((license) => license.is_trial && license.status === 'issued');
-      const trialEnd = activeTrialLicense?.expires_at || issuedTrialLicense?.expires_at || null;
-      const parsedTrialEnd = trialEnd ? new Date(trialEnd).getTime() : NaN;
-      const trialDaysRemaining = activeTrialLicense
-        ? Math.max(0, Number(activeTrialLicense.days_remaining) || (Number.isNaN(parsedTrialEnd) ? 0 : Math.ceil((parsedTrialEnd - Date.now()) / 86400000)))
-        : issuedTrialLicense ? 7 : 0;
-      const isGifted = acc.access_type === 'Gifted' || acc.accessType === 'Gifted' || Boolean(acc.gifted_details || acc.giftedDetails) || localMatch?.accessType === 'Gifted';
-      const giftedDetails = acc.gifted_details || acc.giftedDetails || localMatch?.giftedDetails;
-      const isPaid = Boolean(activePaidLicense) || isGifted;
-      const isTrialActive = !isPaid && Boolean(activeTrialLicense) && trialDaysRemaining > 0;
-      const isTrialExpired = !isPaid && Boolean(issuedTrialLicense || activeTrialLicense) && !isTrialActive;
-      const trialCode = activeTrialLicense?.code || issuedTrialLicense?.code || '';
-      const storeName = acc.business_name || localMatch?.businessName || 'ZAMERIA Store';
-      const storeUrl = acc.store_url || localMatch?.connectedStore.url || '';
-      const fullName = acc.full_name || localMatch?.fullName || 'Store Owner';
-      const phone = acc.phone || localMatch?.phone || '+234 800 000 0000';
-      const rawPlanStr = String(giftedDetails?.plan || activePaidLicense?.plan || acc.plan || localMatch?.plan || '').toLowerCase();
-      const paidPlan = rawPlanStr.includes('starter') ? 'Starter' : rawPlanStr.includes('business') ? 'Business' : 'Starter';
-
-      const accountStatus: AccountStatus = isPaid
-        ? (paidPlan === 'Starter' ? 'active_starter' : 'active_business')
-        : isTrialActive ? 'trial_active'
-          : isTrialExpired ? 'trial_expired' : 'trial_not_started';
+        });
+      }
 
       const boundLicense = licenseItems.find((license) => Boolean(license.connectedDomain));
       const isActuallyConnected = Boolean(boundLicense?.connectedDomain || (isTrialActive && Boolean(acc.trial?.activatedStore?.url)));

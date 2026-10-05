@@ -260,7 +260,7 @@ export const Hero: React.FC = () => {
                     gap: '8px',
                   }}
                 >
-                  <span style={{ color: '#cbd5e1' }}>app.zameria.com/sale</span>
+                  <span style={{ color: '#cbd5e1' }}>app.zameria.co/sale</span>
                   <span>•</span>
                   <span>Lagos Skincare Lab — Counter POS</span>
                 </div>
