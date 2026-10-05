@@ -10,6 +10,10 @@ export interface VerifiedCheckout {
   expires_at: string;
   store_domain?: string;
   payment_reference?: string;
+  country?: string;
+  currency?: 'NGN' | 'USD';
+  amount?: number;
+  price?: string;
 }
 
 export async function startZameriaCheckout(input: {
@@ -18,6 +22,9 @@ export async function startZameriaCheckout(input: {
   businessName: string;
   storeUrl: string;
   callbackUrl: string;
+  country?: string;
+  currency?: 'NGN' | 'USD';
+  amount?: number;
 }): Promise<{ authorization_url: string; reference: string }> {
   const response = await fetch(`${ZAMERIA_API_BASE}/checkout`, {
     method: 'POST',
@@ -28,8 +35,12 @@ export async function startZameriaCheckout(input: {
       business_name: input.businessName,
       store_url: input.storeUrl,
       callback_url: input.callbackUrl,
+      country: input.country,
+      currency: input.currency,
+      amount: input.amount,
     }),
   });
+
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.authorization_url || !data.reference) {
     throw new Error(data.error || 'Unable to start secure checkout. Please try again.');

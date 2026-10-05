@@ -70,12 +70,12 @@ export const Hero: React.FC = () => {
 
           {/* Oversized Display Headline */}
           <h1 className="hero-headline" style={{ margin: '0 auto 24px' }}>
-            Your online and offline business shouldn't live in different worlds.
+            Real-Time WooCommerce POS &amp; In-Store Inventory Management
           </h1>
 
           {/* Straight-To-The-Point Subtitle */}
-          <p className="lead-text center" style={{ maxWidth: '680px', marginBottom: '36px' }}>
-            ZAMERIA connects your online WooCommerce store with your physical store. Manage your products, inventory, orders, and sales without maintaining separate systems.
+          <p className="lead-text center" style={{ maxWidth: '720px', marginBottom: '36px' }}>
+            Your online and offline business shouldn't live in different worlds. ZAMERIA connects your WooCommerce store with physical retail counters, barcode checkout, and instant bi-directional inventory sync.
           </p>
 
           {/* Action Duo */}

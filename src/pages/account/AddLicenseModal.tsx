@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth, LicenseItem, OrderItem } from '../../context/CustomerAuthContext';
+import { isNigerianCountry, getAuthoritativePlanPrice } from '../../lib/geoPricing';
 import { useRouter } from '../../router/Router';
 import {
   X,
@@ -42,11 +43,14 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
   const isTrial = resolveSubscriptionState(customer) === 'trial_active';
   const defaultPm = customer.paymentMethods.find((p) => p.isDefault) || customer.paymentMethods[0];
 
+  const targetCountry = customer.country || (customer.currency === 'USD' ? 'US' : 'NG');
+  const isNigeria = customer.currency ? customer.currency === 'NGN' : isNigerianCountry(targetCountry);
+  const starterPriceStr = isNigeria ? '₦200,000' : '$250';
+  const businessPriceStr = isNigeria ? '₦300,000' : '$400';
+
   const getPrice = (plan: 'Starter' | 'Business', _cycle: 'monthly' | 'yearly' = 'yearly') => {
-    if (plan === 'Starter') {
-      return { amount: '₦200,000', period: 'per year', billedTotal: '₦200,000 billed annually' };
-    }
-    return { amount: '₦300,000', period: 'per year', billedTotal: '₦300,000 billed annually' };
+    const formatted = plan === 'Starter' ? starterPriceStr : businessPriceStr;
+    return { amount: formatted, period: 'per year', billedTotal: `${formatted} billed annually` };
   };
 
   const handlePurchase = async () => {
@@ -230,7 +234,7 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                     />
                   </div>
                   <div style={{ fontSize: '20px', fontWeight: 900, color: '#071A31' }}>
-                    ₦200,000
+                    {starterPriceStr}
                     <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}> / yr</span>
                   </div>
                   <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 10px', lineHeight: 1.4 }}>
@@ -276,7 +280,7 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                     />
                   </div>
                   <div style={{ fontSize: '20px', fontWeight: 900, color: '#071A31' }}>
-                    ₦300,000
+                    {businessPriceStr}
                     <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 500 }}> / yr</span>
                   </div>
                   <p style={{ fontSize: '12px', color: '#64748b', margin: '6px 0 10px', lineHeight: 1.4 }}>

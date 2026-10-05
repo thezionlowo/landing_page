@@ -1,13 +1,30 @@
-# Robots.txt for ZAMERIA (https://zameria.co)
+# Robots.txt for ZAMERIA (https://www.zameria.co)
 User-agent: *
 Allow: /
 Allow: /get-started
 Allow: /login
+Allow: /woocommerce-pos
+Allow: /woocommerce-inventory-sync
+Allow: /woocommerce-pos-nigeria
+Allow: /industries/
+Allow: /solutions/
+Allow: /hardware-compatibility
+Allow: /woocommerce-pos-vs-traditional-pos
+Allow: /best-woocommerce-pos
+Allow: /alternatives/
+Allow: /comparisons/
+Allow: /features/
+Allow: /nigeria/
+Allow: /leadcapture1
+Allow: /leadcapture2
 
-# Disallow private customer account, auth reset, and internal API paths
+# Disallow private customer account, auth reset, and internal checkout paths
 Disallow: /account
 Disallow: /account/*
 Disallow: /forgot-password
+Disallow: /subscribe
+Disallow: /payment/
 
 # Search Engine Sitemaps
-Sitemap: https://zameria.co/sitemap.xml
+Sitemap: https://www.zameria.co/sitemap.xml
+

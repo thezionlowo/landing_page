@@ -1,5 +1,6 @@
 import React from 'react';
 import { ArrowRight, Check, ShieldCheck } from 'lucide-react';
+import { useGeoPricing } from '../services/geoPricingService';
 
 const starterFeatures = [
   '1 WooCommerce store',
@@ -69,36 +70,54 @@ function PlanCard({ name, price, description, features, featured = false, plan }
   );
 }
 
-export const PricingSection: React.FC = () => (
-  <section id="pricing" className="pricing-section">
-    <div className="container pricing-container">
-      <div className="pricing-header">
-        <div className="eyebrow-badge purple" style={{ margin: '0 auto 16px' }}>
-          <span>TRANSPARENT PRICING</span>
-        </div>
-        <h2 className="section-headline pricing-headline">Two simple plans. One connected business.</h2>
-        <p className="lead-text center pricing-lead">
-          Start with a 7-day free trial. All subscriptions are billed annually—there are no monthly plans.
-        </p>
-      </div>
+export const PricingSection: React.FC = () => {
+  const { geo, isNigeria, setCountry } = useGeoPricing();
 
-      <div className="pricing-two-grid">
-        <PlanCard
-          name="Starter"
-          price="₦200,000"
-          description="For a retailer setting up their first connected store and POS."
-          features={starterFeatures}
-          plan="starter"
-        />
-        <PlanCard
-          name="Business"
-          price="₦300,000"
-          description="For growing retailers with unlimited products and staff."
-          features={businessFeatures}
-          featured
-          plan="business"
-        />
-      </div>
+  return (
+    <section id="pricing" className="pricing-section">
+      <div className="container pricing-container">
+        <div className="pricing-header">
+          <div className="eyebrow-badge purple" style={{ margin: '0 auto 16px' }}>
+            <span>TRANSPARENT PRICING</span>
+          </div>
+          <h2 className="section-headline pricing-headline">Two simple plans. One connected business.</h2>
+          <p className="lead-text center pricing-lead">
+            Start with a 7-day free trial. All subscriptions are billed annually—there are no monthly plans.
+          </p>
+
+          {/* Geo Location Pill & Selector */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginTop: '16px', padding: '6px 14px', borderRadius: '9999px', backgroundColor: '#f1f5f9', border: '1px solid #cbd5e1', fontSize: '12.5px' }}>
+            <span style={{ color: '#64748b' }}>Detected region:</span>
+            <strong style={{ color: 'var(--brand-navy)' }}>{isNigeria ? '🇳🇬 Nigeria (₦ NGN)' : `🌐 ${geo.country || 'International'} ($ USD)`}</strong>
+            <span style={{ color: '#94a3b8' }}>•</span>
+            <button
+              type="button"
+              onClick={() => setCountry(isNigeria ? 'US' : 'NG')}
+              style={{ border: 'none', background: 'transparent', color: '#2563eb', fontWeight: 600, cursor: 'pointer', padding: 0, textDecoration: 'underline', fontSize: '12px' }}
+            >
+              Switch to {isNigeria ? 'International ($ USD)' : 'Nigeria (₦ NGN)'}
+            </button>
+          </div>
+        </div>
+
+        <div className="pricing-two-grid">
+          <PlanCard
+            name="Starter"
+            price={geo.plans.starter.priceFormatted}
+            description="For a retailer setting up their first connected store and POS."
+            features={starterFeatures}
+            plan="starter"
+          />
+          <PlanCard
+            name="Business"
+            price={geo.plans.business.priceFormatted}
+            description="For growing retailers with unlimited products and staff."
+            features={businessFeatures}
+            featured
+            plan="business"
+          />
+        </div>
+
 
       {/* Trust & Peace of Mind indicators */}
       <div className="pricing-trust-strip">
@@ -337,6 +356,6 @@ export const PricingSection: React.FC = () => (
         }
       }
     `}</style>
-  </section>
-);
-
+    </section>
+  );
+};

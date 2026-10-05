@@ -1,5 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { leadCaptureClient, LeadSource, ReferralPartnerInfo } from '../services/leadCaptureClient';
+import {
+  isNigerianCountry,
+  resolveGeoPricing,
+  getAuthoritativePlanPrice,
+  getAuthoritativePlanAmount,
+} from '../lib/geoPricing';
 
 export type LicenseStatus = 'Active' | 'Not Activated' | 'Expired' | 'Suspended' | 'Revoked';
 
@@ -52,6 +58,9 @@ export interface SubscriptionInfo {
   planId: 'Starter' | 'Business' | null;
   planName: string;
   price: string;
+  currency?: 'NGN' | 'USD';
+  currencySymbol?: '₦' | '$';
+  amountNumber?: number;
   billingCycle: 'monthly' | 'yearly';
   startDate: string | null;
   renewsAt: string | null;
@@ -66,6 +75,9 @@ export interface LicenseItem {
   planName: string;
   billingCycle: 'monthly' | 'yearly';
   price: string;
+  currency?: 'NGN' | 'USD';
+  currencySymbol?: '₦' | '$';
+  amountNumber?: number;
   status: LicenseStatus;
   connectedDomain: string | null;
   // Store URL supplied at checkout. This is not an activation confirmation;
@@ -86,6 +98,8 @@ export interface OrderItem {
   status: 'Completed' | 'Processing' | 'Pending' | 'Failed';
   plan: string;
   total: string;
+  currency?: 'NGN' | 'USD';
+  currencySymbol?: '₦' | '$';
   amountNumber: number;
   invoiceNumber: string;
   paymentMethod: string;
@@ -98,6 +112,7 @@ export interface OrderItem {
   connectedDomain?: string | null;
   transactionRef?: string;
 }
+
 
 export interface PaymentMethodItem {
   id: string;
@@ -125,8 +140,12 @@ export interface CustomerProfile {
   businessName: string;
   email: string;
   phone: string;
+  country?: string;
+  currency?: 'NGN' | 'USD';
+  currencySymbol?: '₦' | '$';
   password?: string;
   accountStatus: AccountStatus;
+
 
   // Modern Structured Models
   trial: TrialInfo;
@@ -1165,6 +1184,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     email: string;
     password: string;
     phone?: string;
+    country?: string;
+    currency?: 'NGN' | 'USD';
     source?: LeadSource;
     campaign?: string;
     referralPartner?: ReferralPartnerInfo;
@@ -1229,6 +1250,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
 
       const userPhone = data.phone?.trim() || '+234 800 000 0000';
+      const isNigeria = data.currency === 'NGN' || isNigerianCountry(data.country || 'Nigeria');
+      const userCountry = isNigeria ? 'Nigeria' : (data.country || 'International');
+      const userCurrency: 'NGN' | 'USD' = isNigeria ? 'NGN' : 'USD';
+      const userCurrencySymbol: '₦' | '$' = isNigeria ? '₦' : '$';
 
       // STATE A: Account Created, Trial Not Started, NO license, NO subscription!
       const newCustomer: CustomerProfile = {
@@ -1237,6 +1262,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         businessName: data.businessName.trim(),
         email: trimmedEmail,
         phone: userPhone,
+        country: userCountry,
+        currency: userCurrency,
+        currencySymbol: userCurrencySymbol,
         password: data.password,
         accountStatus: 'trial_not_started',
         trial: {
@@ -1260,7 +1288,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           status: 'none',
           planId: null,
           planName: 'None (Trial Eligible)',
-          price: '₦0',
+          price: userCurrencySymbol + '0',
+          currency: userCurrency,
+          currencySymbol: userCurrencySymbol,
+          amountNumber: 0,
           billingCycle: 'monthly',
           startDate: null,
           renewsAt: null,
@@ -1278,16 +1309,17 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           firstName,
           lastName,
           company: data.businessName.trim(),
-          address: 'Victoria Island',
-          city: 'Lagos',
-          state: 'Lagos State',
-          country: 'Nigeria',
+          address: isNigeria ? 'Victoria Island' : 'Commercial Suite',
+          city: isNigeria ? 'Lagos' : 'Metro City',
+          state: isNigeria ? 'Lagos State' : 'State',
+          country: userCountry,
           phone: userPhone,
         },
         paymentMethods: [],
         orders: [],
         licenses: [], // NO LICENSE CREATED!
       };
+
 
       users.push(newCustomer);
       localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
@@ -1670,17 +1702,26 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const changePlan = (newPlan: 'Starter' | 'Business', _cycle: 'monthly' | 'yearly' = 'yearly') => {
     if (!customer) return;
-    const price = newPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
+    const isUsd = customer.currency === 'USD' || (customer.country && !isNigerianCountry(customer.country)) || (customer.subscription?.price && customer.subscription.price.includes('$'));
+    const price = isUsd
+      ? (newPlan === 'Starter' ? '$250 / year' : '$400 / year')
+      : (newPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year');
+    const amountNumber = isUsd ? (newPlan === 'Starter' ? 250 : 400) : (newPlan === 'Starter' ? 200000 : 300000);
     const updated: CustomerProfile = {
       ...customer,
       plan: newPlan,
       planPrice: price,
+      currency: isUsd ? 'USD' : 'NGN',
+      currencySymbol: isUsd ? '$' : '₦',
       billingCycle: 'yearly',
       subscription: {
         ...customer.subscription,
         planId: newPlan,
         planName: `${newPlan} Plan`,
         price,
+        currency: isUsd ? 'USD' : 'NGN',
+        currencySymbol: isUsd ? '$' : '₦',
+        amountNumber,
         billingCycle: 'yearly',
         status: 'active',
       },
@@ -1691,11 +1732,44 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // The dashboard only changes after the server has verified a Paystack receipt.
   // This deliberately does not create a payment, order, or license in the browser.
-  const recordVerifiedPayment = (receipt: { license_key: string; plan: 'starter' | 'business'; expires_at: string; store_domain?: string; payment_reference?: string }) => {
+  const recordVerifiedPayment = (receipt: {
+    license_key: string;
+    plan: 'starter' | 'business';
+    expires_at: string;
+    store_domain?: string;
+    payment_reference?: string;
+    country?: string;
+    currency?: 'NGN' | 'USD';
+    amount?: number;
+    price?: string;
+  }) => {
     if (!customer || !receipt.license_key) return;
     if (customer.licenses.some((license) => license.licenseKey === receipt.license_key)) return;
     const plan: 'Starter' | 'Business' = receipt.plan === 'starter' ? 'Starter' : 'Business';
-    const price = plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
+
+    const isUsd = receipt.currency === 'USD'
+      || (receipt.country && !isNigerianCountry(receipt.country))
+      || customer.currency === 'USD'
+      || (customer.country && !isNigerianCountry(customer.country))
+      || (typeof receipt.amount === 'number' && receipt.amount < 1000)
+      || receipt.price?.includes('$');
+
+    const currency: 'NGN' | 'USD' = isUsd ? 'USD' : 'NGN';
+    const currencySymbol: '₦' | '$' = isUsd ? '$' : '₦';
+    const country = receipt.country || customer.country || (isUsd ? 'International' : 'Nigeria');
+
+    const price = receipt.price || (isUsd
+      ? (plan === 'Starter' ? '$250 / year' : '$400 / year')
+      : (plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year'));
+
+    const amountNumber = typeof receipt.amount === 'number'
+      ? receipt.amount
+      : (isUsd ? (plan === 'Starter' ? 250 : 400) : (plan === 'Starter' ? 200000 : 300000));
+
+    const total = isUsd
+      ? (plan === 'Starter' ? '$250' : '$400')
+      : (plan === 'Starter' ? '₦200,000' : '₦300,000');
+
     const expiresAt = new Date(receipt.expires_at);
     const expiryLabel = Number.isNaN(expiresAt.getTime()) ? receipt.expires_at : expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const now = new Date();
@@ -1704,9 +1778,79 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const licenseId = `lic_${idSuffix}`;
     const orderId = `ord_${receipt.payment_reference || idSuffix}`;
     const orderNumber = `#ZM-${(receipt.payment_reference || idSuffix).slice(-8).toUpperCase()}`;
-    const license: LicenseItem = { id: licenseId, licenseKey: receipt.license_key, plan, planName: `${plan} Plan`, billingCycle: 'yearly', price, status: 'Active', connectedDomain: null, requestedDomain: receipt.store_domain || null, activationStatus: 'Not Activated', activatedAt: null, expiresAt: expiryLabel, orderId, orderNumber, features: [] };
-    const order: OrderItem = { id: orderId, orderNumber, date: dateLabel, status: 'Completed', plan: `${plan} Plan (Annual)`, total: plan === 'Starter' ? '₦200,000' : '₦300,000', amountNumber: plan === 'Starter' ? 200000 : 300000, invoiceNumber: `PAYSTACK-${(receipt.payment_reference || idSuffix).slice(-10).toUpperCase()}`, paymentMethod: 'Paystack', billingName: `${customer.fullName} • ${customer.businessName}`, billingEmail: customer.email, items: [`ZAMERIA ${plan} Plan Subscription`, `License Key ${receipt.license_key}`], licenseId, licenseKey: receipt.license_key, licenseStatus: 'Active', connectedDomain: receipt.store_domain || null, transactionRef: receipt.payment_reference };
-    persistSession({ ...customer, accountStatus: 'active_business', plan, planPrice: price, billingCycle: 'yearly', nextBillingDate: expiryLabel, trial: { ...customer.trial, status: 'expired', daysRemaining: 0 }, trialDaysRemaining: 0, subscription: { ...customer.subscription, status: 'active', planId: plan, planName: `${plan} Plan`, price, billingCycle: 'yearly', startDate: dateLabel, renewsAt: expiryLabel, cancelledAt: null }, licenses: [license, ...customer.licenses], orders: [order, ...customer.orders] });
+
+    const license: LicenseItem = {
+      id: licenseId,
+      licenseKey: receipt.license_key,
+      plan,
+      planName: `${plan} Plan`,
+      billingCycle: 'yearly',
+      price,
+      currency,
+      currencySymbol,
+      amountNumber,
+      status: 'Active',
+      connectedDomain: null,
+      requestedDomain: receipt.store_domain || null,
+      activationStatus: 'Not Activated',
+      activatedAt: null,
+      expiresAt: expiryLabel,
+      orderId,
+      orderNumber,
+      features: [],
+    };
+
+    const order: OrderItem = {
+      id: orderId,
+      orderNumber,
+      date: dateLabel,
+      status: 'Completed',
+      plan: `${plan} Plan (Annual)`,
+      total,
+      currency,
+      currencySymbol,
+      amountNumber,
+      invoiceNumber: `PAYSTACK-${(receipt.payment_reference || idSuffix).slice(-10).toUpperCase()}`,
+      paymentMethod: 'Paystack',
+      billingName: `${customer.fullName} • ${customer.businessName}`,
+      billingEmail: customer.email,
+      items: [`ZAMERIA ${plan} Plan Subscription`, `License Key ${receipt.license_key}`],
+      licenseId,
+      licenseKey: receipt.license_key,
+      licenseStatus: 'Active',
+      connectedDomain: receipt.store_domain || null,
+      transactionRef: receipt.payment_reference,
+    };
+
+    persistSession({
+      ...customer,
+      accountStatus: 'active_business',
+      plan,
+      planPrice: price,
+      country,
+      currency,
+      currencySymbol,
+      billingCycle: 'yearly',
+      nextBillingDate: expiryLabel,
+      trial: { ...customer.trial, status: 'expired', daysRemaining: 0 },
+      trialDaysRemaining: 0,
+      subscription: {
+        ...customer.subscription,
+        status: 'active',
+        planId: plan,
+        planName: `${plan} Plan`,
+        price,
+        currency,
+        currencySymbol,
+        amountNumber,
+        billingCycle: 'yearly',
+        startDate: dateLabel,
+        renewsAt: expiryLabel,
+        cancelledAt: null,
+      },
+      licenses: [license, ...customer.licenses],
+      orders: [order, ...customer.orders],
+    });
   };
 
   // --- STATE 4: Paid Subscription & License Generation ---
@@ -1717,6 +1861,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     billingCycle?: 'monthly' | 'yearly';
     paymentMethodId?: string;
     transactionRef?: string;
+    currency?: 'NGN' | 'USD';
+    country?: string;
   }): Promise<{ success: boolean; license: LicenseItem; order: OrderItem; isDuplicate?: boolean }> => {
     if (!customer) throw new Error('Not authenticated');
 
@@ -1741,18 +1887,23 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const renewStr = periodEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
     const orderDateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-    let priceStr = '₦300,000 / year';
-    let amountNumber = 300000;
-    let totalStr = '₦300,000';
+    const isUsd = (data as any).currency === 'USD'
+      || customer.currency === 'USD'
+      || (customer.country && !isNigerianCountry(customer.country))
+      || (customer.billingAddress?.country && !isNigerianCountry(customer.billingAddress.country));
+
+    const currency: 'NGN' | 'USD' = isUsd ? 'USD' : 'NGN';
+    const currencySymbol: '₦' | '$' = isUsd ? '$' : '₦';
+    const country = customer.country || (isUsd ? 'International' : 'Nigeria');
+
+    let priceStr = isUsd ? '$400 / year' : '₦300,000 / year';
+    let amountNumber = isUsd ? 400 : 300000;
+    let totalStr = isUsd ? '$400' : '₦300,000';
 
     if (data.plan === 'Starter') {
-      priceStr = '₦200,000 / year';
-      amountNumber = 200000;
-      totalStr = '₦200,000';
-    } else {
-      priceStr = '₦300,000 / year';
-      amountNumber = 300000;
-      totalStr = '₦300,000';
+      priceStr = isUsd ? '$250 / year' : '₦200,000 / year';
+      amountNumber = isUsd ? 250 : 200000;
+      totalStr = isUsd ? '$250' : '₦200,000';
     }
 
     // Generate strict ZMR-XXXX-XXXX-XXXX key
@@ -1788,6 +1939,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       planName: `${data.plan} Plan`,
       billingCycle: 'yearly',
       price: priceStr,
+      currency,
+      currencySymbol,
+      amountNumber,
       status: 'Active',
       connectedDomain: null,
       activationStatus: 'Not Activated',
@@ -1820,6 +1974,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       status: 'Completed',
       plan: `${data.plan} Plan (${data.billingCycle === 'yearly' ? 'Annual' : 'Monthly'})`,
       total: totalStr,
+      currency,
+      currencySymbol,
       amountNumber,
       invoiceNumber: `INV-${now.getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
       paymentMethod: paymentMethodDesc,
@@ -1842,6 +1998,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       accountStatus: 'active_business',
       plan: data.plan,
       planPrice: priceStr,
+      country,
+      currency,
+      currencySymbol,
       billingCycle: data.billingCycle || 'yearly',
       nextBillingDate: renewStr,
       paymentMethods: updatedPaymentMethods,
@@ -1856,6 +2015,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         planId: data.plan,
         planName: `${data.plan} Plan`,
         price: priceStr,
+        currency,
+        currencySymbol,
+        amountNumber,
         billingCycle: data.billingCycle || 'yearly',
         startDate: startStr,
         renewsAt: renewStr,

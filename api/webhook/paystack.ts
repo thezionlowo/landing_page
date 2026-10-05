@@ -96,12 +96,26 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
     return;
   }
 
-  // 5. Identify Plan from Amount and Metadata
-  // Starter: ₦200,000 = 20,000,000 kobo
-  // Business: ₦300,000 = 30,000,000 kobo
-  let plan: 'Starter' | 'Business' = metadata?.plan || (amount >= 25000000 ? 'Business' : 'Starter');
+  // 5. Identify Plan & Currency from Amount, Currency and Metadata
+  // Nigeria (NGN): Starter: ₦200,000 = 20,000,000 kobo | Business: ₦300,000 = 30,000,000 kobo
+  // International (USD): Starter: $250 = 25,000 cents | Business: $400 = 40,000 cents
+  const currencyHeader = (eventData.data as any).currency || metadata?.currency || (amount < 1000000 ? 'USD' : 'NGN');
+  const isUsd = currencyHeader.toUpperCase() === 'USD' || amount < 1000000;
+  const currency: 'NGN' | 'USD' = isUsd ? 'USD' : 'NGN';
+
+  let plan: 'Starter' | 'Business';
+  if (metadata?.plan) {
+    plan = metadata.plan;
+  } else if (isUsd) {
+    plan = amount >= 35000 ? 'Business' : 'Starter';
+  } else {
+    plan = amount >= 25000000 ? 'Business' : 'Starter';
+  }
+
   let planName = plan === 'Starter' ? 'Starter Plan' : 'Business Plan';
-  let price = plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
+  let price = isUsd
+    ? (plan === 'Starter' ? '$250 / year' : '$400 / year')
+    : (plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year');
 
   // 6. Generate 1-Year License & Authoritative Expiry
   const licenseKey = generateAuthoritativeLicenseKey();
@@ -116,6 +130,7 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
     planName,
     billingCycle: 'yearly' as const,
     price,
+    currency,
     status: 'Active' as const,
     connectedDomain: null,
     activationStatus: 'Not Activated' as const,
@@ -126,6 +141,7 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
     customerEmail: customer?.email,
     accountId: metadata?.accountId || metadata?.account_id,
   };
+
 
   // Register transaction as successfully processed
   processedTransactions.add(reference);

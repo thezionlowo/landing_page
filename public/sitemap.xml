@@ -4,117 +4,178 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
         http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
   <url>
-    <loc>https://zameria.co/</loc>
+    <loc>https://www.zameria.co/</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://zameria.co/get-started</loc>
+    <loc>https://www.zameria.co/get-started</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/woocommerce-pos</loc>
+    <loc>https://www.zameria.co/woocommerce-pos</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://zameria.co/woocommerce-inventory-sync</loc>
+    <loc>https://www.zameria.co/woocommerce-inventory-sync</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://zameria.co/woocommerce-pos-nigeria</loc>
+    <loc>https://www.zameria.co/woocommerce-pos-nigeria</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://zameria.co/industries/fashion</loc>
+    <loc>https://www.zameria.co/industries/fashion</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/industries/beauty</loc>
+    <loc>https://www.zameria.co/industries/beauty</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/industries/electronics</loc>
+    <loc>https://www.zameria.co/industries/electronics</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/solutions/prevent-overselling</loc>
+    <loc>https://www.zameria.co/solutions/prevent-overselling</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/industries/supermarkets</loc>
+    <loc>https://www.zameria.co/industries/supermarkets</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/industries/pharmacies</loc>
+    <loc>https://www.zameria.co/industries/pharmacies</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/industries/jewelry</loc>
+    <loc>https://www.zameria.co/industries/jewelry</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/hardware-compatibility</loc>
+    <loc>https://www.zameria.co/hardware-compatibility</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/woocommerce-pos-vs-traditional-pos</loc>
+    <loc>https://www.zameria.co/woocommerce-pos-vs-traditional-pos</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/solutions/stock-mismatch</loc>
+    <loc>https://www.zameria.co/solutions/stock-mismatch</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/solutions/offline-pos</loc>
+    <loc>https://www.zameria.co/solutions/offline-pos</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://zameria.co/login</loc>
+    <loc>https://www.zameria.co/login</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://zameria.co/leadcapture1</loc>
+    <loc>https://www.zameria.co/alternatives/foosales</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/alternatives/oliver-pos</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/comparisons/foosales-vs-oliver-pos</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/best-woocommerce-pos</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/solutions/multi-store-inventory-sync</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/features/split-payments</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/nigeria/lagos-retail-pos</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/industries/clothing-boutique-pos</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/industries/electronics-pos</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/solutions/stop-overselling-rush-hours</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://www.zameria.co/leadcapture1</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://zameria.co/leadcapture2</loc>
+    <loc>https://www.zameria.co/leadcapture2</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 </urlset>
+

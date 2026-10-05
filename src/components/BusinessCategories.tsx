@@ -4,6 +4,7 @@ interface CategoryItem {
   name: string;
   desc: string;
   image: string;
+  imageWebp: string;
   tag: string;
 }
 
@@ -12,36 +13,42 @@ const CATEGORIES: CategoryItem[] = [
     name: 'Fashion & Clothing',
     desc: 'Boutiques, apparel brands, shoe stores and bespoke Nigerian designers.',
     image: '/categories/fashion.jpg',
+    imageWebp: '/categories/fashion.webp',
     tag: 'Size & Color Variations',
   },
   {
     name: 'Beauty & Cosmetics',
     desc: 'Skincare shops, cosmetics brands, wellness bars and beauty studios.',
     image: '/categories/beauty.jpg',
+    imageWebp: '/categories/beauty.webp',
     tag: 'Batch & Expiry Ready',
   },
   {
     name: 'Electronics & Gadgets',
     desc: 'Phone shops, computer vendors, audio equipment and tech accessories.',
     image: '/categories/electronics.jpg',
+    imageWebp: '/categories/electronics.webp',
     tag: 'Serial & IMEI Tracking',
   },
   {
     name: 'Grocery & Supermarkets',
     desc: 'Supermarkets, mini marts, food provisions and fast-paced retail stores.',
     image: '/categories/grocery.jpg',
+    imageWebp: '/categories/grocery.webp',
     tag: 'Rapid Barcode Scanning',
   },
   {
     name: 'Pharmacies & Health Stores',
     desc: 'Retail pharmacies, medical dispensaries and wellness product centers.',
     image: '/categories/pharmacy.jpg',
+    imageWebp: '/categories/pharmacy.webp',
     tag: 'Stock Alert Safeguards',
   },
   {
     name: 'Jewelry & Accessories',
     desc: 'Fine jewelry stores, luxury watches, handcrafted beads and gift shops.',
     image: '/categories/jewelry.jpg',
+    imageWebp: '/categories/jewelry.webp',
     tag: 'High-Value Tagging',
   },
 ];
@@ -106,19 +113,26 @@ export const BusinessCategories: React.FC = () => {
                   backgroundColor: '#f1f5f9',
                 }}
               >
-                <img
-                  src={cat.image}
-                  alt={`${cat.name} Nigerian retail store`}
-                  loading="lazy"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    display: 'block',
-                    transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-                  }}
-                  className="cat-img"
-                />
+                <picture>
+                  <source type="image/webp" srcSet={cat.imageWebp} />
+                  <source type="image/jpeg" srcSet={cat.image} />
+                  <img
+                    src={cat.imageWebp}
+                    alt={`${cat.name} Nigerian retail store`}
+                    loading="lazy"
+                    decoding="async"
+                    width={800}
+                    height={600}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      display: 'block',
+                      transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    }}
+                    className="cat-img"
+                  />
+                </picture>
                 <div
                   style={{
                     position: 'absolute',

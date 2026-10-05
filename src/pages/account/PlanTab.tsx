@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth } from '../../context/CustomerAuthContext';
+import { isNigerianCountry, getAuthoritativePlanPrice } from '../../lib/geoPricing';
 import { useRouter } from '../../router/Router';
 import { AddLicenseModal } from './AddLicenseModal';
 import {
@@ -44,7 +45,13 @@ export const PlanTab: React.FC = () => {
   const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || 'October 12, 2026';
   const planName = customer.subscription.planName || 'Business Plan';
   const isBusiness = planName.toLowerCase().includes('business') || String(customer.plan || '').toLowerCase().includes('business');
-  const authoritativePrice = isBusiness ? '₦300,000 / year' : '₦200,000 / year';
+  
+  const targetCountry = customer.country || (customer.currency === 'USD' ? 'US' : 'NG');
+  const authoritativePrice = getAuthoritativePlanPrice(targetCountry, isBusiness ? 'Business' : 'Starter');
+  const starterCardPrice = getAuthoritativePlanPrice(targetCountry, 'Starter').split(' /')[0];
+  const businessCardPrice = getAuthoritativePlanPrice(targetCountry, 'Business').split(' /')[0];
+  const freeTrialZeroPrice = (customer.currency === 'USD' || !isNigerianCountry(targetCountry)) ? '$0 (7-Day Trial)' : '₦0 (7-Day Trial)';
+
   const rawPrice = customer.subscription.price || customer.planPrice || authoritativePrice;
   const price = (rawPrice.includes('15,000') || rawPrice.includes('5,000') || rawPrice.includes('20,000') || rawPrice.includes('30,000'))
     ? authoritativePrice
@@ -195,7 +202,7 @@ export const PlanTab: React.FC = () => {
               {isTrialNotStarted ? (
                 <span>Activate ZAMERIA to start your trial</span>
               ) : isTrialActive ? (
-                <span>₦0 (7-Day Trial)</span>
+                <span>{freeTrialZeroPrice}</span>
               ) : isTrialExpired ? (
                 <span style={{ color: '#dc2626' }}>Trial Ended</span>
               ) : (
@@ -511,7 +518,7 @@ export const PlanTab: React.FC = () => {
                 </span>
               </div>
               <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
-                ₦200,000
+                {starterCardPrice}
                 <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
               </div>
               <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>
@@ -568,7 +575,7 @@ export const PlanTab: React.FC = () => {
                 </span>
               </div>
               <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
-                ₦300,000
+                {businessCardPrice}
                 <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
               </div>
               <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>

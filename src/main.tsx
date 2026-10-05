@@ -5,9 +5,18 @@ import './index.css';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+  if (rootElement.hasChildNodes()) {
+    ReactDOM.hydrateRoot(
+      rootElement,
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  } else {
+    ReactDOM.createRoot(rootElement).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  }
 }

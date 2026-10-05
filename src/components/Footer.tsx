@@ -1,6 +1,6 @@
 import React from 'react';
 import { Mail, Phone, ArrowUpRight } from 'lucide-react';
-import { scrollToSection } from '../lib/routes';
+import { scrollToSection, ROUTES } from '../lib/routes';
 import { useRouter, AccountTab } from '../router/Router';
 
 // --- Pixel-Perfect Subtle SVG Social Icons ---
@@ -75,7 +75,7 @@ export const Footer: React.FC = () => {
 
   const handleOpenPos = (e: React.MouseEvent) => {
     e.preventDefault();
-    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer');
+    window.open(ROUTES.pos, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -348,7 +348,7 @@ export const Footer: React.FC = () => {
                   href="/#download"
                   onClick={(e) => {
                     e.preventDefault();
-                    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer');
+                    window.open(ROUTES.pos, '_blank', 'noopener,noreferrer');
                   }}
                   className="dark-footer-link"
                 >

@@ -1,13 +1,6 @@
 import React from 'react';
 import { CustomerAuthProvider } from './context/CustomerAuthContext';
 import { RouterProvider, useRouter } from './router/Router';
-import { LoginPage } from './pages/auth/LoginPage';
-import { GetStartedPage } from './pages/auth/GetStartedPage';
-import { ForgotPasswordPage } from './pages/auth/ForgotPasswordPage';
-import { AccountLayout } from './pages/account/AccountLayout';
-import { SubscribePage } from './pages/SubscribePage';
-import { PaymentCompletePage } from './pages/PaymentCompletePage';
-
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { ProofStrip } from './components/ProofStrip';
@@ -22,24 +15,45 @@ import { Footer } from './components/Footer';
 import { SEOHead } from './components/SEOHead';
 import { ZameriaSupportChatWidget } from './components/ZameriaSupportChatWidget';
 
-import { WooCommercePosPage } from './pages/seo/WooCommercePosPage';
-import { WooCommerceInventorySyncPage } from './pages/seo/WooCommerceInventorySyncPage';
-import { WooCommercePosNigeriaPage } from './pages/seo/WooCommercePosNigeriaPage';
-import { FashionPosPage } from './pages/seo/FashionPosPage';
-import { BeautyPosPage } from './pages/seo/BeautyPosPage';
-import { ElectronicsPosPage } from './pages/seo/ElectronicsPosPage';
-import { SupermarketPosPage } from './pages/seo/SupermarketPosPage';
-import { PharmacyPosPage } from './pages/seo/PharmacyPosPage';
-import { JewelryPosPage } from './pages/seo/JewelryPosPage';
-import { HardwareCompatibilityPage } from './pages/seo/HardwareCompatibilityPage';
-import { PosComparisonPage } from './pages/seo/PosComparisonPage';
-import { StockMismatchPage } from './pages/seo/StockMismatchPage';
-import { OfflinePosPage } from './pages/seo/OfflinePosPage';
-import { PreventOversellingPage } from './pages/seo/PreventOversellingPage';
-import { LeadCapture1Page } from './pages/LeadCapture1Page';
-import { LeadCapture2Page } from './pages/LeadCapture2Page';
+// Code-split subpages for performance and smaller initial bundles
+const LoginPage = React.lazy(() => import('./pages/auth/LoginPage').then(m => ({ default: m.LoginPage })));
+const GetStartedPage = React.lazy(() => import('./pages/auth/GetStartedPage').then(m => ({ default: m.GetStartedPage })));
+const ForgotPasswordPage = React.lazy(() => import('./pages/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
+const AccountLayout = React.lazy(() => import('./pages/account/AccountLayout').then(m => ({ default: m.AccountLayout })));
+const SubscribePage = React.lazy(() => import('./pages/SubscribePage').then(m => ({ default: m.SubscribePage })));
+const PaymentCompletePage = React.lazy(() => import('./pages/PaymentCompletePage').then(m => ({ default: m.PaymentCompletePage })));
+const LeadCapture1Page = React.lazy(() => import('./pages/LeadCapture1Page').then(m => ({ default: m.LeadCapture1Page })));
+const LeadCapture2Page = React.lazy(() => import('./pages/LeadCapture2Page').then(m => ({ default: m.LeadCapture2Page })));
 
-function LandingPageContent() {
+// Code-split SEO Pillar & Industry Pages
+const WooCommercePosPage = React.lazy(() => import('./pages/seo/WooCommercePosPage').then(m => ({ default: m.WooCommercePosPage })));
+const WooCommerceInventorySyncPage = React.lazy(() => import('./pages/seo/WooCommerceInventorySyncPage').then(m => ({ default: m.WooCommerceInventorySyncPage })));
+const WooCommercePosNigeriaPage = React.lazy(() => import('./pages/seo/WooCommercePosNigeriaPage').then(m => ({ default: m.WooCommercePosNigeriaPage })));
+const FashionPosPage = React.lazy(() => import('./pages/seo/FashionPosPage').then(m => ({ default: m.FashionPosPage })));
+const BeautyPosPage = React.lazy(() => import('./pages/seo/BeautyPosPage').then(m => ({ default: m.BeautyPosPage })));
+const ElectronicsPosPage = React.lazy(() => import('./pages/seo/ElectronicsPosPage').then(m => ({ default: m.ElectronicsPosPage })));
+const SupermarketPosPage = React.lazy(() => import('./pages/seo/SupermarketPosPage').then(m => ({ default: m.SupermarketPosPage })));
+const PharmacyPosPage = React.lazy(() => import('./pages/seo/PharmacyPosPage').then(m => ({ default: m.PharmacyPosPage })));
+const JewelryPosPage = React.lazy(() => import('./pages/seo/JewelryPosPage').then(m => ({ default: m.JewelryPosPage })));
+const HardwareCompatibilityPage = React.lazy(() => import('./pages/seo/HardwareCompatibilityPage').then(m => ({ default: m.HardwareCompatibilityPage })));
+const PosComparisonPage = React.lazy(() => import('./pages/seo/PosComparisonPage').then(m => ({ default: m.PosComparisonPage })));
+const StockMismatchPage = React.lazy(() => import('./pages/seo/StockMismatchPage').then(m => ({ default: m.StockMismatchPage })));
+const OfflinePosPage = React.lazy(() => import('./pages/seo/OfflinePosPage').then(m => ({ default: m.OfflinePosPage })));
+const PreventOversellingPage = React.lazy(() => import('./pages/seo/PreventOversellingPage').then(m => ({ default: m.PreventOversellingPage })));
+
+// Phase 1 Commercial Attack Pages
+const FooSalesAlternativesPage = React.lazy(() => import('./pages/seo/FooSalesAlternativesPage').then(m => ({ default: m.FooSalesAlternativesPage })));
+const OliverPosAlternativesPage = React.lazy(() => import('./pages/seo/OliverPosAlternativesPage').then(m => ({ default: m.OliverPosAlternativesPage })));
+const FooSalesVsOliverPosPage = React.lazy(() => import('./pages/seo/FooSalesVsOliverPosPage').then(m => ({ default: m.FooSalesVsOliverPosPage })));
+const BestWooCommercePosPage = React.lazy(() => import('./pages/seo/BestWooCommercePosPage').then(m => ({ default: m.BestWooCommercePosPage })));
+const MultiStoreInventorySyncPage = React.lazy(() => import('./pages/seo/MultiStoreInventorySyncPage').then(m => ({ default: m.MultiStoreInventorySyncPage })));
+const SplitPaymentsPage = React.lazy(() => import('./pages/seo/SplitPaymentsPage').then(m => ({ default: m.SplitPaymentsPage })));
+const LagosRetailPosPage = React.lazy(() => import('./pages/seo/LagosRetailPosPage').then(m => ({ default: m.LagosRetailPosPage })));
+const ClothingBoutiquePosPage = React.lazy(() => import('./pages/seo/ClothingBoutiquePosPage').then(m => ({ default: m.ClothingBoutiquePosPage })));
+const ElectronicsPosDeepPage = React.lazy(() => import('./pages/seo/ElectronicsPosDeepPage').then(m => ({ default: m.ElectronicsPosDeepPage })));
+const StopOversellingRushHoursPage = React.lazy(() => import('./pages/seo/StopOversellingRushHoursPage').then(m => ({ default: m.StopOversellingRushHoursPage })));
+
+export function LandingPageContent() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--canvas-bg)' }}>
       {/* 1. Ultra-Clean Floating Frosted Glass Capsule */}
@@ -175,6 +189,47 @@ function MainAppRoutes() {
     return <OfflinePosPage />;
   }
 
+  // Phase 1 Commercial Attack Routes
+  if (path === '/alternatives/foosales') {
+    return <FooSalesAlternativesPage />;
+  }
+
+  if (path === '/alternatives/oliver-pos') {
+    return <OliverPosAlternativesPage />;
+  }
+
+  if (path === '/comparisons/foosales-vs-oliver-pos') {
+    return <FooSalesVsOliverPosPage />;
+  }
+
+  if (path === '/best-woocommerce-pos') {
+    return <BestWooCommercePosPage />;
+  }
+
+  if (path === '/solutions/multi-store-inventory-sync') {
+    return <MultiStoreInventorySyncPage />;
+  }
+
+  if (path === '/features/split-payments') {
+    return <SplitPaymentsPage />;
+  }
+
+  if (path === '/nigeria/lagos-retail-pos') {
+    return <LagosRetailPosPage />;
+  }
+
+  if (path === '/industries/clothing-boutique-pos') {
+    return <ClothingBoutiquePosPage />;
+  }
+
+  if (path === '/industries/electronics-pos') {
+    return <ElectronicsPosDeepPage />;
+  }
+
+  if (path === '/solutions/stop-overselling-rush-hours') {
+    return <StopOversellingRushHoursPage />;
+  }
+
   return <LandingPageContent />;
 }
 
@@ -185,7 +240,9 @@ function AppShell() {
   return (
     <>
       <SEOHead />
-      <MainAppRoutes />
+      <React.Suspense fallback={<div style={{ minHeight: '80vh', backgroundColor: 'var(--canvas-bg)' }} />}>
+        <MainAppRoutes />
+      </React.Suspense>
       {!hideChatWidget && <ZameriaSupportChatWidget />}
     </>
   );

@@ -30,6 +30,24 @@
       ]
     },
     {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/categories/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
       "source": "/(.*)",
       "headers": [
         {
@@ -46,6 +64,20 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    { "source": "/signup", "destination": "/get-started", "permanent": true },
+    { "source": "/woocommerce-pos-for-fashion", "destination": "/industries/fashion", "permanent": true },
+    { "source": "/woocommerce-pos-for-beauty", "destination": "/industries/beauty", "permanent": true },
+    { "source": "/woocommerce-pos-for-electronics", "destination": "/industries/electronics", "permanent": true },
+    { "source": "/woocommerce-pos-for-supermarkets", "destination": "/industries/supermarkets", "permanent": true },
+    { "source": "/woocommerce-pos-for-pharmacies", "destination": "/industries/pharmacies", "permanent": true },
+    { "source": "/woocommerce-pos-for-jewelry", "destination": "/industries/jewelry", "permanent": true },
+    { "source": "/woocommerce-pos-hardware-compatibility", "destination": "/hardware-compatibility", "permanent": true },
+    { "source": "/comparisons/woocommerce-pos-vs-traditional-pos", "destination": "/woocommerce-pos-vs-traditional-pos", "permanent": true },
+    { "source": "/how-to-prevent-overselling-woocommerce", "destination": "/solutions/prevent-overselling", "permanent": true },
+    { "source": "/how-to-fix-woocommerce-stock-mismatch", "destination": "/solutions/stock-mismatch", "permanent": true },
+    { "source": "/woocommerce-offline-pos-system", "destination": "/solutions/offline-pos", "permanent": true }
   ],
   "rewrites": [
     { "source": "/leadcapture1", "destination": "/leadcapture1/index.html" },

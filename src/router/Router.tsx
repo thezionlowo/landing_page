@@ -44,8 +44,13 @@ interface RouterContextType {
 
 const RouterContext = createContext<RouterContextType | undefined>(undefined);
 
-export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const RouterProvider: React.FC<{ children: React.ReactNode; initialPath?: string; initialSearch?: string }> = ({
+  children,
+  initialPath,
+  initialSearch,
+}) => {
   const [path, setPath] = useState<string>(() => {
+    if (initialPath) return initialPath;
     if (typeof window !== 'undefined') {
       return window.location.pathname || '/';
     }
@@ -53,6 +58,7 @@ export const RouterProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   });
 
   const [search, setSearch] = useState<string>(() => {
+    if (initialSearch) return initialSearch;
     if (typeof window !== 'undefined') {
       return window.location.search || '';
     }
