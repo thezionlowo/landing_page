@@ -16,8 +16,8 @@ import {
   ArrowRight,
   X,
   CreditCard,
-  Layers,
-  Key
+  Key,
+  Monitor
 } from 'lucide-react';
 
 export const PlanTab: React.FC = () => {
@@ -449,6 +449,16 @@ export const PlanTab: React.FC = () => {
               <span>{customer.staffAllowance || 5} Staff PINs Allowed</span>
             </div>
           </div>
+
+          <div>
+            <div style={{ fontSize: '11.5px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>
+              Registers
+            </div>
+            <div style={{ fontSize: '14px', fontWeight: 700, color: '#071A31', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Monitor size={15} color="#0284c7" />
+              <span>{isBusiness ? 'Unlimited Registers' : '2 Registers'}</span>
+            </div>
+          </div>
         </div>
 
         {/* Informative Notice for Trial States */}
@@ -554,6 +564,7 @@ export const PlanTab: React.FC = () => {
                 <li>✓ 1 physical store/location</li>
                 <li>✓ Up to 500 products</li>
                 <li>✓ Up to 2 staff members</li>
+                <li>✓ Up to 2 POS registers</li>
                 <li>✓ Point of Sale and inventory synchronization</li>
               </ul>
             </div>
@@ -582,37 +593,38 @@ export const PlanTab: React.FC = () => {
           {/* Business Plan Card */}
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '20px',
-              border: planName === 'Business' ? '2px solid #2563eb' : '1px solid #e2e8f0',
-              padding: '24px',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-            }}
-          >
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>Business</span>
-                <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', backgroundColor: '#eff6ff', padding: '2px 8px', borderRadius: '9999px' }}>
-                  Most Popular
-                </span>
-              </div>
-              <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
-                {businessCardPrice}
-                <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
-              </div>
-              <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>
-                Complete retail solution with unlimited products, staff, and real-time inventory synchronization.
-              </p>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <li>✓ 1 WooCommerce store</li>
-                <li>✓ 1 physical store/location</li>
-                <li>✓ Unlimited products</li>
-                <li>✓ Unlimited staff members</li>
-                <li>✓ Point of Sale and real-time inventory synchronization</li>
-              </ul>
+            backgroundColor: '#ffffff',
+            borderRadius: '20px',
+            border: planName === 'Business' ? '2px solid #2563eb' : '1px solid #e2e8f0',
+            padding: '24px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
+          }}
+        >
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+              <span style={{ fontSize: '16px', fontWeight: 800, color: '#071A31' }}>Business</span>
+              <span style={{ fontSize: '11px', fontWeight: 800, color: '#2563eb', backgroundColor: '#eff6ff', padding: '2px 8px', borderRadius: '9999px' }}>
+                Most Popular
+              </span>
+            </div>
+            <div style={{ fontSize: '26px', fontWeight: 900, color: '#071A31', marginBottom: '12px' }}>
+              {businessCardPrice}
+              <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 500 }}> / year</span>
+            </div>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 16px', lineHeight: 1.5 }}>
+              Complete retail solution with unlimited products, staff, and real-time inventory synchronization.
+            </p>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', color: '#334155', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <li>✓ 1 WooCommerce store</li>
+              <li>✓ 1 physical store/location</li>
+              <li>✓ Unlimited products</li>
+              <li>✓ Unlimited staff members</li>
+              <li>✓ Unlimited POS registers</li>
+              <li>✓ Point of Sale and real-time inventory synchronization</li>
+            </ul>
             </div>
 
             <button
