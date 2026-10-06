@@ -36,6 +36,18 @@ import { LagosRetailPosPage } from '../src/pages/seo/LagosRetailPosPage';
 import { ClothingBoutiquePosPage } from '../src/pages/seo/ClothingBoutiquePosPage';
 import { ElectronicsPosDeepPage } from '../src/pages/seo/ElectronicsPosDeepPage';
 import { StopOversellingRushHoursPage } from '../src/pages/seo/StopOversellingRushHoursPage';
+import { WooCommercePosPluginPage } from '../src/pages/seo/WooCommercePosPluginPage';
+import { PosForWooCommercePage } from '../src/pages/seo/PosForWooCommercePage';
+import { WooCommerceInventoryManagementPage } from '../src/pages/seo/WooCommerceInventoryManagementPage';
+import { WooCommerceStockManagementPage } from '../src/pages/seo/WooCommerceStockManagementPage';
+import { WooCommerceRetailPosPage } from '../src/pages/seo/WooCommerceRetailPosPage';
+import { WooCommercePhysicalStorePage } from '../src/pages/seo/WooCommercePhysicalStorePage';
+import { WooCommercePosInventoryPage } from '../src/pages/seo/WooCommercePosInventoryPage';
+import { WooCommercePosComparisonPage } from '../src/pages/seo/WooCommercePosComparisonPage';
+import { WooCommerceStockNotUpdatingPage } from '../src/pages/seo/WooCommerceStockNotUpdatingPage';
+import { AlternativesHubPage } from '../src/pages/seo/AlternativesHubPage';
+import { WcposAlternativesPage } from '../src/pages/seo/WcposAlternativesPage';
+import { WeposAlternativesPage } from '../src/pages/seo/WeposAlternativesPage';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +57,13 @@ const distDir = path.resolve(projectRoot, 'dist');
 const ROUTES_TO_RENDER: Record<string, React.ComponentType> = {
   '/': LandingPageContent,
   '/woocommerce-pos': WooCommercePosPage,
+  '/woocommerce-pos-plugin': WooCommercePosPluginPage,
+  '/pos-for-woocommerce': PosForWooCommercePage,
+  '/woocommerce-inventory-management': WooCommerceInventoryManagementPage,
+  '/woocommerce-stock-management': WooCommerceStockManagementPage,
+  '/woocommerce-retail-pos': WooCommerceRetailPosPage,
+  '/woocommerce-physical-store': WooCommercePhysicalStorePage,
+  '/woocommerce-pos-inventory': WooCommercePosInventoryPage,
   '/woocommerce-inventory-sync': WooCommerceInventorySyncPage,
   '/woocommerce-pos-nigeria': WooCommercePosNigeriaPage,
   '/industries/fashion': FashionPosPage,
@@ -55,11 +74,16 @@ const ROUTES_TO_RENDER: Record<string, React.ComponentType> = {
   '/industries/jewelry': JewelryPosPage,
   '/hardware-compatibility': HardwareCompatibilityPage,
   '/woocommerce-pos-vs-traditional-pos': PosComparisonPage,
+  '/woocommerce-pos-comparison': WooCommercePosComparisonPage,
   '/solutions/prevent-overselling': PreventOversellingPage,
   '/solutions/stock-mismatch': StockMismatchPage,
+  '/solutions/woocommerce-stock-not-updating': WooCommerceStockNotUpdatingPage,
   '/solutions/offline-pos': OfflinePosPage,
+  '/alternatives': AlternativesHubPage,
   '/alternatives/foosales': FooSalesAlternativesPage,
   '/alternatives/oliver-pos': OliverPosAlternativesPage,
+  '/alternatives/wcpos': WcposAlternativesPage,
+  '/alternatives/wepos': WeposAlternativesPage,
   '/comparisons/foosales-vs-oliver-pos': FooSalesVsOliverPosPage,
   '/best-woocommerce-pos': BestWooCommercePosPage,
   '/solutions/multi-store-inventory-sync': MultiStoreInventorySyncPage,
@@ -227,7 +251,7 @@ function generatePageSchema(route: string, config: RouteSEO): object {
       author: organizationSchema,
       publisher: organizationSchema,
     });
-  } else if (route === '/woocommerce-pos-vs-traditional-pos') {
+  } else if (route === '/woocommerce-pos-vs-traditional-pos' || route === '/woocommerce-pos-comparison' || route.startsWith('/comparisons/')) {
     graph.push({
       '@type': 'Article',
       '@id': `${pageUrl}#article`,

@@ -73,8 +73,9 @@
     { "source": "/woocommerce-pos-for-supermarkets", "destination": "/industries/supermarkets", "permanent": true },
     { "source": "/woocommerce-pos-for-pharmacies", "destination": "/industries/pharmacies", "permanent": true },
     { "source": "/woocommerce-pos-for-jewelry", "destination": "/industries/jewelry", "permanent": true },
-    { "source": "/woocommerce-pos-hardware-compatibility", "destination": "/hardware-compatibility", "permanent": true },
-    { "source": "/comparisons/woocommerce-pos-vs-traditional-pos", "destination": "/woocommerce-pos-vs-traditional-pos", "permanent": true },
+    { "source": "/woocommerce-point-of-sale", "destination": "/woocommerce-pos", "permanent": true },
+    { "source": "/woocommerce-pos-vs-traditional-pos", "destination": "/woocommerce-pos-comparison", "permanent": true },
+    { "source": "/comparisons/woocommerce-pos-vs-traditional-pos", "destination": "/woocommerce-pos-comparison", "permanent": true },
     { "source": "/how-to-prevent-overselling-woocommerce", "destination": "/solutions/prevent-overselling", "permanent": true },
     { "source": "/how-to-fix-woocommerce-stock-mismatch", "destination": "/solutions/stock-mismatch", "permanent": true },
     { "source": "/woocommerce-offline-pos-system", "destination": "/solutions/offline-pos", "permanent": true }

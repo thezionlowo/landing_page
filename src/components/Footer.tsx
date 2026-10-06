@@ -116,6 +116,78 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
+                  href="/woocommerce-pos-plugin"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-pos-plugin');
+                  }}
+                  className="dark-footer-link"
+                >
+                  WooCommerce POS Plugin
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/pos-for-woocommerce"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/pos-for-woocommerce');
+                  }}
+                  className="dark-footer-link"
+                >
+                  POS for WooCommerce
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/woocommerce-inventory-management"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-inventory-management');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Inventory Management
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/woocommerce-stock-management"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-stock-management');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Stock Management
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/woocommerce-retail-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-retail-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Retail POS
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/woocommerce-physical-store"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/woocommerce-physical-store');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Physical Store Sync
+                </a>
+              </li>
+              <li>
+                <a
                   href="/woocommerce-inventory-sync"
                   onClick={(e) => {
                     e.preventDefault();
@@ -123,19 +195,165 @@ export const Footer: React.FC = () => {
                   }}
                   className="dark-footer-link"
                 >
-                  Inventory Sync
+                  Real-Time Stock Sync
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* 2. COMPARISONS & ALTERNATIVES COLUMN */}
+          <div className="dark-footer-col">
+            <h4 className="dark-footer-col-title">COMPARISONS</h4>
+            <ul className="dark-footer-links-list">
+              <li>
+                <a
+                  href="/best-woocommerce-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/best-woocommerce-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Best WooCommerce POS
                 </a>
               </li>
               <li>
                 <a
-                  href="/woocommerce-pos-nigeria"
+                  href="/woocommerce-pos-comparison"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/woocommerce-pos-nigeria');
+                    navigate('/woocommerce-pos-comparison');
                   }}
                   className="dark-footer-link"
                 >
-                  WooCommerce POS Nigeria
+                  POS Comparison
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/alternatives/foosales"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/alternatives/foosales');
+                  }}
+                  className="dark-footer-link"
+                >
+                  FooSales Alternative
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/alternatives/oliver-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/alternatives/oliver-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Oliver POS Alternative
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/alternatives/wcpos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/alternatives/wcpos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  WCPOS Alternative
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/alternatives/wepos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/alternatives/wepos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  wePOS Alternative
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/alternatives"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/alternatives');
+                  }}
+                  className="dark-footer-link"
+                >
+                  All Alternatives Hub
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* 3. SOLUTIONS & PROBLEMS COLUMN */}
+          <div className="dark-footer-col">
+            <h4 className="dark-footer-col-title">SOLUTIONS</h4>
+            <ul className="dark-footer-links-list">
+              <li>
+                <a
+                  href="/solutions/woocommerce-stock-not-updating"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/woocommerce-stock-not-updating');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Stock Not Updating
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/solutions/prevent-overselling"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/prevent-overselling');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Prevent Overselling
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/solutions/stock-mismatch"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/stock-mismatch');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Fix Stock Mismatch
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/solutions/offline-pos"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/offline-pos');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Offline POS System
+                </a>
+              </li>
+              <li>
+                <a
+                  href="/solutions/multi-store-inventory-sync"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    navigate('/solutions/multi-store-inventory-sync');
+                  }}
+                  className="dark-footer-link"
+                >
+                  Multi-Store Inventory
                 </a>
               </li>
               <li>
@@ -152,20 +370,20 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <a
-                  href="/woocommerce-pos-vs-traditional-pos"
+                  href="/woocommerce-pos-nigeria"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/woocommerce-pos-vs-traditional-pos');
+                    navigate('/woocommerce-pos-nigeria');
                   }}
                   className="dark-footer-link"
                 >
-                  POS Comparison
+                  Nigeria Retail Market
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* 2. INDUSTRIES COLUMN */}
+          {/* 4. INDUSTRIES COLUMN */}
           <div className="dark-footer-col">
             <h4 className="dark-footer-col-title">INDUSTRIES</h4>
             <ul className="dark-footer-links-list">
@@ -244,100 +462,17 @@ export const Footer: React.FC = () => {
             </ul>
           </div>
 
-          {/* 3. SOLUTIONS & GUIDES COLUMN */}
+          {/* 5. ACCOUNT & APP DOWNLOADS */}
           <div className="dark-footer-col">
-            <h4 className="dark-footer-col-title">SOLUTIONS</h4>
+            <h4 className="dark-footer-col-title">ACCOUNT & APPS</h4>
             <ul className="dark-footer-links-list">
               <li>
                 <a
-                  href="/solutions/prevent-overselling"
+                  href="/woocommerce-pos-plugin"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/solutions/prevent-overselling');
+                    navigate('/woocommerce-pos-plugin');
                   }}
-                  className="dark-footer-link"
-                >
-                  Prevent Overselling
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/solutions/stock-mismatch"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate('/solutions/stock-mismatch');
-                  }}
-                  className="dark-footer-link"
-                >
-                  Fix Stock Mismatch
-                </a>
-              </li>
-              <li>
-                <a
-                  href="/solutions/offline-pos"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    navigate('/solutions/offline-pos');
-                  }}
-                  className="dark-footer-link"
-                >
-                  Offline POS System
-                </a>
-              </li>
-              <li>
-                <a href="#pricing" onClick={handleNavScroll('pricing')} className="dark-footer-link">
-                  Pricing Plans
-                </a>
-              </li>
-              <li>
-                <a href="#faq" onClick={handleNavScroll('faq')} className="dark-footer-link">
-                  FAQ's
-                </a>
-              </li>
-            </ul>
-          </div>
-
-          {/* 3. ACCOUNT COLUMN */}
-          <div className="dark-footer-col">
-            <h4 className="dark-footer-col-title">ACCOUNT</h4>
-            <ul className="dark-footer-links-list">
-              <li>
-                <button onClick={handleGoToAccount('orders')} className="dark-footer-link">
-                  Orders
-                </button>
-              </li>
-              <li>
-                <button onClick={handleGoToAccount('licenses')} className="dark-footer-link">
-                  License
-                </button>
-              </li>
-              <li>
-                <button onClick={handleGoToAccount('plan')} className="dark-footer-link">
-                  Plan
-                </button>
-              </li>
-              <li>
-                <button onClick={handleGoToAccount('billing')} className="dark-footer-link">
-                  Billing
-                </button>
-              </li>
-              <li>
-                <button onClick={handleGoToAccount('settings')} className="dark-footer-link">
-                  Settings
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          {/* 4. DOWNLOADS & APPS COLUMN */}
-          <div className="dark-footer-col">
-            <h4 className="dark-footer-col-title">DOWNLOADS</h4>
-            <ul className="dark-footer-links-list">
-              <li>
-                <a
-                  href="http://localhost:5182"
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="dark-footer-link"
                 >
                   ZAMERIA Plugin
@@ -352,71 +487,69 @@ export const Footer: React.FC = () => {
                   }}
                   className="dark-footer-link"
                 >
-                  Desktop App
+                  Desktop POS App
                 </a>
               </li>
               <li>
-                <div className="dark-footer-item-muted">
-                  <span>iOS App</span>
-                  <span className="dark-coming-soon-label">— Coming Soon</span>
-                </div>
+                <button onClick={handleGoToAccount('orders')} className="dark-footer-link">
+                  Orders
+                </button>
               </li>
               <li>
-                <div className="dark-footer-item-muted">
-                  <span>Android App</span>
-                  <span className="dark-coming-soon-label">— Coming Soon</span>
-                </div>
+                <button onClick={handleGoToAccount('licenses')} className="dark-footer-link">
+                  Licenses
+                </button>
+              </li>
+              <li>
+                <button onClick={handleGoToAccount('plan')} className="dark-footer-link">
+                  Subscription Plan
+                </button>
+              </li>
+              <li>
+                <button onClick={handleGoToAccount('billing')} className="dark-footer-link">
+                  Billing & Invoices
+                </button>
               </li>
             </ul>
           </div>
+        </div>
 
-          {/* 5. CONNECT COLUMN */}
-          <div className="dark-footer-col">
-            <h4 className="dark-footer-col-title">CONNECT</h4>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {/* CONNECT ROW */}
+        <div style={{ marginTop: '36px', paddingTop: '28px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.08em', color: '#94a3b8', textTransform: 'uppercase' }}>Connect:</span>
+            <a
+              href="tel:08122342436"
+              className="dark-footer-link dark-footer-contact"
+              title="Call ZAMERIA Support"
+            >
+              <Phone size={14} style={{ color: '#64748b', flexShrink: 0 }} />
+              <span>08122342436</span>
+            </a>
+            <a
+              href="mailto:hello@zameria.co"
+              className="dark-footer-link dark-footer-contact"
+              title="Email ZAMERIA Support"
+            >
+              <Mail size={14} style={{ color: '#64748b', flexShrink: 0 }} />
+              <span>hello@zameria.co</span>
+            </a>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {SOCIAL_ITEMS.map((item) => (
               <a
-                href="tel:08122342436"
-                className="dark-footer-link dark-footer-contact"
-                title="Call ZAMERIA Support"
+                key={item.name}
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="dark-footer-social-btn"
+                aria-label={item.ariaLabel}
+                title={item.name}
               >
-                <Phone size={14} style={{ color: '#64748b', flexShrink: 0 }} />
-                <span>08122342436</span>
+                <item.icon size={15} />
               </a>
-
-              <a
-                href="mailto:hello@zameria.co"
-                className="dark-footer-link dark-footer-contact"
-                title="Email ZAMERIA Support"
-              >
-                <Mail size={14} style={{ color: '#64748b', flexShrink: 0 }} />
-                <span>hello@zameria.co</span>
-              </a>
-
-              {/* Clean, subtle, consistent social icons */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginTop: '4px',
-                  flexWrap: 'wrap',
-                }}
-              >
-                {SOCIAL_ITEMS.map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="dark-footer-social-btn"
-                    aria-label={item.ariaLabel}
-                    title={item.name}
-                  >
-                    <item.icon size={15} />
-                  </a>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 

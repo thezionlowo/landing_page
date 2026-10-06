@@ -53,6 +53,20 @@ const ClothingBoutiquePosPage = React.lazy(() => import('./pages/seo/ClothingBou
 const ElectronicsPosDeepPage = React.lazy(() => import('./pages/seo/ElectronicsPosDeepPage').then(m => ({ default: m.ElectronicsPosDeepPage })));
 const StopOversellingRushHoursPage = React.lazy(() => import('./pages/seo/StopOversellingRushHoursPage').then(m => ({ default: m.StopOversellingRushHoursPage })));
 
+// Global SEO Expansion Money Pages & Hubs
+const WooCommercePosPluginPage = React.lazy(() => import('./pages/seo/WooCommercePosPluginPage').then(m => ({ default: m.WooCommercePosPluginPage })));
+const PosForWooCommercePage = React.lazy(() => import('./pages/seo/PosForWooCommercePage').then(m => ({ default: m.PosForWooCommercePage })));
+const WooCommerceInventoryManagementPage = React.lazy(() => import('./pages/seo/WooCommerceInventoryManagementPage').then(m => ({ default: m.WooCommerceInventoryManagementPage })));
+const WooCommerceStockManagementPage = React.lazy(() => import('./pages/seo/WooCommerceStockManagementPage').then(m => ({ default: m.WooCommerceStockManagementPage })));
+const WooCommerceRetailPosPage = React.lazy(() => import('./pages/seo/WooCommerceRetailPosPage').then(m => ({ default: m.WooCommerceRetailPosPage })));
+const WooCommercePhysicalStorePage = React.lazy(() => import('./pages/seo/WooCommercePhysicalStorePage').then(m => ({ default: m.WooCommercePhysicalStorePage })));
+const WooCommercePosInventoryPage = React.lazy(() => import('./pages/seo/WooCommercePosInventoryPage').then(m => ({ default: m.WooCommercePosInventoryPage })));
+const WooCommercePosComparisonPage = React.lazy(() => import('./pages/seo/WooCommercePosComparisonPage').then(m => ({ default: m.WooCommercePosComparisonPage })));
+const WooCommerceStockNotUpdatingPage = React.lazy(() => import('./pages/seo/WooCommerceStockNotUpdatingPage').then(m => ({ default: m.WooCommerceStockNotUpdatingPage })));
+const AlternativesHubPage = React.lazy(() => import('./pages/seo/AlternativesHubPage').then(m => ({ default: m.AlternativesHubPage })));
+const WcposAlternativesPage = React.lazy(() => import('./pages/seo/WcposAlternativesPage').then(m => ({ default: m.WcposAlternativesPage })));
+const WeposAlternativesPage = React.lazy(() => import('./pages/seo/WeposAlternativesPage').then(m => ({ default: m.WeposAlternativesPage })));
+
 export function LandingPageContent() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', backgroundColor: 'var(--canvas-bg)' }}>
@@ -228,6 +242,55 @@ function MainAppRoutes() {
 
   if (path === '/solutions/stop-overselling-rush-hours') {
     return <StopOversellingRushHoursPage />;
+  }
+
+  // Global Commercial Money Routes
+  if (path === '/woocommerce-pos-plugin') {
+    return <WooCommercePosPluginPage />;
+  }
+
+  if (path === '/pos-for-woocommerce') {
+    return <PosForWooCommercePage />;
+  }
+
+  if (path === '/woocommerce-inventory-management') {
+    return <WooCommerceInventoryManagementPage />;
+  }
+
+  if (path === '/woocommerce-stock-management') {
+    return <WooCommerceStockManagementPage />;
+  }
+
+  if (path === '/woocommerce-retail-pos') {
+    return <WooCommerceRetailPosPage />;
+  }
+
+  if (path === '/woocommerce-physical-store') {
+    return <WooCommercePhysicalStorePage />;
+  }
+
+  if (path === '/woocommerce-pos-inventory') {
+    return <WooCommercePosInventoryPage />;
+  }
+
+  if (path === '/woocommerce-pos-comparison') {
+    return <WooCommercePosComparisonPage />;
+  }
+
+  if (path === '/solutions/woocommerce-stock-not-updating') {
+    return <WooCommerceStockNotUpdatingPage />;
+  }
+
+  if (path === '/alternatives' || path === '/alternatives/') {
+    return <AlternativesHubPage />;
+  }
+
+  if (path === '/alternatives/wcpos') {
+    return <WcposAlternativesPage />;
+  }
+
+  if (path === '/alternatives/wepos') {
+    return <WeposAlternativesPage />;
   }
 
   return <LandingPageContent />;
