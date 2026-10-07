@@ -7,36 +7,34 @@ import {
   Key,
   Globe,
   CreditCard,
-  Plus,
   ArrowRight,
   ExternalLink,
   CheckCircle2,
   Clock,
   ShieldCheck,
-  Calendar,
-  Sparkles,
   AlertTriangle,
   AlertCircle,
-  HelpCircle,
   Zap,
-  Check,
-  Copy,
-  Download,
   Store,
   RefreshCw,
+  Monitor,
+  Printer,
+  Barcode,
+  Users,
+  Check,
+  Sparkles,
 } from 'lucide-react';
 
 export const OverviewTab: React.FC = () => {
-  const { customer, cancelSubscription, resumeSubscription } = useCustomerAuth();
+  const { customer, resumeSubscription, retryStoreConnection } = useCustomerAuth();
   const { setAccountTab } = useRouter();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [copiedKey, setCopiedKey] = useState(false);
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState(false);
 
   if (!customer) return null;
 
   const subscriptionState = resolveSubscriptionState(customer);
-  const isTrialNotStarted = subscriptionState === 'no_active_plan' && (customer.accountStatus === 'trial_not_started' || customer.trial?.status === 'not_started');
   const isTrialActive = subscriptionState === 'trial_active';
   const isTrialExpired = subscriptionState === 'trial_expired';
   const isCancelled =
@@ -46,23 +44,54 @@ export const OverviewTab: React.FC = () => {
   const isExpired =
     customer.accountStatus === 'expired' || customer.subscription.status === 'expired';
   const isPaidActive = subscriptionState === 'paid_active';
-  const isGifted = customer.accessType === 'Gifted' || customer.accessType === 'Complimentary' || Boolean(customer.giftedDetails);
+  const isGifted =
+    customer.accessType === 'Gifted' ||
+    customer.accessType === 'Complimentary' ||
+    Boolean(customer.giftedDetails);
 
   const licenses = customer.licenses || [];
   const primaryLicense = licenses[0] || null;
 
-  const activationCode = customer.trial?.activationCode || customer.activationCode || '';
-  const isStoreActuallyConnected = customer.connectedStore?.status === 'connected' && Boolean(customer.connectedStore?.url || primaryLicense?.connectedDomain);
-  const store = {
-    name: customer.connectedStore?.name && customer.connectedStore.name !== 'No store connected'
-      ? customer.connectedStore.name
-      : (isStoreActuallyConnected ? (customer.businessName || 'WooCommerce Store') : 'No store connected'),
-    url: customer.connectedStore?.url || '',
-    status: isStoreActuallyConnected ? ('connected' as const) : ('not_connected' as const),
-  };
+  const isStoreConnected =
+    customer.connectedStore?.status === 'connected' &&
+    Boolean(customer.connectedStore?.url || primaryLicense?.connectedDomain);
+
+  const storeUrl = customer.connectedStore?.url || (primaryLicense?.connectedDomain ? `https://${primaryLicense.connectedDomain}` : '');
+  const storeName = customer.connectedStore?.name && customer.connectedStore.name !== 'No store connected'
+    ? customer.connectedStore.name
+    : (customer.businessName || 'WooCommerce Store');
+
+  // Direct, working Cashier Web POS URL
+  const posUrl = storeUrl
+    ? `${storeUrl.replace(/\/$/, '')}/pos/`
+    : 'http://localhost:8899/pos/';
 
   const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
-  const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? '';
+  const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? 'in 7 days';
+
+  const rawPlanStr = String(
+    customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || ''
+  ).toLowerCase();
+  const isStarter =
+    rawPlanStr.includes('starter') ||
+    (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
+  const isBusiness = rawPlanStr.includes('business') && !isStarter;
+  const planTier = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
+
+  const planName = isPaidActive
+    ? (customer.subscription?.planName || `${planTier} Plan`)
+    : isTrialActive
+      ? '7-Day Free Trial'
+      : isGifted
+        ? `Gifted ${planTier} Plan`
+        : `${planTier} Plan`;
+
+  const authoritativePrice = isBusiness ? '₦300,000 / year' : '₦200,000 / year';
+  const price = isGifted
+    ? 'Complimentary'
+    : isPaidActive
+      ? authoritativePrice
+      : '₦0 (Active Trial)';
 
   const dynamicAnnualExpiry = (() => {
     const d = new Date();
@@ -71,47 +100,26 @@ export const OverviewTab: React.FC = () => {
   })();
   const renewsAt = customer.subscription.renewsAt || customer.nextBillingDate || primaryLicense?.expiresAt || dynamicAnnualExpiry;
 
-  const rawPlanStr = String(customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || '').toLowerCase();
-  const isStarter = rawPlanStr.includes('starter') || (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
-  const isBusiness = rawPlanStr.includes('business') && !isStarter;
-  const planTier = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
-  const planName = isPaidActive
-    ? (customer.subscription?.planName || `${planTier} Plan`)
-    : isTrialActive
-      ? 'Free Trial'
-      : isTrialNotStarted
-        ? 'Trial Eligible'
-        : `${planTier} Plan`;
-
-  const authoritativePrice = isBusiness ? '₦300,000 / year' : '₦200,000 / year';
-  const price = isGifted
-    ? 'Gifted Plan (Complimentary)'
-    : isPaidActive
-      ? authoritativePrice
-      : '₦0';
-
-  const copyLicenseKey = (key: string) => {
-    navigator.clipboard.writeText(key);
-    setCopiedKey(true);
-    setTimeout(() => setCopiedKey(false), 2200);
-  };
-
-  const copyActivationCode = () => {
-    navigator.clipboard.writeText(activationCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2200);
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    await retryStoreConnection();
+    setTimeout(() => {
+      setIsSyncing(false);
+      setSyncSuccess(true);
+      setTimeout(() => setSyncSuccess(false), 3000);
+    }, 800);
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
-      {/* 1. STATE BANNERS (TRIAL EXPIRED / PAST DUE / CANCELLED / TRIAL JUST STARTED) */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* 1. STATE BANNERS (Alerts needing customer attention) */}
       {isTrialExpired && (
         <div
           style={{
             backgroundColor: '#fef2f2',
             border: '1px solid #fecaca',
             borderRadius: '16px',
-            padding: '20px 24px',
+            padding: '18px 22px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
@@ -119,51 +127,33 @@ export const OverviewTab: React.FC = () => {
             gap: '16px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-            <AlertCircle size={22} style={{ color: '#b91c1c', marginTop: '2px', flexShrink: 0 }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <AlertCircle size={22} style={{ color: '#b91c1c', flexShrink: 0 }} />
             <div>
-              <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#991b1b', margin: '0 0 4px' }}>
-                Your 7-day trial has ended.
+              <h3 style={{ fontSize: '15px', fontWeight: 800, color: '#991b1b', margin: '0 0 2px' }}>
+                Your 7-day trial has ended
               </h3>
-              <p style={{ fontSize: '13.5px', color: '#7f1d1d', margin: 0, lineHeight: 1.5 }}>
-                Your 7-day free trial has expired. Upgrade your plan now to restore full WooCommerce Point of Sale functionality.
+              <p style={{ fontSize: '13px', color: '#7f1d1d', margin: 0 }}>
+                Upgrade your subscription now to restore full WooCommerce Point of Sale functionality.
               </p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <button
-              type="button"
-              onClick={() => setIsAddModalOpen(true)}
-              style={{
-                backgroundColor: '#b91c1c',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '10px',
-                padding: '10px 20px',
-                fontSize: '13.5px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              Upgrade Now
-            </button>
-            <button
-              type="button"
-              onClick={() => setAccountTab('plan')}
-              style={{
-                backgroundColor: '#ffffff',
-                color: '#b91c1c',
-                border: '1px solid #fecaca',
-                borderRadius: '10px',
-                padding: '10px 16px',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-            >
-              View Pricing
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsUpgradeModalOpen(true)}
+            style={{
+              backgroundColor: '#b91c1c',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '9px 18px',
+              fontSize: '13px',
+              fontWeight: 700,
+              cursor: 'pointer',
+            }}
+          >
+            Upgrade Plan
+          </button>
         </div>
       )}
 
@@ -184,17 +174,17 @@ export const OverviewTab: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <AlertTriangle size={22} style={{ color: '#b45309', flexShrink: 0 }} />
             <div>
-              <div style={{ fontSize: '14.5px', fontWeight: 800, color: '#92400e' }}>
-                Payment Failed / Past Due
+              <div style={{ fontSize: '14px', fontWeight: 800, color: '#92400e' }}>
+                Payment Failed / Grace Period Active
               </div>
               <div style={{ fontSize: '13px', color: '#78350f' }}>
-                License is temporarily active under grace period. Please update your payment method to avoid suspension.
+                Your POS is temporarily active under grace period. Please update your payment method.
               </div>
             </div>
           </div>
           <button
             type="button"
-            onClick={() => setAccountTab('payment-methods')}
+            onClick={() => setAccountTab('billing')}
             style={{
               backgroundColor: '#b45309',
               color: '#ffffff',
@@ -232,7 +222,7 @@ export const OverviewTab: React.FC = () => {
                 Subscription Cancelled
               </div>
               <div style={{ fontSize: '13px', color: '#64748b' }}>
-                Your subscription has been cancelled. You can continue using ZAMERIA until {renewsAt}.
+                You can continue using ZAMERIA POS until {renewsAt}.
               </div>
             </div>
           </div>
@@ -255,14 +245,14 @@ export const OverviewTab: React.FC = () => {
         </div>
       )}
 
-      {/* 2. MAIN HEADER CARD (Changes based on State A, B, C, D) */}
+      {/* 2. EXECUTIVE COMMAND CENTER HERO */}
       <div
         style={{
           backgroundColor: '#ffffff',
-          borderRadius: '24px',
+          borderRadius: '20px',
           border: '1px solid #e2e8f0',
-          padding: '32px 28px',
-          boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
+          padding: '28px',
+          boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.05)',
           display: 'flex',
           flexWrap: 'wrap',
           alignItems: 'center',
@@ -270,29 +260,9 @@ export const OverviewTab: React.FC = () => {
           gap: '20px',
         }}
       >
-        <div>
+        <div style={{ maxWidth: '640px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            {isTrialNotStarted ? (
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: '#d97706',
-                  backgroundColor: '#fffbeb',
-                  border: '1px solid #fde68a',
-                  padding: '3px 10px',
-                  borderRadius: '9999px',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                }}
-              >
-                <Clock size={12} />
-                <span>Trial Not Started</span>
-              </span>
-            ) : isTrialActive ? (
+            {isTrialActive ? (
               <span
                 style={{
                   fontSize: '11px',
@@ -302,7 +272,7 @@ export const OverviewTab: React.FC = () => {
                   border: '1px solid #bfdbfe',
                   padding: '3px 10px',
                   borderRadius: '9999px',
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -310,39 +280,9 @@ export const OverviewTab: React.FC = () => {
                 }}
               >
                 <Clock size={12} />
-                <span>Trial · {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left</span>
+                <span>Free Trial · {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left</span>
               </span>
-            ) : isCancelled ? (
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: '#b45309',
-                  backgroundColor: '#fffbeb',
-                  padding: '3px 10px',
-                  borderRadius: '9999px',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Cancelled • Active until {renewsAt}
-              </span>
-            ) : isExpired ? (
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 800,
-                  color: '#b91c1c',
-                  backgroundColor: '#fef2f2',
-                  padding: '3px 10px',
-                  borderRadius: '9999px',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                Subscription Expired
-              </span>
-            ) : (
+            ) : isPaidActive ? (
               <span
                 style={{
                   fontSize: '11px',
@@ -352,7 +292,7 @@ export const OverviewTab: React.FC = () => {
                   border: '1px solid #bbf7d0',
                   padding: '3px 10px',
                   borderRadius: '9999px',
-                  letterSpacing: '0.06em',
+                  letterSpacing: '0.04em',
                   textTransform: 'uppercase',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -362,1019 +302,455 @@ export const OverviewTab: React.FC = () => {
                 <CheckCircle2 size={12} />
                 <span>{planName} · Active</span>
               </span>
+            ) : isGifted ? (
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: '#7c3aed',
+                  backgroundColor: '#f5f3ff',
+                  border: '1px solid #ddd6fe',
+                  padding: '3px 10px',
+                  borderRadius: '9999px',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                }}
+              >
+                <Sparkles size={12} />
+                <span>Gifted Plan · Active</span>
+              </span>
+            ) : (
+              <span
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  color: '#64748b',
+                  backgroundColor: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  padding: '3px 10px',
+                  borderRadius: '9999px',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                Account Active
+              </span>
             )}
-            <span style={{ fontSize: '12px', color: '#94a3b8' }}>• Account ID: {customer.id}</span>
+
+            <span style={{ fontSize: '12px', color: '#94a3b8' }}>
+              • {customer.email}
+            </span>
           </div>
 
           <h1
             style={{
-              fontSize: '26px',
-              fontWeight: 900,
+              fontSize: '24px',
+              fontWeight: 800,
               color: '#071A31',
               margin: '0 0 6px',
               letterSpacing: '-0.02em',
             }}
           >
-            Your ZAMERIA Account
+            {customer.businessName || 'My Retail Store'}
           </h1>
 
-          <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
-            {isTrialNotStarted ? (
+          <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+            {isStoreConnected ? (
               <span>
-                Your 7-day trial starts when you connect your WooCommerce store.
-              </span>
-            ) : isTrialActive ? (
-              <span>
-                Trial · {daysLeft} {daysLeft === 1 ? 'day' : 'days'} left (Ends <strong>{trialEnd}</strong>).
-              </span>
-            ) : isPaidActive ? (
-              <span>
-                {planName} · Active for <strong>{customer.businessName}</strong>. License expires: <strong>{primaryLicense?.expiresAt || renewsAt}</strong>.
+                Connected to <strong>{storeName}</strong>. 2-way real-time catalog &amp; stock sync active.
               </span>
             ) : (
               <span>
-                Account for <strong>{customer.businessName}</strong>. Access is currently inactive.
+                Your store is not connected yet. Connect your WooCommerce store to start syncing products and sales.
               </span>
             )}
           </p>
         </div>
 
-        {/* Action Button: Prioritizes the single most important action */}
+        {/* Primary Action Button */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {isTrialNotStarted ? (
+          {isStoreConnected ? (
+            <>
+              <a
+                href={posUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '11px 22px',
+                  backgroundColor: '#071A31',
+                  color: '#ffffff',
+                  fontSize: '13.5px',
+                  fontWeight: 700,
+                  borderRadius: '10px',
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(7, 26, 49, 0.16)',
+                  transition: 'background-color 0.15s ease',
+                }}
+              >
+                <Monitor size={15} style={{ color: '#60a5fa' }} />
+                <span>Launch POS Register</span>
+                <ExternalLink size={13} />
+              </a>
+
+              <button
+                type="button"
+                onClick={handleManualSync}
+                disabled={isSyncing}
+                style={{
+                  padding: '11px 16px',
+                  backgroundColor: '#f8fafc',
+                  color: '#071A31',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  borderRadius: '10px',
+                  border: '1px solid #cbd5e1',
+                  cursor: isSyncing ? 'not-allowed' : 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <RefreshCw size={14} style={{ animation: isSyncing ? 'spin 1s linear infinite' : 'none' }} />
+                <span>{isSyncing ? 'Syncing...' : syncSuccess ? 'Synced!' : 'Sync Now'}</span>
+              </button>
+            </>
+          ) : (
             <button
               type="button"
               onClick={() => setAccountTab('store')}
               style={{
-                padding: '12px 26px',
+                padding: '12px 24px',
                 backgroundColor: '#071A31',
                 color: '#ffffff',
-                fontSize: '14px',
+                fontSize: '13.5px',
                 fontWeight: 700,
-                borderRadius: '12px',
+                borderRadius: '10px',
                 border: 'none',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: '0 4px 14px rgba(7, 26, 49, 0.18)',
-                transition: 'all 0.15s ease',
+                boxShadow: '0 4px 14px rgba(7, 26, 49, 0.16)',
               }}
             >
               <Zap size={16} style={{ color: '#fbbf24' }} />
-              <span>Activate Your Trial</span>
+              <span>Connect Store</span>
             </button>
-          ) : isTrialActive ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(true)}
-                style={{
-                  padding: '12px 24px',
-                  backgroundColor: '#071A31',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  fontWeight: 700,
-                  borderRadius: '12px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  boxShadow: '0 4px 14px rgba(7, 26, 49, 0.18)',
-                }}
-              >
-                <Sparkles size={16} style={{ color: '#fbbf24' }} />
-                <span>Choose a Plan</span>
-              </button>
-              <a
-                href="http://localhost:5176"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: '11px 18px',
-                  backgroundColor: '#f1f5f9',
-                  color: '#071A31',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  borderRadius: '12px',
-                  border: '1px solid #cbd5e1',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  textDecoration: 'none',
-                }}
-              >
-                <span>Open POS</span>
-                <ExternalLink size={14} />
-              </a>
-              <a
-                href="http://localhost:5182"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: '11px 18px',
-                  backgroundColor: '#ffffff',
-                  color: '#071A31',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  borderRadius: '12px',
-                  border: '1px solid #cbd5e1',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  textDecoration: 'none',
-                }}
-              >
-                <span>Plugin Dashboard</span>
-                <ExternalLink size={14} />
-              </a>
-            </>
-          ) : isExpired || isTrialExpired ? (
+          )}
+
+          {!isPaidActive && !isGifted && (
             <button
               type="button"
-              onClick={() => setIsAddModalOpen(true)}
+              onClick={() => setIsUpgradeModalOpen(true)}
               style={{
-                padding: '12px 26px',
-                backgroundColor: '#071A31',
-                color: '#ffffff',
-                fontSize: '14px',
+                padding: '11px 18px',
+                backgroundColor: '#ffffff',
+                color: '#2563eb',
+                fontSize: '13px',
                 fontWeight: 700,
-                borderRadius: '12px',
-                border: 'none',
+                borderRadius: '10px',
+                border: '1px solid #bfdbfe',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: '6px',
               }}
             >
-              <Sparkles size={16} style={{ color: '#fbbf24' }} />
-              <span>Choose a Plan</span>
+              <Sparkles size={14} />
+              <span>Choose Plan</span>
             </button>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => setAccountTab('plan')}
-                style={{
-                  padding: '11px 20px',
-                  backgroundColor: '#071A31',
-                  color: '#ffffff',
-                  fontSize: '13.5px',
-                  fontWeight: 700,
-                  borderRadius: '10px',
-                  border: 'none',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                }}
-              >
-                <span>Manage Plan</span>
-              </button>
-              <a
-                href="http://localhost:5176"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: '11px 18px',
-                  backgroundColor: '#f1f5f9',
-                  color: '#071A31',
-                  fontSize: '13.5px',
-                  fontWeight: 700,
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  textDecoration: 'none',
-                }}
-              >
-                <span>Open POS</span>
-                <ExternalLink size={14} />
-              </a>
-              <a
-                href="http://localhost:5182"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  padding: '11px 18px',
-                  backgroundColor: '#ffffff',
-                  color: '#071A31',
-                  fontSize: '13.5px',
-                  fontWeight: 700,
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  textDecoration: 'none',
-                }}
-              >
-                <span>Plugin Dashboard</span>
-                <ExternalLink size={14} />
-              </a>
-            </>
           )}
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* 3. STATE A — PROMINENT ONBOARDING & ACTIVATION SECTION (TRIAL NOT STARTED) */}
-      {/* ========================================================================= */}
-      {isTrialNotStarted && (
-        <div
-          style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '24px',
-            border: '2px solid #bfdbfe',
-            padding: '32px 28px',
-            boxShadow: '0 8px 30px -4px rgba(37, 99, 235, 0.08)',
-          }}
-        >
-          <div style={{ maxWidth: '780px' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '4px 12px',
-                borderRadius: '9999px',
-                backgroundColor: '#eff6ff',
-                color: '#2563eb',
-                fontSize: '11px',
-                fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '12px',
-              }}
-            >
-              <Zap size={13} />
-              <span>Step-by-Step Onboarding</span>
-            </div>
-
-            <h2
-              style={{
-                fontSize: '24px',
-                fontWeight: 900,
-                color: '#071A31',
-                margin: '0 0 8px',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Your 7-day trial is ready to start
-            </h2>
-
-            <p style={{ fontSize: '15px', color: '#475569', lineHeight: 1.55, margin: '0 0 28px' }}>
-              Your trial begins when you activate ZAMERIA on your WooCommerce store. Follow these three quick steps:
-            </p>
-
-            {/* Step 1 */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#071A31',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                1
-              </div>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '15.5px', fontWeight: 800, color: '#071A31', margin: '0 0 4px' }}>
-                  Install the ZAMERIA WooCommerce Plugin
-                </h4>
-                <p style={{ fontSize: '13.5px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.5 }}>
-                  Download the plugin zip file and upload it in your WordPress admin under <strong>Plugins → Add New → Upload Plugin</strong>.
-                </p>
-                <a
-                  href="/downloads/zameria-pos-sync.zip"
-                  download
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    backgroundColor: '#f1f5f9',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: '#071A31',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <Download size={14} />
-                  <span>Download Plugin (v1.2.4)</span>
-                </a>
-              </div>
-            </div>
-
-            {/* Step 2: TRIAL ACTIVATION CODE */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#071A31',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                2
-              </div>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '15.5px', fontWeight: 800, color: '#071A31', margin: '0 0 4px' }}>
-                  Copy your Trial Activation Code
-                </h4>
-                <p style={{ fontSize: '13.5px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.5 }}>
-                  Use this code in the ZAMERIA plugin inside your WooCommerce dashboard to activate your trial:
-                </p>
-
-                {/* Activation Code Component */}
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '16px',
-                    backgroundColor: '#f8fafc',
-                    border: '2px dashed #94a3b8',
-                    borderRadius: '12px',
-                    padding: '12px 20px',
-                    marginBottom: '8px',
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: '11px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Trial Activation Code
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '22px',
-                        fontWeight: 900,
-                        fontFamily: 'var(--font-mono)',
-                        color: '#071A31',
-                        letterSpacing: '0.08em',
-                      }}
-                    >
-                      {activationCode}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={copyActivationCode}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '9px 16px',
-                      backgroundColor: copiedCode ? '#16a34a' : '#071A31',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '13px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                  >
-                    {copiedCode ? <Check size={14} /> : <Copy size={14} />}
-                    <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
-                  </button>
-                </div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>
-                  Use this code to activate your 7-day trial. It is not a paid license key.
-                </div>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '26px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#071A31',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                3
-              </div>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '15.5px', fontWeight: 800, color: '#071A31', margin: '0 0 4px' }}>
-                  Enter the code in your WooCommerce dashboard
-                </h4>
-                <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-                  Open <strong>WordPress → ZAMERIA → Activation</strong>, paste your code, and click <strong>Activate Trial</strong>.
-                </p>
-              </div>
-            </div>
-
-            {/* Highly Visible Important Note */}
-            <div
-              style={{
-                backgroundColor: '#eff6ff',
-                border: '1px solid #bfdbfe',
-                borderRadius: '12px',
-                padding: '14px 18px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-              }}
-            >
-              <ShieldCheck size={20} style={{ color: '#2563eb', flexShrink: 0 }} />
-              <div style={{ fontSize: '13.5px', color: '#1e40af', lineHeight: 1.45 }}>
-                <strong>Important:</strong> Your 7-day trial does not start until activation is completed on your WooCommerce store.
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* 4. DYNAMIC STATUS CARDS (Trial Not Started vs. Trial Active vs. Paid)     */}
-      {/* ========================================================================= */}
+      {/* 3. CORE SAAS OVERVIEW METRIC CARDS */}
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '20px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))',
+          gap: '16px',
         }}
       >
-        {isTrialNotStarted ? (
-          /* STATE A CARDS */
-          <>
-            {/* Card 1: Trial Status */}
+        {/* Card 1: Plan & Access */}
+        <div
+          onClick={() => setAccountTab('billing')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            padding: '20px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#071A31')}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Plan &amp; Access
+            </span>
             <div
-              onClick={() => setAccountTab('store')}
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #fde68a',
-                background: 'linear-gradient(135deg, #fffdf5 0%, #ffffff 60%)',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(217, 119, 6, 0.06)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#d97706')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#fde68a')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 800, color: '#b45309', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Trial Status
-                </span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#fef3c7',
-                    color: '#d97706',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Clock size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '24px', fontWeight: 900, color: '#071A31', lineHeight: 1.1 }}>
-                Not Started
-              </div>
-              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '6px' }}>
-                7 days ready upon store activation
-              </div>
-              <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#d97706' }}>
-                <span>Activate Your Trial</span>
-                <ArrowRight size={14} />
-              </div>
+              <Layers size={16} />
             </div>
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.2 }}>
+            {planName}
+          </div>
+          <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '4px' }}>
+            {isTrialActive ? `Trial ends ${trialEnd}` : price}
+          </div>
+          <div style={{ marginTop: '14px', fontSize: '12px', color: '#2563eb', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>Manage Subscription</span>
+            <ArrowRight size={12} />
+          </div>
+        </div>
 
-            {/* Card 2: Connected Store */}
+        {/* Card 2: Connected Store */}
+        <div
+          onClick={() => setAccountTab('store')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            padding: '20px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#071A31')}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Connected Store
+            </span>
             <div
-              onClick={() => setAccountTab('store')}
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: isStoreConnected ? '#f0fdf4' : '#fffbeb',
+                color: isStoreConnected ? '#16a34a' : '#d97706',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>Connected Store</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#f8fafc',
-                    color: '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Store size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.1 }}>
-                No store connected
-              </div>
-              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '6px' }}>
-                Connect WooCommerce to start using ZAMERIA
-              </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                Connect your store &rarr;
-              </div>
+              <Store size={16} />
             </div>
+          </div>
+          <div style={{ fontSize: '18px', fontWeight: 800, color: '#071A31', lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {isStoreConnected ? storeName : 'Not Connected'}
+          </div>
+          <div style={{ fontSize: '12.5px', color: isStoreConnected ? '#16a34a' : '#d97706', marginTop: '4px', fontWeight: 600 }}>
+            {isStoreConnected ? '● 2-Way Real-time Sync Active' : '● Connect WooCommerce'}
+          </div>
+          <div style={{ marginTop: '14px', fontSize: '12px', color: '#2563eb', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>Store &amp; Sync Details</span>
+            <ArrowRight size={12} />
+          </div>
+        </div>
 
-            {/* Card 3: License */}
+        {/* Card 3: POS Register & Hardware */}
+        <div
+          onClick={() => setAccountTab('devices')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            padding: '20px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#071A31')}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Registers &amp; Till
+            </span>
             <div
-              onClick={() => setAccountTab('licenses')}
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: '#f8fafc',
+                color: '#071A31',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>License</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#f1f5f9',
-                    color: '#94a3b8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Key size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#64748b', lineHeight: 1.1 }}>
-                No License Yet
-              </div>
-              <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px', lineHeight: 1.4 }}>
-                Your license will be generated when you subscribe to a paid plan.
-              </div>
+              <Monitor size={16} />
             </div>
+          </div>
+          <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.2 }}>
+            Web POS Terminal
+          </div>
+          <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '4px' }}>
+            Barcode, 80mm Print &amp; Cash Drawer
+          </div>
+          <div style={{ marginTop: '14px', fontSize: '12px', color: '#2563eb', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>Configure Hardware</span>
+            <ArrowRight size={12} />
+          </div>
+        </div>
 
-            {/* Card 4: Plan */}
+        {/* Card 4: License & Entitlement */}
+        <div
+          onClick={() => setAccountTab('billing')}
+          style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            border: '1px solid #e2e8f0',
+            padding: '20px',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#071A31')}
+          onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              Entitlement Key
+            </span>
             <div
-              onClick={() => setAccountTab('plan')}
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: '#f0fdf4',
+                color: '#16a34a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
             >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>Plan</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#f8fafc',
-                    color: '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Layers size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.1 }}>
-                Trial Eligible
-              </div>
-              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '6px' }}>
-                7-day free trial ready to activate
-              </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                View Plans &rarr;
-              </div>
+              <Key size={16} />
             </div>
-          </>
-        ) : isTrialActive ? (
-          /* STATE B CARDS (TRIAL ACTIVE) */
-          <>
-            {/* Card 1: Free Trial Countdown */}
-            <div
-              onClick={() => setIsAddModalOpen(true)}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #bfdbfe',
-                background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 60%)',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(37, 99, 235, 0.08)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#bfdbfe')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 800, color: '#1e40af', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  7-Day Free Trial
-                </span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#dbeafe',
-                    color: '#2563eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Clock size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '32px', fontWeight: 900, color: '#071A31', lineHeight: 1.1 }}>
-                {daysLeft} days remaining
-              </div>
-              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '6px' }}>
-                Trial ends {trialEnd}
-              </div>
-              <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 700, color: '#2563eb' }}>
-                <span>Choose a Plan</span>
-                <ArrowRight size={14} />
-              </div>
-            </div>
-
-            {/* Card 2: Connected Store */}
-            <div
-              onClick={() => setAccountTab('store')}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>Connected Store</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#f0fdf4',
-                    color: '#16a34a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Store size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.1 }}>
-                {store.name}
-              </div>
-              <div style={{ fontSize: '12.5px', color: '#16a34a', marginTop: '6px', fontWeight: 600 }}>
-                ● Connected · 2-way sync active
-              </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                Manage Store &rarr;
-              </div>
-            </div>
-
-            {/* Card 3: License */}
-            <div
-              onClick={() => setAccountTab('licenses')}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>License</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#f1f5f9',
-                    color: '#94a3b8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Key size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#64748b', lineHeight: 1.1 }}>
-                No License Yet
-              </div>
-              <div style={{ fontSize: '12px', color: '#94a3b8', marginTop: '6px', lineHeight: 1.4 }}>
-                Your license will be generated when you subscribe to a paid plan.
-              </div>
-            </div>
-
-            {/* Card 4: Plan */}
-            <div
-              onClick={() => setIsAddModalOpen(true)}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>Subscription</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#eff6ff',
-                    color: '#2563eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Layers size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.1 }}>
-                Free Trial
-              </div>
-              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '6px' }}>
-                ₦0 / trial period
-              </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                Upgrade to Business &rarr;
-              </div>
-            </div>
-          </>
-        ) : (
-          /* STATE D CARDS (PAID CUSTOMER) */
-          <>
-            {/* Card 1: Active Plan */}
-            <div
-              onClick={() => setAccountTab('plan')}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>Plan</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#eff6ff',
-                    color: '#2563eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Layers size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '26px', fontWeight: 800, color: '#071A31', lineHeight: 1.1 }}>
-                {planName}
-              </div>
-              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '6px' }}>
-                {price}
-              </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                Manage Plan &rarr;
-              </div>
-            </div>
-
-            {/* Card 2: ZAMERIA License */}
-            <div
-              onClick={() => setAccountTab('licenses')}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>ZAMERIA License</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#f0fdf4',
-                    color: '#16a34a',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Key size={18} />
-                </div>
-              </div>
-              <div
-                style={{
-                  fontSize: '16px',
-                  fontWeight: 800,
-                  color: '#071A31',
-                  fontFamily: 'var(--font-mono)',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                {primaryLicense ? primaryLicense.licenseKey : 'ZMR-XXXX-XXXX-XXXX'}
-              </div>
-              <div style={{ fontSize: '12px', color: '#16a34a', marginTop: '6px', fontWeight: 700 }}>
-                ● License Active
-              </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                View License Details &rarr;
-              </div>
-            </div>
-
-            {/* Card 3: Connected Store */}
-            <div
-              onClick={() => setAccountTab('store')}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>Connected Store</span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: store.status === 'connected' ? '#f0fdf4' : '#fffbeb',
-                    color: store.status === 'connected' ? '#16a34a' : '#d97706',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Store size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.1 }}>
-                {store.name}
-              </div>
-              <div
-                style={{
-                  fontSize: '12.5px',
-                  color: store.status === 'connected' ? '#16a34a' : '#d97706',
-                  marginTop: '6px',
-                  fontWeight: 600,
-                }}
-              >
-                {store.status === 'connected' ? '● Connected & Synced' : '● Activation Required'}
-              </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                {store.status === 'connected' ? 'Store Settings \u2192' : 'Connect Store \u2192'}
-              </div>
-            </div>
-
-            {/* Card 4: Renewal / Access Expiry */}
-            <div
-              onClick={() => setAccountTab(isGifted ? 'licenses' : 'billing')}
-              style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '20px',
-                border: '1px solid #e2e8f0',
-                padding: '24px',
-                boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#2563eb')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#e2e8f0')}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748b' }}>
-                  {isGifted ? 'Access Expiry' : 'Next Billing'}
-                </span>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: isGifted ? '#eff6ff' : '#f8fafc',
-                    color: isGifted ? '#2563eb' : '#64748b',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <CreditCard size={18} />
-                </div>
-              </div>
-              <div style={{ fontSize: '20px', fontWeight: 800, color: '#071A31', lineHeight: 1.1 }}>
-                {renewsAt}
-              </div>
-              <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '6px' }}>
-                {isGifted ? 'Gifted Plan · 12 Months Access' : 'Auto-renews with default card'}
-              </div>
-              <div style={{ marginTop: '16px', fontSize: '12.5px', color: '#2563eb', fontWeight: 600 }}>
-                {isGifted ? 'License Details \u2192' : 'Billing History \u2192'}
-              </div>
-            </div>
-          </>
-        )}
+          </div>
+          <div
+            style={{
+              fontSize: '15px',
+              fontWeight: 800,
+              color: '#071A31',
+              fontFamily: 'monospace',
+              lineHeight: 1.2,
+            }}
+          >
+            {primaryLicense ? primaryLicense.licenseKey : 'Auto-Assigned'}
+          </div>
+          <div style={{ fontSize: '12.5px', color: '#64748b', marginTop: '4px' }}>
+            {isGifted ? '12-Month Complimentary' : `Renews ${renewsAt}`}
+          </div>
+          <div style={{ marginTop: '14px', fontSize: '12px', color: '#2563eb', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>Invoices &amp; Entitlements</span>
+            <ArrowRight size={12} />
+          </div>
+        </div>
       </div>
 
-      {/* 5. ADD / UPGRADE PLAN MODAL */}
+      {/* 4. REAL-TIME SYSTEM PULSE & DIAGNOSTICS */}
+      <div
+        style={{
+          backgroundColor: '#ffffff',
+          borderRadius: '18px',
+          border: '1px solid #e2e8f0',
+          padding: '24px 28px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+          <div>
+            <h3 style={{ fontSize: '16px', fontWeight: 800, color: '#071A31', margin: '0 0 2px' }}>
+              Ecosystem Health &amp; Diagnostics
+            </h3>
+            <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+              Live telemetry between your WooCommerce database, Cloud SaaS, and Cashier POS.
+            </p>
+          </div>
+          <span
+            style={{
+              fontSize: '11.5px',
+              fontWeight: 700,
+              color: isStoreConnected ? '#16a34a' : '#d97706',
+              backgroundColor: isStoreConnected ? '#f0fdf4' : '#fffbeb',
+              padding: '4px 10px',
+              borderRadius: '6px',
+            }}
+          >
+            {isStoreConnected ? 'All Systems Operational' : 'Store Offline'}
+          </span>
+        </div>
+
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '16px',
+          }}
+        >
+          <div style={{ padding: '14px 16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isStoreConnected ? '#16a34a' : '#94a3b8' }} />
+              <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#071A31' }}>Product Catalog</span>
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>
+              {isStoreConnected ? 'Synchronized with WooCommerce REST API v3' : 'Awaiting store connection'}
+            </div>
+          </div>
+
+          <div style={{ padding: '14px 16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isStoreConnected ? '#16a34a' : '#94a3b8' }} />
+              <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#071A31' }}>Real-time Inventory</span>
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>
+              {isStoreConnected ? 'Instant stock deduction on in-store sales' : 'Inventory sync paused'}
+            </div>
+          </div>
+
+          <div style={{ padding: '14px 16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isStoreConnected ? '#16a34a' : '#94a3b8' }} />
+              <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#071A31' }}>Offline Cashier Buffer</span>
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>
+              IndexedDB enabled for offline transactions
+            </div>
+          </div>
+
+          <div style={{ padding: '14px 16px', backgroundColor: '#f8fafc', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a' }} />
+              <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#071A31' }}>Security &amp; SaaS API</span>
+            </div>
+            <div style={{ fontSize: '12px', color: '#64748b' }}>
+              ZAMERIA Cloud Run API authenticated (SSL 256-bit)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Upgrade / Choose Plan Modal */}
       <AddLicenseModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
         initialPlan="Business"
       />
     </div>

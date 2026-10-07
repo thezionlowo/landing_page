@@ -2,36 +2,26 @@ import React, { useState, useEffect } from 'react';
 import { resolveSubscriptionState, useCustomerAuth, CustomerProfile } from '../../context/CustomerAuthContext';
 import { useRouter, AccountTab } from '../../router/Router';
 import { OverviewTab } from './OverviewTab';
-import { OrdersTab } from './OrdersTab';
-import { LicensesTab } from './LicensesTab';
-import { PlanTab } from './PlanTab';
-import { BillingTab } from './BillingTab';
-import { BillingAddressTab } from './BillingAddressTab';
-import { PaymentMethodsTab } from './PaymentMethodsTab';
-import { SettingsTab } from './SettingsTab';
 import { ConnectedStoreTab } from './ConnectedStoreTab';
+import { BillingTab } from './BillingTab';
+import { DevicesTab } from './DevicesTab';
+import { TeamTab } from './TeamTab';
+import { SettingsTab } from './SettingsTab';
 import {
   LayoutDashboard,
-  ShoppingBag,
-  Key,
-  Layers,
   CreditCard,
-  MapPin,
-  Wallet,
   Settings,
   LogOut,
-  ChevronRight,
   ExternalLink,
   Menu,
   X,
-  User,
-  ShieldCheck,
   ChevronDown,
-  Sparkles,
-  Clock,
+  Store,
+  Monitor,
+  Users,
   CheckCircle2,
-  AlertTriangle,
-  Store
+  Clock,
+  Sparkles,
 } from 'lucide-react';
 
 interface NavItem {
@@ -41,50 +31,47 @@ interface NavItem {
   getBadge?: (c: CustomerProfile) => { text: string; color: string; bg: string } | null;
 }
 
-const ACCOUNT_NAV_ITEMS: NavItem[] = [
+const NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   {
-    id: 'orders',
-    label: 'Orders',
-    icon: ShoppingBag,
-    getBadge: (c) => (c.orders && c.orders.length > 0 ? { text: String(c.orders.length), color: '#475569', bg: '#f1f5f9' } : null),
-  },
-  { id: 'plan', label: 'Plan', icon: Layers },
-  { id: 'billing', label: 'Billing', icon: CreditCard },
-  {
-    id: 'licenses',
-    label: 'License',
-    icon: Key,
-    getBadge: (c) => {
-      const state = resolveSubscriptionState(c);
-      const isTrial = state === 'trial_active' || (state === 'no_active_plan' && c.accountStatus === 'trial_not_started');
-      if (isTrial || !c.licenses || c.licenses.length === 0) {
-        return null;
-      }
-      return { text: `${c.licenses.length}`, color: '#16a34a', bg: '#f0fdf4' };
-    },
-  },
-  { id: 'settings', label: 'Settings', icon: Settings },
-];
-
-const STORE_NAV_ITEMS: NavItem[] = [
-  {
     id: 'store',
-    label: 'Connected Store',
+    label: 'Store & Sync',
     icon: Store,
     getBadge: (c) => {
       const status = c.connectedStore?.status;
-      if (status === 'connected') {
-        return { text: 'Connected', color: '#16a34a', bg: '#f0fdf4' };
-      }
-      if (status === 'error') {
-        return { text: 'Error', color: '#dc2626', bg: '#fef2f2' };
-      }
-      if (status === 'pending') {
-        return { text: 'Pending', color: '#d97706', bg: '#fffbeb' };
-      }
-      return { text: 'Not Connected', color: '#64748b', bg: '#f1f5f9' };
+      if (status === 'connected') return { text: 'Synced', color: '#16a34a', bg: '#f0fdf4' };
+      if (status === 'error') return { text: 'Error', color: '#dc2626', bg: '#fef2f2' };
+      return { text: 'Connect', color: '#d97706', bg: '#fffbeb' };
     },
+  },
+  {
+    id: 'billing',
+    label: 'Subscription & Billing',
+    icon: CreditCard,
+    getBadge: (c) => {
+      const state = resolveSubscriptionState(c);
+      if (state === 'trial_active') {
+        const d = c.trial?.daysRemaining ?? c.trialDaysRemaining ?? 7;
+        return { text: `${d}d Trial`, color: '#2563eb', bg: '#eff6ff' };
+      }
+      if (state === 'paid_active') return { text: 'Active', color: '#16a34a', bg: '#f0fdf4' };
+      return null;
+    },
+  },
+  {
+    id: 'devices',
+    label: 'Registers & Hardware',
+    icon: Monitor,
+  },
+  {
+    id: 'team',
+    label: 'Team & Cashiers',
+    icon: Users,
+  },
+  {
+    id: 'settings',
+    label: 'Account & Security',
+    icon: Settings,
   },
 ];
 
@@ -93,7 +80,6 @@ export const AccountLayout: React.FC = () => {
   const { activeTab, setAccountTab, navigate } = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
-  const [targetOrderId, setTargetOrderId] = useState<string | null>(null);
 
   // If not authenticated, redirect to login
   useEffect(() => {
@@ -126,7 +112,7 @@ export const AccountLayout: React.FC = () => {
               margin: '0 auto 16px',
             }}
           />
-          <p style={{ fontSize: '14px', color: '#64748b' }}>Loading your ZAMERIA account...</p>
+          <p style={{ fontSize: '14px', color: '#64748b' }}>Loading your ZAMERIA merchant portal...</p>
         </div>
       </div>
     );
@@ -138,11 +124,19 @@ export const AccountLayout: React.FC = () => {
   const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
   const isPaid = subscriptionState === 'paid_active';
 
-  const rawPlanStr = String(customer.giftedDetails?.plan || customer.licenses?.[0]?.plan || customer.plan || customer.subscription?.planId || '').toLowerCase();
+  const rawPlanStr = String(
+    customer.giftedDetails?.plan || customer.licenses?.[0]?.plan || customer.plan || customer.subscription?.planId || ''
+  ).toLowerCase();
   const isStarter = rawPlanStr.includes('starter') || (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
   const isBusiness = rawPlanStr.includes('business') && !isStarter;
   const effectivePlan = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
-  const planLabel = customer.subscription.planName || `${effectivePlan} Plan`;
+  const planLabel = customer.subscription?.planName || `${effectivePlan} Plan`;
+
+  const primaryLicense = customer.licenses?.[0] || null;
+  const storeUrl = customer.connectedStore?.url
+    ? customer.connectedStore.url
+    : (primaryLicense?.connectedDomain ? `https://${primaryLicense.connectedDomain}` : '');
+  const posUrl = storeUrl ? `${storeUrl.replace(/\/$/, '')}/pos/` : 'http://localhost:8899/pos/';
 
   const handleLogout = () => {
     logout();
@@ -191,7 +185,7 @@ export const AccountLayout: React.FC = () => {
             justifyContent: 'space-between',
           }}
         >
-          {/* Brand Logo & Area title */}
+          {/* Brand Logo & Portal Tag */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -247,7 +241,7 @@ export const AccountLayout: React.FC = () => {
 
             <span
               style={{
-                fontSize: '13px',
+                fontSize: '12.5px',
                 fontWeight: 700,
                 color: '#64748b',
                 textTransform: 'uppercase',
@@ -255,37 +249,36 @@ export const AccountLayout: React.FC = () => {
               }}
               className="zameria-portal-badge"
             >
-              My Account
+              Merchant Portal
             </span>
           </div>
 
           {/* Right Header Navigation & Profile Menu */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            {/* Link back to Main Website */}
+            {/* Direct Launch POS Button */}
             <a
-              href="/"
-              onClick={(e) => {
-                e.preventDefault();
-                navigate('/');
-              }}
+              href={posUrl}
+              target="_blank"
+              rel="noopener noreferrer"
               style={{
                 fontSize: '13px',
-                fontWeight: 600,
-                color: '#475569',
+                fontWeight: 700,
+                color: '#071A31',
                 textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                padding: '8px 12px',
+                gap: '6px',
+                padding: '7px 14px',
                 borderRadius: '8px',
+                backgroundColor: '#f1f5f9',
+                border: '1px solid #cbd5e1',
                 transition: 'background-color 0.15s ease',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
               className="zameria-back-to-site"
             >
-              <span>Back to Website</span>
-              <ExternalLink size={13} style={{ color: '#94a3b8' }} />
+              <Monitor size={14} style={{ color: '#2563eb' }} />
+              <span>Launch POS</span>
+              <ExternalLink size={12} style={{ color: '#94a3b8' }} />
             </a>
 
             {/* Profile Menu Trigger */}
@@ -318,24 +311,24 @@ export const AccountLayout: React.FC = () => {
                     fontWeight: 700,
                   }}
                 >
-                  {getInitials(customer.fullName)}
+                  {getInitials(customer.fullName || 'Merchant')}
                 </div>
                 <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }} className="zameria-user-text">
                   <span style={{ fontSize: '13px', fontWeight: 700, color: '#071A31', lineHeight: 1.2 }}>
-                    {customer.fullName}
+                    {customer.businessName || customer.fullName}
                   </span>
                   <span
                     style={{
                       fontSize: '11px',
                       fontWeight: 700,
-                      color: isTrial ? '#2563eb' : '#16a34a',
+                      color: isTrial ? '#2563eb' : isPaid ? '#16a34a' : '#64748b',
                       lineHeight: 1.2,
                     }}
                   >
                     {isTrialNotStarted
-                      ? 'Trial Not Started'
+                      ? 'Trial Eligible'
                       : isTrial
-                      ? `Free Trial · ${daysLeft} days left`
+                      ? `Free Trial · ${daysLeft}d left`
                       : `${planLabel} · Active`}
                   </span>
                 </div>
@@ -378,92 +371,27 @@ export const AccountLayout: React.FC = () => {
                           marginTop: '4px',
                         }}
                       >
-                        {isTrialNotStarted
-                          ? 'Trial Not Started'
-                          : isTrial
-                          ? `Free Trial · ${daysLeft} days left`
-                          : `${planLabel} · Active`}
+                        {isTrial ? `Free Trial · ${daysLeft} days left` : `${planLabel} · Active`}
                       </div>
                     </div>
 
                     <div style={{ padding: '4px 0' }}>
-                      <button
-                        onClick={() => {
-                          setAccountTab('overview');
-                          setUserDropdownOpen(false);
-                        }}
-                        className="user-menu-item"
-                      >
-                        <LayoutDashboard size={15} style={{ color: '#64748b' }} />
-                        <span>My Account</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setAccountTab('orders');
-                          setUserDropdownOpen(false);
-                        }}
-                        className="user-menu-item"
-                      >
-                        <ShoppingBag size={15} style={{ color: '#64748b' }} />
-                        <span>Orders</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setAccountTab('plan');
-                          setUserDropdownOpen(false);
-                        }}
-                        className="user-menu-item"
-                      >
-                        <Layers size={15} style={{ color: '#64748b' }} />
-                        <span>Plan</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setAccountTab('billing');
-                          setUserDropdownOpen(false);
-                        }}
-                        className="user-menu-item"
-                      >
-                        <CreditCard size={15} style={{ color: '#64748b' }} />
-                        <span>Billing</span>
-                      </button>
-
-                      {/* License: show actual state */}
-                      <button
-                        onClick={() => {
-                          setAccountTab('licenses');
-                          setUserDropdownOpen(false);
-                        }}
-                        className="user-menu-item"
-                      >
-                        <Key size={15} style={{ color: '#64748b' }} />
-                        <span>{isTrial ? 'License (Not Assigned)' : 'License'}</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setAccountTab('store');
-                          setUserDropdownOpen(false);
-                        }}
-                        className="user-menu-item"
-                      >
-                        <Store size={15} style={{ color: '#64748b' }} />
-                        <span>Connected Store</span>
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setAccountTab('settings');
-                          setUserDropdownOpen(false);
-                        }}
-                        className="user-menu-item"
-                      >
-                        <Settings size={15} style={{ color: '#64748b' }} />
-                        <span>Settings</span>
-                      </button>
+                      {NAV_ITEMS.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => {
+                              setAccountTab(item.id);
+                              setUserDropdownOpen(false);
+                            }}
+                            className="user-menu-item"
+                          >
+                            <Icon size={15} style={{ color: '#64748b' }} />
+                            <span>{item.label}</span>
+                          </button>
+                        );
+                      })}
                     </div>
 
                     <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '4px', paddingTop: '4px' }}>
@@ -486,8 +414,6 @@ export const AccountLayout: React.FC = () => {
                           gap: '8px',
                           fontWeight: 600,
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
-                        onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                       >
                         <LogOut size={15} />
                         <span>Logout</span>
@@ -532,85 +458,9 @@ export const AccountLayout: React.FC = () => {
             <div style={{ fontSize: '12px', color: '#64748b' }}>
               {customer.email}
             </div>
-            <div
-              style={{
-                fontSize: '11px',
-                fontWeight: 700,
-                color: isTrial ? '#2563eb' : '#16a34a',
-                marginTop: '4px',
-              }}
-            >
-              {isTrialNotStarted
-                ? 'Trial Not Started'
-                : isTrial
-                ? `Free Trial · ${daysLeft} days left`
-                : `${planLabel} · Active`}
-            </div>
           </div>
 
-          {/* Section: ACCOUNT */}
-          <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '4px 16px 2px' }}>
-            Account
-          </div>
-          {ACCOUNT_NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            const badge = item.getBadge ? item.getBadge(customer) : null;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setAccountTab(item.id);
-                  setMobileMenuOpen(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '11px 16px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  backgroundColor: isActive ? '#071A31' : 'transparent',
-                  color: isActive ? '#ffffff' : '#334155',
-                  fontSize: '14px',
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Icon
-                    size={18}
-                    style={{
-                      color: isActive ? '#60a5fa' : '#64748b',
-                    }}
-                  />
-                  <span>{item.label}</span>
-                </div>
-                {badge && (
-                  <span
-                    style={{
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : badge.bg,
-                      color: isActive ? '#ffffff' : badge.color,
-                      padding: '2px 8px',
-                      borderRadius: '9999px',
-                    }}
-                  >
-                    {badge.text}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-
-          {/* Section: STORE */}
-          <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '8px 16px 2px' }}>
-            Store
-          </div>
-          {STORE_NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             const badge = item.getBadge ? item.getBadge(customer) : null;
@@ -666,31 +516,6 @@ export const AccountLayout: React.FC = () => {
 
           <div style={{ height: '1px', backgroundColor: '#e2e8f0', margin: '6px 0' }} />
 
-          {/* Mobile Back to Website */}
-          <a
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              setMobileMenuOpen(false);
-              navigate('/');
-            }}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              padding: '10px 16px',
-              borderRadius: '10px',
-              textDecoration: 'none',
-              color: '#475569',
-              fontSize: '13.5px',
-              fontWeight: 600,
-            }}
-          >
-            <span>Back to Website</span>
-            <ExternalLink size={14} style={{ color: '#94a3b8' }} />
-          </a>
-
-          {/* Mobile Logout */}
           <button
             onClick={() => {
               setMobileMenuOpen(false);
@@ -708,7 +533,6 @@ export const AccountLayout: React.FC = () => {
               fontSize: '13.5px',
               fontWeight: 700,
               cursor: 'pointer',
-              marginTop: '4px',
             }}
           >
             <LogOut size={16} />
@@ -740,13 +564,16 @@ export const AccountLayout: React.FC = () => {
           }}
           className="zameria-account-sidebar"
         >
-          {/* Section: ACCOUNT */}
-          <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '6px 16px 4px' }}>
-            Account
-          </div>
-          {ACCOUNT_NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
-            const isActive = activeTab === item.id;
+            const isTabActive =
+              activeTab === item.id ||
+              (item.id === 'billing' &&
+                (activeTab === 'plan' ||
+                  activeTab === 'licenses' ||
+                  activeTab === 'orders' ||
+                  activeTab === 'billing-address' ||
+                  activeTab === 'payment-methods'));
             const badge = item.getBadge ? item.getBadge(customer) : null;
 
             return (
@@ -760,22 +587,22 @@ export const AccountLayout: React.FC = () => {
                   padding: '10px 16px',
                   borderRadius: '10px',
                   border: 'none',
-                  backgroundColor: isActive ? '#071A31' : 'transparent',
-                  color: isActive ? '#ffffff' : '#475569',
-                  fontSize: '14px',
-                  fontWeight: isActive ? 700 : 500,
+                  backgroundColor: isTabActive ? '#071A31' : 'transparent',
+                  color: isTabActive ? '#ffffff' : '#475569',
+                  fontSize: '13.5px',
+                  fontWeight: isTabActive ? 700 : 500,
                   cursor: 'pointer',
                   textAlign: 'left',
                   transition: 'all 0.15s ease',
                 }}
                 onMouseEnter={(e) => {
-                  if (!isActive) {
+                  if (!isTabActive) {
                     e.currentTarget.style.backgroundColor = '#f1f5f9';
                     e.currentTarget.style.color = '#071A31';
                   }
                 }}
                 onMouseLeave={(e) => {
-                  if (!isActive) {
+                  if (!isTabActive) {
                     e.currentTarget.style.backgroundColor = 'transparent';
                     e.currentTarget.style.color = '#475569';
                   }
@@ -785,7 +612,7 @@ export const AccountLayout: React.FC = () => {
                   <Icon
                     size={17}
                     style={{
-                      color: isActive ? '#60a5fa' : '#64748b',
+                      color: isTabActive ? '#60a5fa' : '#64748b',
                     }}
                   />
                   <span>{item.label}</span>
@@ -795,76 +622,8 @@ export const AccountLayout: React.FC = () => {
                     style={{
                       fontSize: '10.5px',
                       fontWeight: 700,
-                      backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : badge.bg,
-                      color: isActive ? '#ffffff' : badge.color,
-                      padding: '2px 8px',
-                      borderRadius: '9999px',
-                    }}
-                  >
-                    {badge.text}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-
-          {/* Section: STORE */}
-          <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', padding: '14px 16px 4px' }}>
-            Store
-          </div>
-          {STORE_NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            const badge = item.getBadge ? item.getBadge(customer) : null;
-
-            return (
-              <button
-                key={item.id}
-                onClick={() => setAccountTab(item.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 16px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  backgroundColor: isActive ? '#071A31' : 'transparent',
-                  color: isActive ? '#ffffff' : '#475569',
-                  fontSize: '14px',
-                  fontWeight: isActive ? 700 : 500,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  transition: 'all 0.15s ease',
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = '#f1f5f9';
-                    e.currentTarget.style.color = '#071A31';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#475569';
-                  }
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <Icon
-                    size={17}
-                    style={{
-                      color: isActive ? '#60a5fa' : '#64748b',
-                    }}
-                  />
-                  <span>{item.label}</span>
-                </div>
-                {badge && (
-                  <span
-                    style={{
-                      fontSize: '10.5px',
-                      fontWeight: 700,
-                      backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : badge.bg,
-                      color: isActive ? '#ffffff' : badge.color,
+                      backgroundColor: isTabActive ? 'rgba(255, 255, 255, 0.15)' : badge.bg,
+                      color: isTabActive ? '#ffffff' : badge.color,
                       padding: '2px 8px',
                       borderRadius: '9999px',
                     }}
@@ -895,7 +654,7 @@ export const AccountLayout: React.FC = () => {
               border: 'none',
               backgroundColor: 'transparent',
               color: '#dc2626',
-              fontSize: '14px',
+              fontSize: '13.5px',
               fontWeight: 600,
               cursor: 'pointer',
               textAlign: 'left',
@@ -904,7 +663,7 @@ export const AccountLayout: React.FC = () => {
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fef2f2')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
           >
-            <LogOut size={17} />
+            <LogOut size={16} />
             <span>Logout</span>
           </button>
         </aside>
@@ -912,13 +671,15 @@ export const AccountLayout: React.FC = () => {
         {/* MAIN TAB CONTENT */}
         <main style={{ flex: 1, minWidth: 0 }}>
           {activeTab === 'overview' && <OverviewTab />}
-          {activeTab === 'orders' && <OrdersTab targetOrderId={targetOrderId} onClearTargetOrder={() => setTargetOrderId(null)} />}
-          {activeTab === 'licenses' && <LicensesTab onOpenOrderDetails={(orderId) => { setTargetOrderId(orderId); setAccountTab('orders'); }} />}
-          {activeTab === 'plan' && <PlanTab />}
           {activeTab === 'store' && <ConnectedStoreTab />}
-          {activeTab === 'billing' && <BillingTab />}
-          {activeTab === 'billing-address' && <BillingAddressTab />}
-          {activeTab === 'payment-methods' && <PaymentMethodsTab />}
+          {(activeTab === 'billing' ||
+            activeTab === 'orders' ||
+            activeTab === 'licenses' ||
+            activeTab === 'plan' ||
+            activeTab === 'billing-address' ||
+            activeTab === 'payment-methods') && <BillingTab />}
+          {activeTab === 'devices' && <DevicesTab />}
+          {activeTab === 'team' && <TeamTab />}
           {activeTab === 'settings' && <SettingsTab />}
         </main>
       </div>
@@ -940,32 +701,6 @@ export const AccountLayout: React.FC = () => {
         }
         .user-menu-item:hover {
           background-color: #f8fafc;
-        }
-        .scenario-btn {
-          width: 100%;
-          padding: 8px 10px;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          background-color: #ffffff;
-          text-align: left;
-          cursor: pointer;
-          font-size: 12px;
-          display: flex;
-          flex-direction: column;
-          gap: 2px;
-          transition: all 0.12s ease;
-        }
-        .scenario-btn:hover {
-          background-color: #f0f7ff;
-          border-color: #93c5fd;
-        }
-        .scenario-btn strong {
-          color: #071A31;
-          font-size: 12px;
-        }
-        .scenario-btn span {
-          color: #64748b;
-          font-size: 11px;
         }
         @media (max-width: 860px) {
           .zameria-mobile-nav-toggle {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
-import { Eye, EyeOff, User, Store, Mail, Lock, Phone, Globe, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Eye, EyeOff, Store, Mail, Lock, Globe, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { AuthHeader } from './AuthHeader';
 import { LeadSource } from '../../services/leadCaptureClient';
 
@@ -9,9 +9,7 @@ export const GetStartedPage: React.FC = () => {
   const { register } = useCustomerAuth();
   const { navigate } = useRouter();
 
-  const [fullName, setFullName] = useState('');
   const [businessName, setBusinessName] = useState('');
-  const [phone, setPhone] = useState('');
   const [storeUrl, setStoreUrl] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,14 +25,12 @@ export const GetStartedPage: React.FC = () => {
     try {
       const searchParams = new URLSearchParams(window.location.search);
       const qEmail = searchParams.get('email');
-      const qName = searchParams.get('name') || searchParams.get('fullName');
       const qBusiness = searchParams.get('business') || searchParams.get('businessName') || searchParams.get('store');
-      const qPhone = searchParams.get('phone');
+      const qStoreUrl = searchParams.get('store_url') || searchParams.get('storeUrl') || searchParams.get('store');
 
       if (qEmail && !email) setEmail(qEmail);
-      if (qName && !fullName) setFullName(qName);
       if (qBusiness && !businessName) setBusinessName(qBusiness);
-      if (qPhone && !phone) setPhone(qPhone);
+      if (qStoreUrl && !storeUrl) setStoreUrl(qStoreUrl);
     } catch {
       // Ignore URL parsing errors
     }
@@ -44,18 +40,26 @@ export const GetStartedPage: React.FC = () => {
     e.preventDefault();
     setError(null);
 
-    if (!fullName.trim()) {
-      setError('Please enter your name.');
+    if (!businessName.trim()) {
+      setError('Please enter your store name.');
+      return;
+    }
+    if (!storeUrl.trim()) {
+      setError('Please enter your WooCommerce store URL.');
+      return;
+    }
+    try {
+      new URL(storeUrl.includes('://') ? storeUrl : `https://${storeUrl}`);
+    } catch {
+      setError('Please enter a valid WooCommerce store URL.');
       return;
     }
     if (!email.trim() || !email.includes('@') || !email.includes('.')) {
       setError('Please enter a valid email address.');
       return;
     }
-    if (!storeUrl.trim()) { setError('Please enter your WooCommerce store URL so we can issue your trial code.'); return; }
-    try { new URL(storeUrl.includes('://') ? storeUrl : `https://${storeUrl}`); } catch { setError('Please enter a valid WooCommerce store URL.'); return; }
-    if (!password || password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (!password || password.length < 8) {
+      setError('Password must be at least 8 characters long.');
       return;
     }
     if (password !== confirmPassword) {
@@ -101,11 +105,9 @@ export const GetStartedPage: React.FC = () => {
 
     setIsLoading(true);
     const res = await register({
-      fullName: fullName.trim(),
-      businessName: businessName.trim() || `${fullName.trim()}'s Retail`,
+      businessName: businessName.trim(),
       email: email.trim(),
       password,
-      phone: phone.trim() || undefined,
       source,
       campaign,
       referralPartner,
@@ -152,7 +154,7 @@ export const GetStartedPage: React.FC = () => {
               }}
             >
               <ShieldCheck size={14} />
-              <span>7-Day Free Trial</span>
+              <span>One Account System</span>
             </div>
             <h1
               style={{
@@ -163,10 +165,10 @@ export const GetStartedPage: React.FC = () => {
                 letterSpacing: '-0.02em',
               }}
             >
-              Start your 7-day free trial
+              Create your ZAMERIA account
             </h1>
             <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-              No license required. No payment required to start your trial.
+              Connect your WooCommerce store to automatically activate your 7-day free trial.
             </p>
           </div>
 
@@ -194,52 +196,13 @@ export const GetStartedPage: React.FC = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Name */}
-            <div>
-              <label
-                htmlFor="reg-name"
-                style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
-              >
-                Full Name
-              </label>
-              <div style={{ position: 'relative' }}>
-                <User
-                  size={16}
-                  color="#94a3b8"
-                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                />
-                <input
-                  id="reg-name"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => {
-                    setFullName(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  placeholder="Amara Okafor"
-                  autoComplete="name"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '11px 12px 11px 36px',
-                    fontSize: '13.5px',
-                    color: '#071A31',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '12px',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Business Name */}
+            {/* Store Name */}
             <div>
               <label
                 htmlFor="reg-business"
                 style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
               >
-                Business / Store Name
+                Store Name
               </label>
               <div style={{ position: 'relative' }}>
                 <Store
@@ -255,7 +218,7 @@ export const GetStartedPage: React.FC = () => {
                     setBusinessName(e.target.value);
                     if (error) setError(null);
                   }}
-                  placeholder="Glow Beauty / Amara's Boutique"
+                  placeholder="e.g. Amara's Boutique"
                   autoComplete="organization"
                   style={{
                     width: '100%',
@@ -272,43 +235,24 @@ export const GetStartedPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Phone */}
+            {/* WooCommerce Store URL */}
             <div>
-              <label
-                htmlFor="reg-phone"
-                style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
-              >
-                Phone Number
+              <label htmlFor="reg-store-url" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}>
+                WooCommerce Store URL
               </label>
               <div style={{ position: 'relative' }}>
-                <Phone
-                  size={16}
-                  color="#94a3b8"
-                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                />
+                <Globe size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                 <input
-                  id="reg-phone"
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => {
-                    setPhone(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  placeholder="+234 800 000 0000"
-                  autoComplete="tel"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '11px 12px 11px 36px',
-                    fontSize: '13.5px',
-                    color: '#071A31',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '12px',
-                    outline: 'none',
-                  }}
+                  id="reg-store-url"
+                  type="text"
+                  value={storeUrl}
+                  onChange={(e) => { setStoreUrl(e.target.value); if (error) setError(null); }}
+                  placeholder="https://yourstore.com"
+                  autoComplete="url"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px 11px 36px', fontSize: '13.5px', color: '#071A31', backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', outline: 'none' }}
                 />
               </div>
+              <p style={{ margin: '5px 0 0', fontSize: '11px', color: '#64748b' }}>Saved as your primary store. Connect the plugin on this domain to activate your trial.</p>
             </div>
 
             {/* Email Address */}
@@ -350,17 +294,6 @@ export const GetStartedPage: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <label htmlFor="reg-store-url" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}>
-                WooCommerce Store URL
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Globe size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                <input id="reg-store-url" type="text" value={storeUrl} onChange={(e) => { setStoreUrl(e.target.value); if (error) setError(null); }} placeholder="https://yourstore.com" autoComplete="url" style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px 11px 36px', fontSize: '13.5px', color: '#071A31', backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', outline: 'none' }} />
-              </div>
-              <p style={{ margin: '5px 0 0', fontSize: '11px', color: '#64748b' }}>Saved as the intended store. The plugin confirms the final licensed domain when installed.</p>
-            </div>
-
             {/* Password */}
             <div>
               <label
@@ -383,7 +316,7 @@ export const GetStartedPage: React.FC = () => {
                     setPassword(e.target.value);
                     if (error) setError(null);
                   }}
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters"
                   autoComplete="new-password"
                   style={{
                     width: '100%',
@@ -488,15 +421,15 @@ export const GetStartedPage: React.FC = () => {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <CheckCircle2 size={14} color="#16a34a" />
-                <span>7-day free trial with full POS and inventory sync access</span>
+                <span>Single ZAMERIA account across website, plugin, and POS</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <CheckCircle2 size={14} color="#16a34a" />
-                <span>No credit card or license key required to start</span>
+                <span>7-day trial activates automatically when store is connected</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <CheckCircle2 size={14} color="#16a34a" />
-                <span>License generated automatically upon paid subscription</span>
+                <span>No separate trial activation required</span>
               </div>
             </div>
 
@@ -524,7 +457,7 @@ export const GetStartedPage: React.FC = () => {
                 transition: 'all 0.18s ease',
               }}
             >
-              <span>{isLoading ? 'Creating account...' : 'Start Free Trial'}</span>
+              <span>{isLoading ? 'Creating account...' : 'Create Account'}</span>
               {!isLoading && <ArrowRight size={16} />}
             </button>
           </form>

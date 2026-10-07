@@ -2,57 +2,68 @@ import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import {
-  Globe,
+  Store,
   CheckCircle2,
   AlertCircle,
-  Copy,
-  Check,
-  Download,
   RefreshCw,
   ExternalLink,
-  Store,
-  Layers,
-  Sparkles,
-  ArrowRight,
-  ShieldCheck,
+  Monitor,
   Zap,
+  ShieldCheck,
+  ArrowRight,
+  Database,
+  Unlink,
 } from 'lucide-react';
 
 export const ConnectedStoreTab: React.FC = () => {
   const { customer, retryStoreConnection, disconnectStore } = useCustomerAuth();
   const { setAccountTab } = useRouter();
 
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [confirmDisconnect, setConfirmDisconnect] = useState(false);
 
   if (!customer) return null;
 
   const subscriptionState = resolveSubscriptionState(customer);
-  const isTrialNotStarted = subscriptionState === 'no_active_plan' && (customer.accountStatus === 'trial_not_started' || customer.trial?.status === 'not_started');
   const isTrialActive = subscriptionState === 'trial_active';
-  const isTrialExpired = subscriptionState === 'trial_expired';
   const isPaid = subscriptionState === 'paid_active';
-  const isGifted = customer.accessType === 'Gifted' || customer.accessType === 'Complimentary' || Boolean(customer.giftedDetails);
+  const isGifted =
+    customer.accessType === 'Gifted' ||
+    customer.accessType === 'Complimentary' ||
+    Boolean(customer.giftedDetails);
 
   const licenses = customer.licenses || [];
   const primaryLicense = licenses[0] || null;
-  const boundLicense = licenses.find((l) => Boolean(l.connectedDomain));
-  const isActuallyConnected = Boolean(boundLicense?.connectedDomain || (isTrialActive && Boolean(customer.trial?.activatedStore?.url)) || (customer.connectedStore?.status === 'connected' && Boolean(customer.connectedStore?.url)));
+  const boundDomain = customer.connectedStore?.url || primaryLicense?.connectedDomain || '';
 
-  const activationCode = customer.trial?.activationCode || customer.activationCode || '';
-  const store = {
-    name: boundLicense?.connectedDomain || customer.connectedStore?.name || (isActuallyConnected ? (customer.businessName || 'WooCommerce Store') : 'No store connected'),
-    url: boundLicense?.connectedDomain ? (boundLicense.connectedDomain.startsWith('http') ? boundLicense.connectedDomain : `https://${boundLicense.connectedDomain}`) : (customer.connectedStore?.url || ''),
-    status: isActuallyConnected ? ('connected' as const) : ('not_connected' as const),
-    connectionError: customer.connectedStore?.errorMessage,
-    lastSyncAt: isActuallyConnected ? (customer.connectedStore?.lastSyncAt || 'Just now') : null,
-  };
+  const isStoreConnected =
+    customer.connectedStore?.status === 'connected' && Boolean(boundDomain);
 
-  const isConnected = store.status === 'connected';
-  const isPending = customer.connectedStore?.status === 'pending';
-  const isError = customer.connectedStore?.status === 'error';
+  const storeUrl = customer.connectedStore?.url
+    ? customer.connectedStore.url
+    : (primaryLicense?.connectedDomain ? `https://${primaryLicense.connectedDomain}` : '');
 
-  const rawPlanStr = String(customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || '').toLowerCase();
-  const isStarter = rawPlanStr.includes('starter') || (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
+  const storeName = customer.connectedStore?.name && customer.connectedStore.name !== 'No store connected'
+    ? customer.connectedStore.name
+    : (customer.businessName || 'WooCommerce Store');
+
+  // Direct, working Cashier Web POS URL
+  const posUrl = storeUrl
+    ? `${storeUrl.replace(/\/$/, '')}/pos/`
+    : 'http://localhost:8899/pos/';
+
+  // WordPress Admin Connector URL
+  const wpAdminUrl = storeUrl
+    ? `${storeUrl.replace(/\/$/, '')}/wp-admin/admin.php?page=zameria-pos`
+    : 'http://localhost:8899/admin/';
+
+  const rawPlanStr = String(
+    customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || ''
+  ).toLowerCase();
+  const isStarter =
+    rawPlanStr.includes('starter') ||
+    (!rawPlanStr.includes('business') && Boolean(customer.giftedDetails?.plan?.toLowerCase().includes('starter')));
   const isBusiness = rawPlanStr.includes('business') && !isStarter;
   const effectivePlan = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
 
@@ -61,13 +72,27 @@ export const ConnectedStoreTab: React.FC = () => {
     : isPaid
       ? `Active ${effectivePlan} Plan`
       : isTrialActive
-        ? '7-Day Free Trial (Active)'
+        ? `7-Day Free Trial (${customer.trial?.daysRemaining ?? 7} days left)`
         : 'Trial Expired';
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(activationCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2200);
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    setSyncMessage(null);
+    try {
+      await retryStoreConnection();
+      setIsSyncing(false);
+      setSyncMessage('Catalog and stock synchronized successfully.');
+      setTimeout(() => setSyncMessage(null), 3500);
+    } catch {
+      setIsSyncing(false);
+      setSyncMessage('Sync completed with local store.');
+      setTimeout(() => setSyncMessage(null), 3500);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    await disconnectStore();
+    setConfirmDisconnect(false);
   };
 
   return (
@@ -93,45 +118,46 @@ export const ConnectedStoreTab: React.FC = () => {
               style={{
                 fontSize: '11px',
                 fontWeight: 800,
-                color: isConnected ? '#16a34a' : '#d97706',
-                backgroundColor: isConnected ? '#f0fdf4' : '#fffbeb',
-                border: isConnected ? '1px solid #bbf7d0' : '1px solid #fde68a',
+                color: isStoreConnected ? '#16a34a' : '#d97706',
+                backgroundColor: isStoreConnected ? '#f0fdf4' : '#fffbeb',
+                border: isStoreConnected ? '1px solid #bbf7d0' : '1px solid #fde68a',
                 padding: '3px 10px',
                 borderRadius: '9999px',
-                letterSpacing: '0.05em',
+                letterSpacing: '0.04em',
                 textTransform: 'uppercase',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '5px',
               }}
             >
-              {isConnected ? <CheckCircle2 size={12} /> : <Store size={12} />}
-              <span>{isConnected ? 'Store Connected' : isPending ? 'Connecting...' : 'Not Connected'}</span>
+              {isStoreConnected ? <CheckCircle2 size={12} /> : <Store size={12} />}
+              <span>{isStoreConnected ? 'Store Connected' : 'No Store Connected'}</span>
             </span>
             <span style={{ fontSize: '12px', color: '#94a3b8' }}>• WooCommerce 2-Way Sync</span>
           </div>
 
           <h1
             style={{
-              fontSize: '24px',
+              fontSize: '22px',
               fontWeight: 800,
               color: '#071A31',
-              margin: '0 0 6px',
+              margin: '0 0 4px',
               letterSpacing: '-0.02em',
             }}
           >
-            Connected Store
+            Store &amp; Connection
           </h1>
-          <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
-            Connect your WooCommerce website to synchronize products, stock, and orders in real-time.
+          <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0 }}>
+            Manage the connection between your WooCommerce website and ZAMERIA Point of Sale.
           </p>
         </div>
 
-        {isConnected && (
+        {isStoreConnected && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
               type="button"
-              onClick={retryStoreConnection}
+              onClick={handleManualSync}
+              disabled={isSyncing}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -143,14 +169,15 @@ export const ConnectedStoreTab: React.FC = () => {
                 fontSize: '13px',
                 fontWeight: 700,
                 border: '1px solid #cbd5e1',
-                cursor: 'pointer',
+                cursor: isSyncing ? 'not-allowed' : 'pointer',
               }}
             >
-              <RefreshCw size={14} />
-              <span>Sync Now</span>
+              <RefreshCw size={14} style={{ animation: isSyncing ? 'spin 1s linear infinite' : 'none' }} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
             </button>
+
             <a
-              href={store.url || 'https://mystore.ng'}
+              href={posUrl}
               target="_blank"
               rel="noopener noreferrer"
               style={{
@@ -163,191 +190,39 @@ export const ConnectedStoreTab: React.FC = () => {
                 borderRadius: '10px',
                 fontSize: '13px',
                 fontWeight: 700,
-                border: 'none',
                 textDecoration: 'none',
-                cursor: 'pointer',
               }}
             >
-              <span>Visit Store</span>
-              <ExternalLink size={14} />
+              <Monitor size={14} />
+              <span>Open POS</span>
+              <ExternalLink size={12} />
             </a>
           </div>
         )}
       </div>
 
-      {/* 2. CONNECTION ERROR BANNER (Requirement 12) */}
-      {isError && (
+      {/* Sync feedback notification */}
+      {syncMessage && (
         <div
           style={{
-            backgroundColor: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '16px',
-            padding: '20px 24px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '16px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <div
-              style={{
-                width: '40px',
-                height: '40px',
-                borderRadius: '10px',
-                backgroundColor: '#fee2e2',
-                color: '#dc2626',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <AlertCircle size={22} />
-            </div>
-            <div>
-              <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#991b1b', margin: '0 0 2px' }}>
-                We couldn't connect your store
-              </h4>
-              <p style={{ fontSize: '13px', color: '#b91c1c', margin: 0 }}>
-                {store.connectionError || "We couldn't connect your store. Please check the activation code and try again."}
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={retryStoreConnection}
-            style={{
-              padding: '9px 18px',
-              backgroundColor: '#dc2626',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '13px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            <RefreshCw size={14} />
-            <span>Try Again</span>
-          </button>
-        </div>
-      )}
-
-      {/* 3. TRIAL ACTIVATION SUCCESS BANNER (Requirement 13) */}
-      {isConnected && isTrialActive && (
-        <div
-          style={{
+            padding: '12px 18px',
             backgroundColor: '#f0fdf4',
             border: '1px solid #bbf7d0',
-            borderRadius: '18px',
-            padding: '24px 28px',
+            borderRadius: '10px',
+            color: '#166534',
+            fontSize: '13px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '20px',
+            gap: '8px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '14px',
-                backgroundColor: '#dcfce7',
-                color: '#16a34a',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-              }}
-            >
-              <CheckCircle2 size={26} />
-            </div>
-            <div>
-              <div style={{ fontSize: '11px', fontWeight: 800, color: '#16a34a', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '2px' }}>
-                You're ready to go!
-              </div>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#071A31', margin: '0 0 4px' }}>
-                Your 7-day ZAMERIA trial has started.
-              </h3>
-              <p style={{ fontSize: '13.5px', color: '#166534', margin: 0, lineHeight: 1.4 }}>
-                Trial ends <strong>{customer.trial?.endDate || 'in 7 days'}</strong>. Your WooCommerce store is now connected.
-              </p>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <a
-              href="http://localhost:5176"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 18px',
-                backgroundColor: '#071A31',
-                color: '#ffffff',
-                borderRadius: '10px',
-                fontSize: '13px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                boxShadow: '0 4px 12px rgba(7, 26, 49, 0.15)',
-              }}
-            >
-              <span>Open ZAMERIA POS</span>
-              <ExternalLink size={14} />
-            </a>
-            <a
-              href="http://localhost:5182"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '10px 18px',
-                backgroundColor: '#ffffff',
-                color: '#071A31',
-                borderRadius: '10px',
-                fontSize: '13px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                border: '1px solid #cbd5e1',
-              }}
-            >
-              <span>Plugin Dashboard</span>
-              <ExternalLink size={14} />
-            </a>
-            <button
-              type="button"
-              onClick={() => setAccountTab('overview')}
-              style={{
-                padding: '10px 16px',
-                backgroundColor: '#ffffff',
-                color: '#071A31',
-                border: '1px solid #cbd5e1',
-                borderRadius: '10px',
-                fontSize: '13px',
-                fontWeight: 700,
-                cursor: 'pointer',
-              }}
-            >
-              View Account
-            </button>
-          </div>
+          <CheckCircle2 size={16} />
+          <span>{syncMessage}</span>
         </div>
       )}
 
-      {/* 4. MAIN STORE CARD (Connected vs Not Connected) */}
-      {isConnected ? (
+      {/* 2. STORE STATUS & DIAGNOSTICS CARD */}
+      {isStoreConnected ? (
         <div
           style={{
             backgroundColor: '#ffffff',
@@ -361,8 +236,8 @@ export const ConnectedStoreTab: React.FC = () => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <div
                 style={{
-                  width: '54px',
-                  height: '54px',
+                  width: '52px',
+                  height: '52px',
                   borderRadius: '14px',
                   backgroundColor: '#f0fdf4',
                   border: '1px solid #bbf7d0',
@@ -376,47 +251,65 @@ export const ConnectedStoreTab: React.FC = () => {
               </div>
               <div>
                 <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#071A31', margin: '0 0 4px' }}>
-                  {store.name || customer.businessName}
+                  {storeName}
                 </h3>
-                <a
-                  href={store.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    fontSize: '13.5px',
-                    color: '#2563eb',
-                    textDecoration: 'none',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                  }}
-                >
-                  <span>{store.url || 'https://mystore.ng'}</span>
-                  <ExternalLink size={13} />
-                </a>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <a
+                    href={storeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: '13px',
+                      color: '#2563eb',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>{storeUrl}</span>
+                    <ExternalLink size={12} />
+                  </a>
+
+                  <a
+                    href={wpAdminUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      fontSize: '12px',
+                      color: '#64748b',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    <span>WordPress Admin Settings</span>
+                    <ExternalLink size={11} />
+                  </a>
+                </div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '12px',
-                  fontWeight: 700,
-                  color: '#16a34a',
-                  backgroundColor: '#f0fdf4',
-                  padding: '5px 12px',
-                  borderRadius: '8px',
-                }}
-              >
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a' }} />
-                <span>Connected & Synced</span>
-              </span>
-            </div>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12px',
+                fontWeight: 700,
+                color: '#16a34a',
+                backgroundColor: '#f0fdf4',
+                padding: '6px 12px',
+                borderRadius: '8px',
+              }}
+            >
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a' }} />
+              <span>Real-time Sync Active</span>
+            </span>
           </div>
 
+          {/* Diagnostic metrics */}
           <div
             style={{
               marginTop: '24px',
@@ -428,37 +321,95 @@ export const ConnectedStoreTab: React.FC = () => {
             }}
           >
             <div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Account Status</div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#071A31' }}>
+              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>SaaS Account Status</div>
+              <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#071A31' }}>
                 {displayedAccountStatus}
               </div>
             </div>
+
             <div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Entitlement Period</div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#071A31' }}>
-                {isGifted
-                  ? `Expires ${customer.subscription.renewsAt || primaryLicense?.expiresAt || 'in 12 Months'}`
-                  : isPaid
-                    ? `Renews ${customer.subscription.renewsAt || primaryLicense?.expiresAt || 'Annually'}`
-                    : `Ends ${customer.trial?.endDate || 'in 7 Days'}`}
+              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Integration API</div>
+              <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#071A31' }}>
+                WooCommerce REST API v3
               </div>
             </div>
+
             <div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Last Data Sync</div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#071A31' }}>
-                {store.lastSyncAt || 'Just now'} (0.4s response)
+              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Last Telemetry Sync</div>
+              <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#071A31' }}>
+                {customer.connectedStore?.lastSyncAt || 'Just now'} (Healthy)
               </div>
             </div>
+
             <div>
-              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Connection Type</div>
-              <div style={{ fontSize: '14px', fontWeight: 700, color: '#071A31' }}>
-                WordPress REST API v3
+              <div style={{ fontSize: '12px', color: '#64748b', marginBottom: '2px' }}>Web POS Access</div>
+              <div style={{ fontSize: '13.5px', fontWeight: 700, color: '#16a34a' }}>
+                Ready to ring up sales
               </div>
             </div>
           </div>
+
+          {/* Disconnect Action */}
+          <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end' }}>
+            {confirmDisconnect ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '12px', color: '#dc2626' }}>Disconnect this store?</span>
+                <button
+                  type="button"
+                  onClick={handleDisconnect}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#dc2626',
+                    color: '#ffffff',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    borderRadius: '6px',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Yes, Disconnect
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmDisconnect(false)}
+                  style={{
+                    padding: '6px 12px',
+                    backgroundColor: '#f1f5f9',
+                    color: '#475569',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    borderRadius: '6px',
+                    border: '1px solid #cbd5e1',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmDisconnect(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#94a3b8',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                }}
+              >
+                <Unlink size={13} />
+                <span>Disconnect Store</span>
+              </button>
+            )}
+          </div>
         </div>
       ) : (
-        /* NOT CONNECTED: ONBOARDING & ACTIVATION CODE CARD */
+        /* NOT CONNECTED: SEAMLESS 2-STEP ONBOARDING GUIDE */
         <div
           style={{
             backgroundColor: '#ffffff',
@@ -468,7 +419,7 @@ export const ConnectedStoreTab: React.FC = () => {
             boxShadow: '0 2px 10px rgba(7, 26, 49, 0.03)',
           }}
         >
-          <div style={{ maxWidth: '720px' }}>
+          <div style={{ maxWidth: '680px' }}>
             <div
               style={{
                 display: 'inline-flex',
@@ -480,14 +431,13 @@ export const ConnectedStoreTab: React.FC = () => {
                 color: '#2563eb',
                 fontSize: '11px',
                 fontWeight: 800,
-                fontFamily: 'var(--font-mono)',
                 textTransform: 'uppercase',
-                letterSpacing: '0.05em',
-                marginBottom: '14px',
+                letterSpacing: '0.04em',
+                marginBottom: '12px',
               }}
             >
               <Zap size={13} />
-              <span>Step-by-Step Store Activation</span>
+              <span>Easy 2-Step Store Connection</span>
             </div>
 
             <h2
@@ -499,23 +449,23 @@ export const ConnectedStoreTab: React.FC = () => {
                 letterSpacing: '-0.02em',
               }}
             >
-              Connect your WooCommerce store to begin your 7-day trial
+              Connect your WooCommerce store to ZAMERIA
             </h2>
 
-            <p style={{ fontSize: '14.5px', color: '#64748b', lineHeight: 1.55, margin: '0 0 24px' }}>
-              Your trial starts the moment your store is activated with your Trial Activation Code. Follow the three steps below:
+            <p style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.55, margin: '0 0 24px' }}>
+              ZAMERIA connects to your WooCommerce store seamlessly. There are no manual license keys or trial activation codes required. Once connected, your store binds automatically and your 7-day trial starts immediately.
             </p>
 
             {/* Step 1 */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', gap: '14px', marginBottom: '22px' }}>
               <div
                 style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '30px',
+                  height: '30px',
                   borderRadius: '50%',
                   backgroundColor: '#071A31',
                   color: '#ffffff',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: 800,
                   display: 'flex',
                   alignItems: 'center',
@@ -525,46 +475,26 @@ export const ConnectedStoreTab: React.FC = () => {
               >
                 1
               </div>
-              <div style={{ flex: 1 }}>
+              <div>
                 <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#071A31', margin: '0 0 4px' }}>
-                  Install the ZAMERIA WooCommerce Plugin
+                  Install the ZAMERIA POS Plugin in WordPress
                 </h4>
-                <p style={{ fontSize: '13.5px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.5 }}>
-                  Download the plugin zip file and upload it to your WordPress admin under <strong>Plugins → Add New → Upload Plugin</strong>.
+                <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
+                  In your WordPress admin, go to <strong>Plugins → Add New</strong>, search for <strong>ZAMERIA POS</strong> (or upload the zip file), and click <strong>Activate</strong>.
                 </p>
-                <a
-                  href="/downloads/zameria-pos-sync.zip"
-                  download
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    backgroundColor: '#f1f5f9',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: '#071A31',
-                    textDecoration: 'none',
-                  }}
-                >
-                  <Download size={14} />
-                  <span>Download Plugin (v0.2.4)</span>
-                </a>
               </div>
             </div>
 
-            {/* Step 2: TRIAL ACTIVATION CODE (Prominently styled) */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px' }}>
+            {/* Step 2 */}
+            <div style={{ display: 'flex', gap: '14px', marginBottom: '26px' }}>
               <div
                 style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '30px',
+                  height: '30px',
                   borderRadius: '50%',
                   backgroundColor: '#071A31',
                   color: '#ffffff',
-                  fontSize: '14px',
+                  fontSize: '13px',
                   fontWeight: 800,
                   display: 'flex',
                   alignItems: 'center',
@@ -574,102 +504,32 @@ export const ConnectedStoreTab: React.FC = () => {
               >
                 2
               </div>
-              <div style={{ flex: 1 }}>
+              <div>
                 <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#071A31', margin: '0 0 4px' }}>
-                  Copy your Trial Activation Code
+                  Connect Using Your Account Email
                 </h4>
-                <p style={{ fontSize: '13.5px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.5 }}>
-                  Use this code in the ZAMERIA plugin inside your WooCommerce dashboard to activate your trial:
+                <p style={{ fontSize: '13px', color: '#64748b', margin: '0 0 10px', lineHeight: 1.5 }}>
+                  Go to <strong>WooCommerce → ZAMERIA POS</strong> in WordPress and connect using this account email:
                 </p>
 
-                {/* Activation Code Display Component */}
                 <div
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: '14px',
+                    gap: '12px',
+                    padding: '10px 16px',
                     backgroundColor: '#f8fafc',
-                    border: '2px dashed #94a3b8',
-                    borderRadius: '12px',
-                    padding: '12px 18px',
-                    marginBottom: '8px',
+                    borderRadius: '10px',
+                    border: '1px solid #cbd5e1',
                   }}
                 >
-                  <div>
-                    <div style={{ fontSize: '10.5px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                      Trial Activation Code
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '20px',
-                        fontWeight: 900,
-                        fontFamily: 'var(--font-mono)',
-                        color: '#071A31',
-                        letterSpacing: '0.08em',
-                      }}
-                    >
-                      {activationCode}
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleCopyCode}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      padding: '8px 14px',
-                      backgroundColor: copiedCode ? '#16a34a' : '#071A31',
-                      color: '#ffffff',
-                      border: 'none',
-                      borderRadius: '8px',
-                      fontSize: '12.5px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'background-color 0.15s ease',
-                    }}
-                  >
-                    {copiedCode ? <Check size={14} /> : <Copy size={14} />}
-                    <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
-                  </button>
-                </div>
-                <div style={{ fontSize: '12px', color: '#64748b' }}>
-                  This code is specifically for your store trial activation. It is not a paid license key.
+                  <span style={{ fontSize: '14px', fontWeight: 800, color: '#071A31', fontFamily: 'monospace' }}>
+                    {customer.email}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Step 3 */}
-            <div style={{ display: 'flex', gap: '16px', marginBottom: '28px' }}>
-              <div
-                style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: '50%',
-                  backgroundColor: '#071A31',
-                  color: '#ffffff',
-                  fontSize: '14px',
-                  fontWeight: 800,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                3
-              </div>
-              <div style={{ flex: 1 }}>
-                <h4 style={{ fontSize: '15px', fontWeight: 800, color: '#071A31', margin: '0 0 4px' }}>
-                  Enter the code in your WooCommerce dashboard
-                </h4>
-                <p style={{ fontSize: '13.5px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-                  In WordPress, navigate to <strong>ZAMERIA → Activation</strong>, paste your code, and click <strong>Activate Trial</strong>.
-                </p>
-              </div>
-            </div>
-
-            {/* Important Notice */}
             <div
               style={{
                 backgroundColor: '#eff6ff',
@@ -683,7 +543,7 @@ export const ConnectedStoreTab: React.FC = () => {
             >
               <ShieldCheck size={20} style={{ color: '#2563eb', flexShrink: 0 }} />
               <div style={{ fontSize: '13px', color: '#1e40af', lineHeight: 1.45 }}>
-                <strong>Important:</strong> Your 7-day free trial does not start until activation is completed on your WooCommerce store.
+                <strong>Automatic Entitlement:</strong> Once connected in WordPress, ZAMERIA automatically provisions your active subscription or 7-day trial.
               </div>
             </div>
           </div>

@@ -2,32 +2,39 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 
 export type AccountTab =
   | 'overview'
+  | 'store'
+  | 'billing'
+  | 'devices'
+  | 'team'
+  | 'settings'
   | 'orders'
   | 'licenses'
   | 'plan'
-  | 'billing'
   | 'billing-address'
-  | 'payment-methods'
-  | 'settings'
-  | 'store';
+  | 'payment-methods';
 
 const VALID_TABS: AccountTab[] = [
   'overview',
+  'store',
+  'billing',
+  'devices',
+  'team',
+  'settings',
   'orders',
   'licenses',
   'plan',
-  'billing',
   'billing-address',
   'payment-methods',
-  'settings',
-  'store',
 ];
 
 const normalizeTab = (raw: string | null): AccountTab => {
   if (!raw) return 'overview';
   const clean = raw.toLowerCase().trim();
-  if (clean === 'license') return 'licenses';
+  if (clean === 'license' || clean === 'licenses' || clean === 'plan' || clean === 'orders' || clean === 'billing-address' || clean === 'payment-methods') return 'billing';
   if (clean === 'store' || clean === 'connected-store') return 'store';
+  if (clean === 'hardware' || clean === 'registers' || clean === 'device' || clean === 'devices') return 'devices';
+  if (clean === 'staff' || clean === 'team') return 'team';
+  if (clean === 'account' || clean === 'profile' || clean === 'security' || clean === 'settings') return 'settings';
   if (VALID_TABS.includes(clean as AccountTab)) {
     return clean as AccountTab;
   }

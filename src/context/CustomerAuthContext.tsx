@@ -386,7 +386,7 @@ interface CustomerAuthContextType {
   disconnectStore: () => void;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: {
-    fullName: string;
+    fullName?: string;
     businessName: string;
     email: string;
     password: string;
@@ -396,6 +396,7 @@ interface CustomerAuthContextType {
     referralPartner?: ReferralPartnerInfo;
     plan?: string;
     storeUrl?: string;
+    storeAddress?: string;
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
@@ -1306,7 +1307,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   // --- STATE 1: Account Created / Trial Not Started ---
   const register = async (data: {
-    fullName: string;
+    fullName?: string;
     businessName: string;
     email: string;
     password: string;
@@ -1318,6 +1319,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     referralPartner?: ReferralPartnerInfo;
     plan?: string;
     storeUrl?: string;
+    storeAddress?: string;
   }): Promise<{ success: boolean; error?: string }> => {
     await new Promise((resolve) => setTimeout(resolve, 400));
 
@@ -1326,7 +1328,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const existing = localStorage.getItem(STORAGE_KEY_USERS);
       const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
 
-      const nameParts = data.fullName.trim().split(' ');
+      const resolvedName = (data.fullName || data.businessName || 'Store Owner').trim();
+      const nameParts = resolvedName.split(' ');
       const firstName = nameParts[0] || 'Store';
       const lastName = nameParts.slice(1).join(' ') || 'Owner';
 
@@ -1340,12 +1343,13 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              full_name: data.fullName.trim(),
+              full_name: resolvedName,
               business_name: data.businessName.trim(),
               email: trimmedEmail,
               password: data.password,
               phone: data.phone?.trim() || '',
               store_url: data.storeUrl?.trim() || '',
+              store_address: data.storeAddress?.trim() || '',
             }),
           });
           if (backendRes.ok) {
@@ -1385,7 +1389,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // STATE A: Account Created, Trial Not Started, NO license, NO subscription!
       const newCustomer: CustomerProfile = {
         id: accountId,
-        fullName: data.fullName.trim(),
+        fullName: resolvedName,
         businessName: data.businessName.trim(),
         email: trimmedEmail,
         phone: userPhone,
@@ -1436,7 +1440,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           firstName,
           lastName,
           company: data.businessName.trim(),
-          address: isNigeria ? 'Victoria Island' : 'Commercial Suite',
+          address: data.storeAddress?.trim() || (isNigeria ? 'Victoria Island' : 'Commercial Suite'),
           city: isNigeria ? 'Lagos' : 'Metro City',
           state: isNigeria ? 'Lagos State' : 'State',
           country: userCountry,
