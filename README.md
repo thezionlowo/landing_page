@@ -1,38 +1,38 @@
 # ZAMERIA Customer Account & Landing Page
 
-The official customer-facing web portal and single source of truth for the **ZAMERIA Unified Retail Ecosystem**.
+The official customer-facing web portal and single source of truth for the **ZAMERIA Standalone SaaS Ecosystem**.
 
 ## Overview
 
 This application manages:
 * **Customer Registration & Authentication**: Secure merchant sign-up and login portal.
-* **Subscription Plans & Pricing**: Authoritative plan tiers:
-  * **Starter**: 7-Day Free Trial / Evaluation, 1 store, 500 products, 2 staff/cashiers.
-  * **Business**: ₦30,000/month (₦25,000/mo billed annually), 1 store, unlimited products, 5 staff/cashiers.
-  * **Business Plus**: ₦50,000/month, multi-store, unlimited products, unlimited staff.
-* **Trial Lifecycle**: Single-use `ZMR-TRL-XXXX-XXXX` activation code issuance and automatic 7-day expiration gating.
-* **Software License Issuance**: Authoritative issuance of paid license keys (`ZMR-XXXX-XXXX-XXXX`) upon plan upgrade.
-* **Store Domain Authorization**: Dynamic binding of licenses to verified WooCommerce store domains.
+* **Subscription Plans & Pricing**: Authoritative annual plan tiers:
+  * **Starter**: ₦200,000/year (Nigeria) / $200/year (Global). Includes up to 2 active registers and 500 catalog products.
+  * **Business**: ₦300,000/year (Nigeria) / $300/year (Global). Includes unlimited active registers and unlimited catalog products.
+* **Store Connection**: Direct WooCommerce store linkage enabling the POS software to seamlessly communicate with the merchant's online store via the ZAMERIA plugin bridge.
 
 ---
 
 ## Ecosystem Integration
 
-The ZAMERIA ecosystem consists of three synchronized client applications communicating with the authoritative cloud backend:
+The ZAMERIA ecosystem operates as a modern Software-as-a-Service (SaaS) platform, completely decoupled from the WordPress admin panel:
 
-1. **Customer Account & Portal** (This repository): `http://localhost:5174`
-2. **WooCommerce Plugin Dashboard (`ZMPLUGIN`)**: `http://localhost:5182`
-3. **Sales / POS Dashboard (`ZMPOS`)**: `http://localhost:5176`
-4. **Authoritative Cloud API**: `http://localhost:5190`
+1. **ZAMERIA Web / SaaS App** (The core POS interface where sales happen)
+2. **ZAMERIA Mobile App** (Capacitor wrappers for Android and iOS)
+3. **ZAMERIA WooCommerce Plugin** (The silent background bridge installed on the merchant's WordPress site)
+4. **ZAMERIA Admin Control Center** (Internal support and operations dashboard)
+5. **ZAMERIA Cloud API** (Authoritative licensing, billing, and routing backend)
+
+The customer journey is simple: *Download the ZAMERIA App -> Create an Account -> Connect your Store -> Start Selling.*
 
 ---
 
 ## Key Routes
 
-* `/` or `/#pricing` — Marketing landing page with transparent plan pricing
-* `/get-started` — Merchant registration and trial code generation
+* `/` — Marketing landing page with transparent plan pricing
+* `/get-started` — Merchant registration
 * `/login` — Clean, production-ready merchant login
-* `/account` — Centralized customer account, billing, license, and connected store management
+* `/account` — Centralized customer account, billing, entitlement, and connected store management
 
 ---
 
@@ -49,17 +49,9 @@ npm install
 ```bash
 npm run dev
 ```
-Runs the development server on `http://localhost:5174` bound to `0.0.0.0`.
 
 ### Production Build
 
 ```bash
 npm run build
 ```
-
-### End-to-End Regression Testing
-
-```bash
-npm run test:e2e
-```
-Executes the comprehensive cross-system integration and synchronization test suite (`src/__tests__/e2e-sync-test.ts`).
