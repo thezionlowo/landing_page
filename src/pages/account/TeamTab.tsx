@@ -1,5 +1,6 @@
 import React from 'react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
+import { ROUTES } from '../../lib/routes';
 import {
   Users,
   ShieldCheck,
@@ -22,7 +23,7 @@ export const TeamTab: React.FC = () => {
 
   const wpUsersUrl = storeUrl
     ? `${storeUrl.replace(/\/$/, '')}/wp-admin/users.php`
-    : 'http://localhost:8899/admin/';
+    : ROUTES.pluginDashboard;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>

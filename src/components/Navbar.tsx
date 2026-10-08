@@ -502,7 +502,7 @@ export const Navbar: React.FC = () => {
 
                   {/* 1. ZAMERIA Plugin (Active) */}
                   <a
-                    href="http://localhost:5182"
+                    href={ROUTES.pluginDashboard}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setDownloadOpen(false)}
@@ -561,7 +561,7 @@ export const Navbar: React.FC = () => {
 
                   {/* 2. Desktop App (Active / Available) */}
                   <a
-                    href="http://localhost:5176"
+                    href={ROUTES.pointOfSale}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setDownloadOpen(false)}
@@ -1133,7 +1133,7 @@ export const Navbar: React.FC = () => {
 
                 {/* Open POS CTA Button */}
                 <a
-                  href="http://localhost:5176"
+                  href={ROUTES.pointOfSale}
                   target="_blank"
                   rel="noopener noreferrer"
                   style={{
@@ -1361,7 +1361,7 @@ export const Navbar: React.FC = () => {
               >
                 {/* 1. ZAMERIA Plugin */}
                 <a
-                  href="http://localhost:5182"
+                  href={ROUTES.pluginDashboard}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}
@@ -1379,7 +1379,7 @@ export const Navbar: React.FC = () => {
 
                 {/* 2. Desktop App */}
                 <a
-                  href="http://localhost:5176"
+                  href={ROUTES.pointOfSale}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}
@@ -1629,7 +1629,7 @@ export const Navbar: React.FC = () => {
 
                 {/* Open POS Link for Mobile */}
                 <a
-                  href="http://localhost:5176"
+                  href={ROUTES.pointOfSale}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}

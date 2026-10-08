@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { resolveSubscriptionState, useCustomerAuth, CustomerProfile } from '../../context/CustomerAuthContext';
 import { useRouter, AccountTab } from '../../router/Router';
+import { ROUTES } from '../../lib/routes';
 import { OverviewTab } from './OverviewTab';
 import { ConnectedStoreTab } from './ConnectedStoreTab';
 import { BillingTab } from './BillingTab';
@@ -136,7 +137,7 @@ export const AccountLayout: React.FC = () => {
   const storeUrl = customer.connectedStore?.url
     ? customer.connectedStore.url
     : (primaryLicense?.connectedDomain ? `https://${primaryLicense.connectedDomain}` : '');
-  const posUrl = storeUrl ? `${storeUrl.replace(/\/$/, '')}/pos/` : 'http://localhost:8899/pos/';
+  const posUrl = storeUrl ? `${storeUrl.replace(/\/$/, '')}/pos/` : ROUTES.pointOfSale;
 
   const handleLogout = () => {
     logout();

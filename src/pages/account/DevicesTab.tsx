@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth } from '../../context/CustomerAuthContext';
+import { ROUTES } from '../../lib/routes';
 import {
   Monitor,
   Printer,
@@ -30,7 +31,7 @@ export const DevicesTab: React.FC = () => {
 
   const posUrl = storeUrl
     ? `${storeUrl.replace(/\/$/, '')}/pos/`
-    : 'http://localhost:8899/pos/';
+    : ROUTES.pointOfSale;
 
   const rawPlanStr = String(
     customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || ''

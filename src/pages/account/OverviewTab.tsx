@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
+import { ROUTES } from '../../lib/routes';
 import { AddLicenseModal } from './AddLicenseModal';
 import {
   Layers,
@@ -64,7 +65,7 @@ export const OverviewTab: React.FC = () => {
   // Direct, working Cashier Web POS URL
   const posUrl = storeUrl
     ? `${storeUrl.replace(/\/$/, '')}/pos/`
-    : 'http://localhost:8899/pos/';
+    : ROUTES.pointOfSale;
 
   const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
   const trialEnd = customer.trial?.endDate ?? customer.trialEndsAt ?? 'in 7 days';
@@ -354,7 +355,7 @@ export const OverviewTab: React.FC = () => {
               letterSpacing: '-0.02em',
             }}
           >
-            {customer.businessName || 'My Retail Store'}
+            {customer.businessName || 'Welcome to ZAMERIA'}
           </h1>
 
           <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
@@ -440,7 +441,7 @@ export const OverviewTab: React.FC = () => {
               }}
             >
               <Zap size={16} style={{ color: '#fbbf24' }} />
-              <span>Connect Store</span>
+              <span>Connect Your Store</span>
             </button>
           )}
 

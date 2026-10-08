@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth, LicenseItem, OrderItem } from '../../context/CustomerAuthContext';
 import { isNigerianCountry, getAuthoritativePlanPrice } from '../../lib/geoPricing';
 import { useRouter } from '../../router/Router';
+import { ROUTES } from '../../lib/routes';
 import {
   X,
   ShieldCheck,
@@ -477,7 +478,7 @@ export const AddLicenseModal: React.FC<AddLicenseModalProps> = ({ isOpen, onClos
                   type="button"
                   onClick={() => {
                     handleClose();
-                    window.open('http://localhost:5176', '_blank', 'noopener,noreferrer');
+                    window.open(ROUTES.pointOfSale, '_blank', 'noopener,noreferrer');
                   }}
                   style={{
                     width: '100%',

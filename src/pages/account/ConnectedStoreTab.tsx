@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
+import { ROUTES } from '../../lib/routes';
 import {
   Store,
   CheckCircle2,
@@ -51,12 +52,12 @@ export const ConnectedStoreTab: React.FC = () => {
   // Direct, working Cashier Web POS URL
   const posUrl = storeUrl
     ? `${storeUrl.replace(/\/$/, '')}/pos/`
-    : 'http://localhost:8899/pos/';
+    : ROUTES.pointOfSale;
 
   // WordPress Admin Connector URL
   const wpAdminUrl = storeUrl
     ? `${storeUrl.replace(/\/$/, '')}/wp-admin/admin.php?page=zameria-pos`
-    : 'http://localhost:8899/admin/';
+    : ROUTES.pluginDashboard;
 
   const rawPlanStr = String(
     customer.giftedDetails?.plan || primaryLicense?.plan || customer.plan || customer.subscription?.planId || ''
