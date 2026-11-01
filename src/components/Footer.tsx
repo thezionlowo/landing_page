@@ -1,3 +1,4 @@
+import { BRAND_HEADLINE, BRAND_SUPPORT } from '../lib/brandMessaging';
 import React from 'react';
 import { Mail, Phone, ArrowUpRight } from 'lucide-react';
 import { scrollToSection, ROUTES } from '../lib/routes';
@@ -88,6 +89,10 @@ export const Footer: React.FC = () => {
         position: 'relative',
       }}
     >
+      <div className="container" style={{ maxWidth: '1180px', padding: '0 24px 32px', margin: '0 auto' }}>
+        <p style={{ fontSize: 'clamp(20px, 3vw, 28px)', fontWeight: 700, lineHeight: 1.3, maxWidth: '720px', margin: '0 0 12px' }}>{BRAND_HEADLINE}</p>
+        <p style={{ color: '#cbd5e1', lineHeight: 1.6, maxWidth: '680px', margin: 0 }}>{BRAND_SUPPORT}</p>
+      </div>
       <div
         className="container"
         style={{

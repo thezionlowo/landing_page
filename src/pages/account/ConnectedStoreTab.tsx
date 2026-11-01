@@ -80,20 +80,20 @@ export const ConnectedStoreTab: React.FC = () => {
     setIsSyncing(true);
     setSyncMessage(null);
     try {
-      await retryStoreConnection();
+      const result = await retryStoreConnection();
       setIsSyncing(false);
-      setSyncMessage('Catalog and stock synchronized successfully.');
+      setSyncMessage(result.success ? 'Store connection confirmed. Open POS to check catalogue sync on your device.' : result.error || 'Connection has not been confirmed.');
       setTimeout(() => setSyncMessage(null), 3500);
     } catch {
       setIsSyncing(false);
-      setSyncMessage('Sync completed with local store.');
+      setSyncMessage('Could not check the connection. Please retry online.');
       setTimeout(() => setSyncMessage(null), 3500);
     }
   };
 
   const handleDisconnect = async () => {
-    await disconnectStore();
-    setConfirmDisconnect(false);
+    const result=await disconnectStore();
+    if(result.success)setConfirmDisconnect(false);else setSyncMessage(result.error || 'Could not disconnect store');
   };
 
   return (
@@ -174,7 +174,7 @@ export const ConnectedStoreTab: React.FC = () => {
               }}
             >
               <RefreshCw size={14} style={{ animation: isSyncing ? 'spin 1s linear infinite' : 'none' }} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+              <span>{isSyncing ? 'Checking...' : 'Check connection'}</span>
             </button>
 
             <a
@@ -306,7 +306,7 @@ export const ConnectedStoreTab: React.FC = () => {
               }}
             >
               <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#16a34a' }} />
-              <span>Real-time Sync Active</span>
+              <span>Store connection confirmed</span>
             </span>
           </div>
 
@@ -481,7 +481,7 @@ export const ConnectedStoreTab: React.FC = () => {
                   Install the ZAMERIA POS Plugin in WordPress
                 </h4>
                 <p style={{ fontSize: '13px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-                  In your WordPress admin, go to <strong>Plugins → Add New</strong>, search for <strong>ZAMERIA POS</strong> (or upload the zip file), and click <strong>Activate</strong>.
+                  Download the plugin from your setup checklist. In WordPress, go to <strong>Plugins → Add New → Upload Plugin</strong>, upload the ZIP, and click <strong>Activate</strong>.
                 </p>
               </div>
             </div>

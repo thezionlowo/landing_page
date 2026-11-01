@@ -1,5 +1,9 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
+import { backendBase } from '../../server/accountSession';
+
+// Paystack signs the raw body. Disable framework parsing before signature verification.
+export const config = { api: { bodyParser: false } };
 
 interface PaystackWebhookBody {
   event: string;
@@ -7,12 +11,14 @@ interface PaystackWebhookBody {
     id: number;
     reference: string;
     amount: number;
+    currency?: string;
     status: string;
     customer: {
       email: string;
       customer_code?: string;
     };
     metadata?: {
+      currency?: string;
       accountId?: string;
       account_id?: string;
       plan?: 'Starter' | 'Business';
@@ -21,18 +27,6 @@ interface PaystackWebhookBody {
     paid_at?: string;
     channel?: string;
   };
-}
-
-// In-memory processed transaction registry to ensure strict idempotency
-const processedTransactions = new Set<string>();
-
-/**
- * Generates an authoritative ZMR-XXXX-XXXX-XXXX license key.
- */
-function generateAuthoritativeLicenseKey(): string {
-  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const seg = () => Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-  return `ZMR-${seg()}-${seg()}-${seg()}`;
 }
 
 /**
@@ -49,8 +43,12 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
 
   // 1. Read Raw Request Body for HMAC SHA-512 Verification
   const chunks: Buffer[] = [];
+  let length = 0;
   for await (const chunk of req) {
-    chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+    const buffer = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
+    length += buffer.length;
+    if (length > 1048576) { res.statusCode = 413; res.end(); return; }
+    chunks.push(buffer);
   }
   const rawBody = Buffer.concat(chunks).toString('utf8');
 
@@ -58,14 +56,19 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
   const secretKey = process.env.PAYSTACK_SECRET_KEY || '';
   const paystackSignature = (req.headers['x-paystack-signature'] as string) || '';
 
-  if (secretKey) {
-    const hash = crypto.createHmac('sha512', secretKey).update(rawBody).digest('hex');
-    if (hash !== paystackSignature) {
-      res.statusCode = 401;
-      res.setHeader('Content-Type', 'application/json');
-      res.end(JSON.stringify({ error: 'Invalid Paystack signature' }));
-      return;
-    }
+  if (!secretKey) {
+    res.statusCode = 503;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: 'Payment webhook is not configured' }));
+    return;
+  }
+  const expectedSignature = crypto.createHmac('sha512', secretKey).update(rawBody).digest();
+  if (!/^[a-f0-9]{128}$/i.test(paystackSignature) ||
+      !crypto.timingSafeEqual(expectedSignature, Buffer.from(paystackSignature, 'hex'))) {
+    res.statusCode = 401;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify({ error: 'Invalid Paystack signature' }));
+    return;
   }
 
   let eventData: PaystackWebhookBody;
@@ -79,6 +82,9 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
   }
 
   // 3. Process Only Successful Charges
+  if (!eventData || typeof eventData !== 'object') {
+    res.statusCode = 400; res.end(JSON.stringify({ error: 'Invalid event' })); return;
+  }
   if (eventData.event !== 'charge.success') {
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/json');
@@ -86,78 +92,37 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
     return;
   }
 
-  const { reference, amount, customer, metadata, paid_at } = eventData.data;
-
-  // 4. Strict Idempotency Check: Prevent duplicate processing of webhooks & retries
-  if (processedTransactions.has(reference)) {
-    res.statusCode = 200;
+  if (!eventData.data || typeof eventData.data.reference !== 'string' || !eventData.data.reference.trim() ||
+      !Number.isSafeInteger(eventData.data.amount) || eventData.data.amount <= 0 ||
+      eventData.data.status !== 'success' || !eventData.data.customer?.email ||
+      (eventData.data.paid_at && !Number.isFinite(Date.parse(eventData.data.paid_at)))) {
+    res.statusCode = 400;
     res.setHeader('Content-Type', 'application/json');
-    res.end(JSON.stringify({ received: true, status: 'already_processed', reference }));
+    res.end(JSON.stringify({ error: 'Invalid successful charge payload' }));
     return;
   }
 
-  // 5. Identify Plan & Currency from Amount, Currency and Metadata
-  // Nigeria (NGN): Starter: ₦200,000 = 20,000,000 kobo | Business: ₦300,000 = 30,000,000 kobo
-  // International (USD): Starter: $250 = 25,000 cents | Business: $400 = 40,000 cents
-  const currencyHeader = (eventData.data as any).currency || metadata?.currency || (amount < 1000000 ? 'USD' : 'NGN');
-  const isUsd = currencyHeader.toUpperCase() === 'USD' || amount < 1000000;
-  const currency: 'NGN' | 'USD' = isUsd ? 'USD' : 'NGN';
+  const { reference } = eventData.data;
 
-  let plan: 'Starter' | 'Business';
-  if (metadata?.plan) {
-    plan = metadata.plan;
-  } else if (isUsd) {
-    plan = amount >= 35000 ? 'Business' : 'Starter';
-  } else {
-    plan = amount >= 25000000 ? 'Business' : 'Starter';
+  // Licence issuance and replay protection belong to the central checkout service.
+  // Every delivery (including retries after a cold start) resolves the same reference.
+  // Never acknowledge a payment while its backend confirmation is unavailable.
+  try {
+    const response = await fetch(`${backendBase()}/checkout/verify?reference=${encodeURIComponent(reference)}`, {
+      headers: { 'Accept': 'application/json' }, cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(15000),
+    });
+    const verified = await response.json().catch(() => ({}));
+    const returnedReference = verified.payment_reference || verified.reference;
+    if (!response.ok || typeof verified.license_key !== 'string' || !verified.license_key.trim() || !Number.isFinite(Date.parse(verified.expires_at)) ||
+        (returnedReference && returnedReference !== reference)) {
+      res.statusCode = 503;
+      res.end(JSON.stringify({ error: 'Payment confirmation is pending. Retry this event.' }));
+      return;
+    }
+    res.statusCode = 200;
+    res.end(JSON.stringify({ received: true, status: 'confirmed', reference }));
+  } catch {
+    res.statusCode = 503;
+    res.end(JSON.stringify({ error: 'Payment confirmation is unavailable. Retry this event.' }));
   }
-
-  let planName = plan === 'Starter' ? 'Starter Plan' : 'Business Plan';
-  let price = isUsd
-    ? (plan === 'Starter' ? '$250 / year' : '$400 / year')
-    : (plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year');
-
-  // 6. Generate 1-Year License & Authoritative Expiry
-  const licenseKey = generateAuthoritativeLicenseKey();
-  const startDate = paid_at ? new Date(paid_at) : new Date();
-  const expiryDate = new Date(startDate);
-  expiryDate.setFullYear(expiryDate.getFullYear() + 1);
-
-  const license = {
-    id: `lic_${Date.now().toString().slice(-6)}`,
-    licenseKey,
-    plan,
-    planName,
-    billingCycle: 'yearly' as const,
-    price,
-    currency,
-    status: 'Active' as const,
-    connectedDomain: null,
-    activationStatus: 'Not Activated' as const,
-    activatedAt: null,
-    expiresAt: expiryDate.toISOString(),
-    transactionRef: reference,
-    amountNumber: amount / 100,
-    customerEmail: customer?.email,
-    accountId: metadata?.accountId || metadata?.account_id,
-  };
-
-
-  // Register transaction as successfully processed
-  processedTransactions.add(reference);
-
-  // Return authoritative 200 OK to Paystack
-  res.statusCode = 200;
-  res.setHeader('Content-Type', 'application/json');
-  res.end(
-    JSON.stringify({
-      received: true,
-      status: 'processed',
-      reference,
-      plan,
-      licenseKey,
-      expiresAt: expiryDate.toISOString(),
-      accountUpdated: true,
-    })
-  );
 }

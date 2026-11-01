@@ -1,3 +1,4 @@
+import { BRAND_HEADLINE, BRAND_SUPPORT } from '../lib/brandMessaging';
 import React from 'react';
 import { ArrowRight, Sparkles, CheckCircle2, Zap, ShieldCheck } from 'lucide-react';
 import { ROUTES } from '../lib/routes';
@@ -75,7 +76,7 @@ export const FinalCta: React.FC = () => {
                 marginBottom: '16px',
               }}
             >
-              Ready to bring your online and offline business together?
+              {BRAND_HEADLINE}
             </h2>
 
             <p
@@ -88,7 +89,7 @@ export const FinalCta: React.FC = () => {
                 fontWeight: 500,
               }}
             >
-              Start your 7-day free trial.
+              {BRAND_SUPPORT}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '18px' }}>

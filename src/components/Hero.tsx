@@ -1,3 +1,4 @@
+import { BRAND_HEADLINE, BRAND_SUPPORT } from '../lib/brandMessaging';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   ArrowRight,
@@ -65,17 +66,17 @@ export const Hero: React.FC = () => {
           {/* Luminous Pill Eyebrow */}
           <div className="eyebrow-badge purple" style={{ margin: '0 auto 22px' }}>
             <span className="eyebrow-dot" />
-            <span>✦ UNIFIED COMMERCE FOR WOOCOMMERCE</span>
+            <span>WOOCOMMERCE POS · ONLINE &amp; IN STORE</span>
           </div>
 
           {/* Oversized Display Headline */}
           <h1 className="hero-headline" style={{ margin: '0 auto 24px' }}>
-            Real-Time WooCommerce POS &amp; In-Store Inventory Management
+            {BRAND_HEADLINE}
           </h1>
 
           {/* Straight-To-The-Point Subtitle */}
           <p className="lead-text center" style={{ maxWidth: '720px', marginBottom: '36px' }}>
-            Your online and offline business shouldn't live in different worlds. ZAMERIA connects your WooCommerce store with physical retail counters, barcode checkout, and instant bi-directional inventory sync.
+            {BRAND_SUPPORT}
           </p>
 
           {/* Action Duo */}

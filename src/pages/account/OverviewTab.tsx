@@ -1,7 +1,9 @@
+import { getAuthoritativePlanPrice } from '../../lib/geoPricing';
 import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import { ROUTES } from '../../lib/routes';
+import { SetupChecklist } from './SetupChecklist';
 import { AddLicenseModal } from './AddLicenseModal';
 import {
   Layers,
@@ -32,6 +34,7 @@ export const OverviewTab: React.FC = () => {
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState(false);
+  const [connectionError, setConnectionError] = useState('');
 
   if (!customer) return null;
 
@@ -87,7 +90,7 @@ export const OverviewTab: React.FC = () => {
         ? `Gifted ${planTier} Plan`
         : `${planTier} Plan`;
 
-  const authoritativePrice = isBusiness ? '₦300,000 / year' : '₦200,000 / year';
+  const authoritativePrice = getAuthoritativePlanPrice(customer.currency === 'USD' ? 'US' : 'NG', isBusiness ? 'Business' : 'Starter');
   const price = isGifted
     ? 'Complimentary'
     : isPaidActive
@@ -103,16 +106,16 @@ export const OverviewTab: React.FC = () => {
 
   const handleManualSync = async () => {
     setIsSyncing(true);
-    await retryStoreConnection();
-    setTimeout(() => {
-      setIsSyncing(false);
-      setSyncSuccess(true);
-      setTimeout(() => setSyncSuccess(false), 3000);
-    }, 800);
+    setSyncSuccess(false); setConnectionError('');
+    try { const result = await retryStoreConnection(); setSyncSuccess(result.success); if (!result.success) setConnectionError(result.error || 'Could not confirm connection.'); }
+    catch { setConnectionError('Could not check connection. Please retry online.'); }
+    finally { setIsSyncing(false); }
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      <SetupChecklist connected={isStoreConnected} storeUrl={storeUrl} email={customer.email} checkConnection={retryStoreConnection} />
+      {connectionError && <p role="alert">{connectionError}</p>}
       {/* 1. STATE BANNERS (Alerts needing customer attention) */}
       {isTrialExpired && (
         <div
@@ -361,7 +364,7 @@ export const OverviewTab: React.FC = () => {
           <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
             {isStoreConnected ? (
               <span>
-                Connected to <strong>{storeName}</strong>. 2-way real-time catalog &amp; stock sync active.
+                Connected to <strong>{storeName}</strong>. Store connection confirmed. Open POS to check device sync.
               </span>
             ) : (
               <span>
@@ -418,7 +421,7 @@ export const OverviewTab: React.FC = () => {
                 }}
               >
                 <RefreshCw size={14} style={{ animation: isSyncing ? 'spin 1s linear infinite' : 'none' }} />
-                <span>{isSyncing ? 'Syncing...' : syncSuccess ? 'Synced!' : 'Sync Now'}</span>
+                <span>{isSyncing ? 'Checking...' : syncSuccess ? 'Connection confirmed' : 'Check connection'}</span>
               </button>
             </>
           ) : (
@@ -560,7 +563,7 @@ export const OverviewTab: React.FC = () => {
             {isStoreConnected ? storeName : 'Not Connected'}
           </div>
           <div style={{ fontSize: '12.5px', color: isStoreConnected ? '#16a34a' : '#d97706', marginTop: '4px', fontWeight: 600 }}>
-            {isStoreConnected ? '● 2-Way Real-time Sync Active' : '● Connect WooCommerce'}
+            {isStoreConnected ? '● Store connection confirmed' : '● Connect WooCommerce'}
           </div>
           <div style={{ marginTop: '14px', fontSize: '12px', color: '#2563eb', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span>Store &amp; Sync Details</span>
@@ -722,7 +725,7 @@ export const OverviewTab: React.FC = () => {
               <span style={{ fontSize: '12.5px', fontWeight: 700, color: '#071A31' }}>Real-time Inventory</span>
             </div>
             <div style={{ fontSize: '12px', color: '#64748b' }}>
-              {isStoreConnected ? 'Instant stock deduction on in-store sales' : 'Inventory sync paused'}
+              {isStoreConnected ? 'Check inventory sync in POS' : 'Inventory sync paused'}
             </div>
           </div>
 

@@ -130,7 +130,7 @@ function generatePageSchema(route: string, config: RouteSEO): object {
     name: 'ZAMERIA',
     url: baseCanonical,
     logo: `${baseCanonical}/zameria-logo.png`,
-    description: 'Real-time WooCommerce Point of Sale (POS) and inventory synchronization platform.',
+    description: 'Manage your in-store and website orders in one place. Keep your products, stock and customers in sync across your shop and website.',
     contactPoint: {
       '@type': 'ContactPoint',
       telephone: '+2348122342436',

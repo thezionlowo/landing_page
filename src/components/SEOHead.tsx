@@ -1,3 +1,4 @@
+import { BRAND_HEADLINE, BRAND_SUPPORT } from '../lib/brandMessaging';
 import React, { useEffect } from 'react';
 import { useRouter } from '../router/Router';
 
@@ -12,12 +13,12 @@ export interface RouteSEO {
 
 export const ROUTE_SEO_CONFIG: Record<string, RouteSEO> = {
   '/': {
-    title: 'ZAMERIA — Real-Time WooCommerce POS & In-Store Inventory Management',
-    description: 'Connect your WooCommerce store with your physical retail shop. Manage products, real-time inventory synchronization, barcode POS checkout, and orders in one unified system.',
+    title: `ZAMERIA — ${BRAND_HEADLINE}`,
+    description: BRAND_SUPPORT,
     canonical: 'https://www.zameria.co/',
     robots: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
     keywords: 'WooCommerce POS, WooCommerce inventory sync, Point of Sale WooCommerce, retail POS Nigeria, retail inventory sync',
-    h1: 'Real-Time WooCommerce POS & In-Store Inventory Management',
+    h1: BRAND_HEADLINE,
   },
   '/woocommerce-pos': {
     title: 'WooCommerce POS for Physical Retail Stores | ZAMERIA Point of Sale',

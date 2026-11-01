@@ -23,7 +23,7 @@ export const SettingsTab: React.FC = () => {
 
   // Personal Info Form State
   const [fullName, setFullName] = useState(customer?.fullName || '');
-  const [email, setEmail] = useState(customer?.email || '');
+  const [email] = useState(customer?.email || '');
   const [profileSuccess, setProfileSuccess] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
@@ -41,7 +41,7 @@ export const SettingsTab: React.FC = () => {
 
   if (!customer) return null;
 
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim()) {
       setProfileError('Please enter your full name.');
@@ -52,20 +52,21 @@ export const SettingsTab: React.FC = () => {
       return;
     }
 
-    updateProfile({ fullName: fullName.trim(), email: email.trim() });
+    const result = await updateProfile({ fullName: fullName.trim(), email: email.trim() });
+    if (!result.success) { setProfileError(result.error || 'Could not save profile'); return; }
     setProfileError(null);
     setProfileSuccess(true);
     setTimeout(() => setProfileSuccess(false), 3500);
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentPassword) {
       setPasswordError('Please enter your current password.');
       return;
     }
-    if (newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters long.');
+    if (newPassword.length < 8) {
+      setPasswordError('New password must be at least 8 characters long.');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -73,13 +74,14 @@ export const SettingsTab: React.FC = () => {
       return;
     }
 
-    const res = changePassword(currentPassword, newPassword);
+    const res = await changePassword(currentPassword, newPassword);
     if (!res.success) {
       setPasswordError(res.error || 'Failed to update password.');
       return;
     }
 
     setPasswordError(null);
+    navigate('/login');
     setPasswordSuccess(true);
     setCurrentPassword('');
     setNewPassword('');
@@ -88,8 +90,9 @@ export const SettingsTab: React.FC = () => {
   };
 
   const handleSendResetEmail = async () => {
-    await requestPasswordReset(customer.email);
-    setResetSent(true);
+    const result = await requestPasswordReset(customer.email);
+    if (!result.success) { setPasswordError(result.error || 'Could not send recovery instructions'); return; }
+    setPasswordError(null); setResetSent(true);
     setTimeout(() => setResetSent(false), 5000);
   };
 
@@ -226,7 +229,7 @@ export const SettingsTab: React.FC = () => {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  readOnly aria-readonly="true" title="Your login email requires a verified change process"
                   placeholder="merchant@business.com"
                   required
                   style={{

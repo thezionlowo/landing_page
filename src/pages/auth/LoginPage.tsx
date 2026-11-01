@@ -1,3 +1,4 @@
+import { BRAND_SUPPORT } from '../../lib/brandMessaging';
 import React, { useState } from 'react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
@@ -70,7 +71,7 @@ export const LoginPage: React.FC = () => {
               Log in to ZAMERIA
             </h1>
             <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-              Access your merchant account and retail operations
+              {BRAND_SUPPORT}
             </p>
           </div>
 

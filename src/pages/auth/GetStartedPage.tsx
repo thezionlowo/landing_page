@@ -1,3 +1,4 @@
+import { BRAND_SUPPORT } from '../../lib/brandMessaging';
 import React, { useState, useEffect } from 'react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
@@ -154,7 +155,7 @@ export const GetStartedPage: React.FC = () => {
               }}
             >
               <ShieldCheck size={14} />
-              <span>One Account System</span>
+              <span>YOUR SHOP + YOUR WEBSITE</span>
             </div>
             <h1
               style={{
@@ -168,7 +169,7 @@ export const GetStartedPage: React.FC = () => {
               Create your ZAMERIA account
             </h1>
             <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-              Connect your WooCommerce store to automatically activate your 7-day free trial.
+              {BRAND_SUPPORT}
             </p>
           </div>
 
@@ -421,7 +422,7 @@ export const GetStartedPage: React.FC = () => {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <CheckCircle2 size={14} color="#16a34a" />
-                <span>Single ZAMERIA account across website, plugin, and POS</span>
+                <span>Use the same ZAMERIA account on this website and in the plugin</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <CheckCircle2 size={14} color="#16a34a" />

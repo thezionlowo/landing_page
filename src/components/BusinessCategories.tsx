@@ -33,7 +33,7 @@ const CATEGORIES: CategoryItem[] = [
   {
     name: 'Grocery & Supermarkets',
     desc: 'Supermarkets, mini marts, food provisions and fast-paced retail stores.',
-    image: '/categories/grocery.jpg',
+    image: '/categories/grocery.webp',
     imageWebp: '/categories/grocery.webp',
     tag: 'Rapid Barcode Scanning',
   },

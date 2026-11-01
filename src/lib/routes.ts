@@ -29,7 +29,7 @@ export const getPluginDashboardUrl = (path: string = ''): string => {
     return `http://localhost:5182${path.startsWith('/') ? path : `/${path}`}`;
   }
 
-  return 'https://zameria.co/plugin';
+  return '/account';
 };
 
 export const ROUTES = {

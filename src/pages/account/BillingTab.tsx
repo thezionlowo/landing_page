@@ -1,3 +1,4 @@
+import { downloadReceipt } from '../../lib/billing';
 import React, { useState } from 'react';
 import { resolveSubscriptionState, useCustomerAuth, OrderItem } from '../../context/CustomerAuthContext';
 import { getAuthoritativePlanPrice } from '../../lib/geoPricing';
@@ -25,23 +26,24 @@ import {
 } from 'lucide-react';
 
 export const BillingTab: React.FC = () => {
-  const { customer, changePlan, cancelSubscription, resumeSubscription, updateBillingAddress } = useCustomerAuth();
+  const { customer, changePlan, updateBillingAddress } = useCustomerAuth();
   const [selectedInvoice, setSelectedInvoice] = useState<OrderItem | null>(null);
+  const [downloadError, setDownloadError] = useState('');
+  const [downloading, setDownloading] = useState(false);
   const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
   const [addrForm, setAddrForm] = useState({
     firstName: customer?.billingAddress?.firstName || customer?.fullName?.split(' ')[0] || '',
     lastName: customer?.billingAddress?.lastName || customer?.fullName?.split(' ').slice(1).join(' ') || '',
     company: customer?.businessName || '',
-    address: customer?.billingAddress?.address || '14 Admiralty Way, Lekki Phase 1',
-    city: customer?.billingAddress?.city || 'Lagos',
-    state: customer?.billingAddress?.state || 'Lagos State',
-    country: 'Nigeria',
-    phone: customer?.billingAddress?.phone || customer?.phone || '+234 800 000 0000',
+    address: customer?.billingAddress?.address || '',
+    city: customer?.billingAddress?.city || '',
+    state: customer?.billingAddress?.state || '',
+    country: customer?.billingAddress?.country || '',
+    phone: customer?.billingAddress?.phone || customer?.phone || '',
   });
 
   if (!customer) return null;
@@ -63,7 +65,7 @@ export const BillingTab: React.FC = () => {
   const isBusiness = rawPlanStr.includes('business') && !isStarter;
   const planTier = isStarter ? 'Starter' : isBusiness ? 'Business' : (customer.plan || 'Starter');
 
-  const targetCountry = customer.country || (customer.currency === 'USD' ? 'US' : 'NG');
+  const targetCountry = customer.currency === 'USD' ? 'US' : customer.currency === 'NGN' ? 'NG' : customer.country || 'NG';
   const authoritativePrice = getAuthoritativePlanPrice(targetCountry, isBusiness ? 'Business' : 'Starter');
 
   const planName = isPaidActive
@@ -94,17 +96,21 @@ export const BillingTab: React.FC = () => {
     setTimeout(() => setCopiedKey(false), 2000);
   };
 
-  const handleDownloadInvoice = (order: OrderItem) => {
-    setDownloadSuccess(order.invoiceNumber);
-    setTimeout(() => setDownloadSuccess(null), 3000);
+  const handleDownloadInvoice = async (order: OrderItem) => {
+    setDownloading(true); setDownloadError('');
+    try { if (!order.transactionRef) throw new Error('No verified payment reference is available for this receipt');
+      await downloadReceipt(order.transactionRef); setDownloadSuccess(order.invoiceNumber);
+      setTimeout(() => setDownloadSuccess(null), 3000);
+    } catch (error) { setDownloadError(error instanceof Error ? error.message : 'Could not download receipt'); }
+    finally { setDownloading(false); }
   };
 
-  const handleSaveAddress = (e: React.FormEvent) => {
+  const handleSaveAddress = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateBillingAddress({
+    const result=await updateBillingAddress({
       ...addrForm,
     });
-    setIsAddressModalOpen(false);
+    if(result.success)setIsAddressModalOpen(false);else setDownloadError(result.error || 'Could not save address');
   };
 
   const orders = customer.orders || [];
@@ -166,6 +172,7 @@ export const BillingTab: React.FC = () => {
         </button>
       </div>
 
+      {downloadError && <p role="alert" style={{ color: '#b91c1c' }}>{downloadError}</p>}
       {downloadSuccess && (
         <div
           style={{
@@ -181,7 +188,7 @@ export const BillingTab: React.FC = () => {
           }}
         >
           <CheckCircle2 size={16} />
-          <span>Tax Invoice {downloadSuccess} downloaded successfully.</span>
+          <span>Payment receipt {downloadSuccess} downloaded successfully.</span>
         </div>
       )}
 
@@ -258,44 +265,7 @@ export const BillingTab: React.FC = () => {
           </div>
         </div>
 
-        {/* Cancellation or Switch actions */}
-        {isPaidActive && !isGifted && (
-          <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            {isCancelled ? (
-              <button
-                type="button"
-                onClick={resumeSubscription}
-                style={{
-                  padding: '8px 14px',
-                  backgroundColor: '#071A31',
-                  color: '#ffffff',
-                  fontSize: '12.5px',
-                  fontWeight: 700,
-                  borderRadius: '8px',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}
-              >
-                Resume Subscription
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setIsCancelModalOpen(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#94a3b8',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  textDecoration: 'underline',
-                }}
-              >
-                Cancel auto-renewal
-              </button>
-            )}
-          </div>
-        )}
+        <p style={{marginTop:'20px',color:'#64748b',fontSize:'13px'}}>Annual license purchased once. Renew through secure checkout when access expires.</p>
       </div>
 
       {/* 3. SOFTWARE ENTITLEMENT & LICENSE */}
@@ -513,7 +483,7 @@ export const BillingTab: React.FC = () => {
               Invoice &amp; Receipt History
             </h3>
             <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
-              Download official receipts for tax accounting and record-keeping.
+              Download receipts for your verified subscription payments.
             </p>
           </div>
         </div>
@@ -557,7 +527,7 @@ export const BillingTab: React.FC = () => {
                     <td style={{ padding: '14px 16px', textAlign: 'right' }}>
                       <button
                         type="button"
-                        onClick={() => handleDownloadInvoice(ord)}
+                        disabled={downloading} onClick={() => handleDownloadInvoice(ord)}
                         style={{
                           background: 'none',
                           border: 'none',
@@ -696,58 +666,7 @@ export const BillingTab: React.FC = () => {
         </div>
       )}
 
-      {/* Cancel Confirmation Modal */}
-      {isCancelModalOpen && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(7, 26, 49, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100,
-            padding: '20px',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '20px',
-              maxWidth: '440px',
-              width: '100%',
-              padding: '28px',
-              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.2)',
-            }}
-          >
-            <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#071A31', margin: '0 0 8px' }}>
-              Cancel Auto-Renewal?
-            </h3>
-            <p style={{ fontSize: '13.5px', color: '#64748b', lineHeight: 1.5, margin: '0 0 20px' }}>
-              Your store will continue to have full access to ZAMERIA POS until <strong>{renewsAt}</strong>. You will not be charged again after this date.
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-              <button
-                type="button"
-                onClick={() => setIsCancelModalOpen(false)}
-                style={{ padding: '9px 16px', borderRadius: '8px', border: '1px solid #cbd5e1', backgroundColor: '#f1f5f9', cursor: 'pointer', fontSize: '13px' }}
-              >
-                Keep Active
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  cancelSubscription();
-                  setIsCancelModalOpen(false);
-                }}
-                style={{ padding: '9px 16px', borderRadius: '8px', border: 'none', backgroundColor: '#dc2626', color: '#ffffff', fontWeight: 700, cursor: 'pointer', fontSize: '13px' }}
-              >
-                Confirm Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
     </div>
   );
 };

@@ -1,4 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { mapBilling } from '../lib/billing';
+import { confirmedStore } from '../lib/storeSetup';
+import { accountRequest, migrateAccountCaches, withoutCredentials } from '../lib/accountClient';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { leadCaptureClient, LeadSource, ReferralPartnerInfo } from '../services/leadCaptureClient';
 import {
   isNigerianCountry,
@@ -231,13 +234,9 @@ export const resolveSubscriptionState = (
 ): SubscriptionDisplayState => {
   if (!profile) return 'no_active_plan';
 
-  const activeLicense = profile.licenses?.some((license) => license.status === 'Active') ?? false;
-  const isGifted =
-    profile.accessType === 'Gifted' ||
-    profile.accessType === 'Complimentary' ||
-    Boolean(profile.giftedDetails) ||
-    Boolean((profile as any).gifted_details);
-  if (profile.subscription?.status === 'active' || activeLicense || isGifted) {
+  const unexpired=(value?:string|null)=>Boolean(value && Number.isFinite(Date.parse(value)) && Date.parse(value)>currentTimeMs);
+  const activeLicense=profile.licenses?.some(l=>l.status==='Active' && unexpired(l.expiresAt)) ?? false;
+  if ((profile.subscription?.status === 'active' && unexpired(profile.subscription.renewsAt)) || activeLicense) {
     return 'paid_active';
   }
   if (profile.subscription?.status === 'past_due' || profile.accountStatus === 'payment_failed') return 'past_due';
@@ -289,7 +288,8 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
 
   // 1. Paid entitlement always wins, even when the historical trial says active or expired.
   if (state === 'paid_active') {
-    const activeLicense = profile.licenses?.find(l => l.status === 'Active' && (!domain || !l.connectedDomain || l.connectedDomain === domain));
+    const activeLicense = profile.licenses?.find(l => l.status === 'Active' && Date.parse(l.expiresAt)>Date.now() && (!domain || !l.connectedDomain || l.connectedDomain === domain));
+    if (domain && !activeLicense) return {allowed:false,status:'unauthorized',planName:'None',licenseRequired:true,message:'No current license was verified for this store.'};
     const resolvedPlanTitle = profile.subscription?.planName || (profile.plan ? `${profile.plan} Plan` : profile.licenses?.[0]?.plan ? `${profile.licenses[0].plan} Plan` : 'Starter Plan');
     return {
       allowed: true,
@@ -373,6 +373,7 @@ export const checkPluginEntitlement = (profile: CustomerProfile | null, domain?:
 };
 
 interface CustomerAuthContextType {
+  isRestoringSession: boolean;
   customer: CustomerProfile | null;
   isAuthenticated: boolean;
   isTrial: boolean;
@@ -383,7 +384,7 @@ interface CustomerAuthContextType {
   verifyPluginAccess: (domain?: string) => PluginEntitlementStatus;
   activateTrial: (code?: string, storeData?: { name?: string; url?: string }) => Promise<{ success: boolean; error?: string }>;
   retryStoreConnection: () => Promise<{ success: boolean; error?: string }>;
-  disconnectStore: () => void;
+  disconnectStore: () => Promise<{success:boolean;error?:string}>;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (data: {
     fullName?: string;
@@ -400,9 +401,9 @@ interface CustomerAuthContextType {
   }) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
-  updateProfile: (data: { fullName: string; email: string }) => void;
-  changePassword: (currentPass: string, newPass: string) => { success: boolean; error?: string };
-  updateBillingAddress: (address: BillingAddress) => void;
+  updateProfile: (data: { fullName: string; email: string }) => Promise<{ success: boolean; error?: string }>;
+  changePassword: (currentPass: string, newPass: string) => Promise<{ success: boolean; error?: string }>;
+  updateBillingAddress: (address: BillingAddress) => Promise<{success:boolean;error?:string}>;
   addPaymentMethod: (card: Omit<PaymentMethodItem, 'id' | 'isDefault'>) => void;
   removePaymentMethod: (id: string) => void;
   setDefaultPaymentMethod: (id: string) => void;
@@ -497,8 +498,8 @@ export const DEMO_TRIAL_CUSTOMER: CustomerProfile = {
     lastName: 'Lowo',
     company: 'Zion Business Ltd.',
     address: 'Plot 14B Admiralty Way, Lekki Phase 1',
-    city: 'Lagos',
-    state: 'Lagos State',
+    city: '',
+    state: '',
     country: 'Nigeria',
     phone: '+234 802 345 6789',
   },
@@ -595,8 +596,8 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
     lastName: 'Lowo',
     company: 'Zion Business Ltd.',
     address: 'Plot 14B Admiralty Way, Lekki Phase 1',
-    city: 'Lagos',
-    state: 'Lagos State',
+    city: '',
+    state: '',
     country: 'Nigeria',
     phone: '+234 802 345 6789',
   },
@@ -655,12 +656,21 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
   ],
 };
 
+const displayPlanPrice = (plan: 'Starter' | 'Business', currency?: string) => getAuthoritativePlanPrice(currency === 'USD' ? 'US' : 'NG', plan);
+
 const STORAGE_KEY_AUTH = 'zameria_customer_session_v3';
 const STORAGE_KEY_USERS = 'zameria_registered_customers_v3';
 
 // Helper: strictly enforce authoritative plan resolution, annual pricing, and store connection truth
+export function activeMerchantLicense(licenses: any[]): any | undefined {
+  const active=licenses.filter(l=>!l.is_trial && String(l.plan).toLowerCase()!=='trial' && String(l.status).toLowerCase()==='active' && (Number.isFinite(Date.parse(l.expires_at)) && Date.parse(l.expires_at)>Date.now()));
+  return active.find(l=>!l.gifted && String(l.access_type).toLowerCase()!=='gifted') || active[0];
+}
+const giftedLicense = (license:any) => Boolean(license && (license.gifted || String(license.access_type).toLowerCase()==='gifted' || license.price==='Gifted Plan'));
+
 export function normalizeCustomerProfile(profile: CustomerProfile | null): CustomerProfile | null {
   if (!profile) return null;
+  profile = withoutCredentials(profile);
 
   const giftedPlan = String(profile.giftedDetails?.plan || (profile as any).gifted_details?.plan || '').toLowerCase();
   const rawLicenses = Array.isArray(profile.licenses) ? profile.licenses : [];
@@ -680,12 +690,7 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
   const isBusiness = rawPlanStr.includes('business') && !isStarter;
   const resolvedPlan: 'Starter' | 'Business' | null = isStarter ? 'Starter' : isBusiness ? 'Business' : null;
 
-  const isGifted =
-    profile.accessType === 'Gifted' ||
-    profile.accessType === 'Complimentary' ||
-    Boolean(profile.giftedDetails) ||
-    Boolean((profile as any).gifted_details) ||
-    rawLicenses.some((l) => (l as any).access_type === 'gifted' || l.price === 'Gifted Plan');
+  const isGifted=rawLicenses.some(l=>String(l.status).toLowerCase()==='active' && giftedLicense(l) && (Number.isFinite(Date.parse(l.expiresAt)) && Date.parse(l.expiresAt)>Date.now()));
 
   // Normalize licenses: enforce authoritative pricing and 1-year expiry, filter out trials and deduplicate
   const filteredRawLicenses = rawLicenses.filter(
@@ -707,17 +712,10 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
 
     const rawLicStr = String(lic.plan || lic.licenseKey || resolvedPlan || '').toLowerCase();
     const licPlan: 'Starter' | 'Business' = rawLicStr.includes('starter') || rawLicStr.includes('zm-str') ? 'Starter' : (rawLicStr.includes('business') ? 'Business' : (resolvedPlan || 'Starter'));
-    const isLicGifted = isGifted || (lic as any).access_type === 'gifted' || lic.price === 'Gifted Plan';
-    const licPrice = isLicGifted ? 'Gifted Plan' : licPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year';
+    const isLicGifted = giftedLicense(lic);
+    const licPrice = isLicGifted ? 'Gifted Plan' : displayPlanPrice(licPlan, lic.currency || profile.currency);
 
-    let exp = lic.expiresAt || '';
-    if (!exp || exp.includes('month') || exp.toLowerCase().includes('invalid')) {
-      const base = lic.activatedAt ? new Date(lic.activatedAt) : new Date();
-      if (!isNaN(base.getTime())) {
-        base.setFullYear(base.getFullYear() + 1);
-        exp = base.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-      }
-    }
+    const exp = lic.expiresAt || ''; // Dates come from the server; never invent another year of access.
 
     normalizedLicenses.push({
       ...lic,
@@ -733,24 +731,15 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
     });
   }
 
-  const hasPaidLicense = normalizedLicenses.some((l) => l.status === 'Active');
-  const isPaid = profile.subscription?.status === 'active' || hasPaidLicense || isGifted;
+  const isPaid = resolveSubscriptionState({...profile,licenses:normalizedLicenses}) === 'paid_active';
 
   let renewsAt = profile.subscription?.renewsAt || profile.nextBillingDate || normalizedLicenses[0]?.expiresAt;
-  if (isPaid && (!renewsAt || renewsAt.includes('month') || renewsAt.toLowerCase().includes('invalid'))) {
-    const base = profile.subscription?.startDate ? new Date(profile.subscription.startDate) : new Date();
-    if (!isNaN(base.getTime())) {
-      base.setFullYear(base.getFullYear() + 1);
-      renewsAt = base.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    }
-  }
-
   // Never fall back to 'Business' when a plan is unknown; default to 'Starter' as lowest tier if paid
   const finalPlan = isPaid ? (resolvedPlan || 'Starter') : resolvedPlan;
   const finalPrice = isGifted
     ? 'Gifted Plan'
     : isPaid && finalPlan
-      ? (finalPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year')
+      ? displayPlanPrice(finalPlan, profile.currency)
       : profile.planPrice;
 
   let finalAccountStatus = profile.accountStatus;
@@ -775,7 +764,8 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
 
   return {
     ...profile,
-    accessType: isGifted ? 'Gifted' : profile.accessType || (isPaid ? 'Paid' : 'Trial'),
+    accessType: isGifted ? 'Gifted' : isPaid ? 'Paid' : 'Trial',
+    giftedDetails: isGifted ? profile.giftedDetails : undefined,
     accountStatus: finalAccountStatus,
     plan: finalPlan,
     planPrice: finalPrice || 'None (Trial Eligible)',
@@ -793,7 +783,7 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
       status: isPaid ? 'active' : profile.subscription?.status || 'none',
       planId: finalPlan,
       planName: finalPlan ? `${finalPlan} Plan` : (profile.subscription?.planName || 'None (Trial Eligible)'),
-      price: isGifted ? '₦0 (Gifted)' : (isPaid && finalPlan ? (finalPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : profile.subscription?.price || '₦0'),
+      price: isGifted ? '₦0 (Gifted)' : (isPaid && finalPlan ? displayPlanPrice(finalPlan, profile.currency) : profile.subscription?.price || '₦0'),
       billingCycle: 'yearly',
       renewsAt: renewsAt || profile.subscription?.renewsAt || null,
     },
@@ -814,8 +804,13 @@ const ZAMERIA_ACCOUNT_API_BASE = `${SCOREFLIP_BACKEND_URL.replace(/\/$/, '')}/ap
 const CustomerAuthContext = createContext<CustomerAuthContextType | undefined>(undefined);
 
 export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const sessionGeneration = useRef(0);
+  const [sessionEpoch, setSessionEpoch] = useState(0);
+  const invalidateAccountRequests = () => { sessionGeneration.current += 1; setSessionEpoch(value => value + 1); };
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [customer, setCustomer] = useState<CustomerProfile | null>(() => {
     try {
+      migrateAccountCaches();
       // Check current key or legacy storage keys
       const saved =
         localStorage.getItem(STORAGE_KEY_AUTH) ||
@@ -833,7 +828,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             localStorage.removeItem('zameria_customer_session');
           } catch {}
         }
-        return normalized;
+        return null; // Cached profiles alone never establish authentication.
       }
     } catch {
       // ignore
@@ -842,7 +837,23 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return null;
   });
 
+  useEffect(() => {
+    let active = true;
+    migrateAccountCaches();
+    void accountRequest('session').then(data => {
+      const raw = localStorage.getItem(STORAGE_KEY_AUTH);
+      const cached = raw ? normalizeCustomerProfile(JSON.parse(raw)) : null;
+      if (active && cached && data.account?.email?.toLowerCase() === cached.email.toLowerCase()) {
+        const confirmed = confirmedStore(data.account);
+        setCustomer({ ...cached, id: String(data.account.id), connectedStore: { ...cached.connectedStore, ...(confirmed || {}), status: confirmed ? 'connected' : 'not_connected' } });
+      }
+    }).catch(() => { /* A fresh sign-in is required when no server session can be validated. */ })
+      .finally(() => { if (active) setIsRestoringSession(false); });
+    return () => { active = false; };
+  }, []);
+
   const persistSession = (c: CustomerProfile | null) => {
+    if (c === null) invalidateAccountRequests();
     const normalized = normalizeCustomerProfile(c);
     setCustomer(normalized);
     try {
@@ -874,29 +885,31 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     if (!customer?.email || !SCOREFLIP_BACKEND_URL) return;
 
+    let active = true;
+    let inFlight = false;
+    const generation = sessionGeneration.current;
     const syncWithBackend = async () => {
+      if (!active || inFlight || generation !== sessionGeneration.current) return;
+      inFlight = true;
       try {
         const queryId = customer.id || customer.email;
-        let res = await fetch(`${ZAMERIA_ACCOUNT_API_BASE}/account/${encodeURIComponent(queryId)}`);
-        if (!res.ok) {
-          res = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/account/${encodeURIComponent(queryId)}`);
-        }
+        const sessionData = await accountRequest('session');
+        if (!active || generation !== sessionGeneration.current) return;
+        const res = { ok: true, json: async () => sessionData };
         if (res.ok) {
           const data = await res.json();
           if (data.account) {
             const acc = data.account;
             setCustomer((prev) => {
-              if (!prev) return prev;
+              if (!active || generation !== sessionGeneration.current || !prev || prev.id !== customer.id || prev.email !== customer.email) return prev;
               const isCancelled = acc.accountStatus === 'cancelled' || acc.subscription?.status === 'cancelled';
               const isTrialActive = acc.trial?.status === 'active';
               const isExpired = acc.trial?.status === 'expired' || acc.accountStatus === 'expired';
               const rawLicenses: any[] = Array.isArray(acc.licenses) ? acc.licenses : [];
-              const activePaidLicense = rawLicenses.find(
-                (l: any) => (l.status || '').toLowerCase() === 'active' && (l.plan || '').toLowerCase() !== 'trial'
-              );
-              const isGifted = acc.access_type === 'Gifted' || acc.accessType === 'Gifted' || Boolean(acc.gifted_details || acc.giftedDetails) || prev.accessType === 'Gifted';
-              const giftedDetails = acc.gifted_details || acc.giftedDetails || prev.giftedDetails;
-              const isPaid = !isCancelled && !isExpired && (acc.subscription?.status === 'active' || Boolean(activePaidLicense) || isGifted);
+              const activePaidLicense = activeMerchantLicense(rawLicenses);
+              const isGifted = giftedLicense(activePaidLicense);
+              const giftedDetails = isGifted ? {plan: activePaidLicense.plan, expiresAt:activePaidLicense.expires_at, reason:activePaidLicense.gift_reason} as CustomerProfile['giftedDetails'] : undefined;
+              const isPaid = Boolean(activePaidLicense);
 
               // Authoritative plan resolution: Starter (₦200,000/yr) or Business (₦300,000/yr)
               const rawGiftedPlan = String(giftedDetails?.plan || '').toLowerCase();
@@ -904,9 +917,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               const isStarter = detectedPlanStr.includes('starter') || (!detectedPlanStr.includes('business') && rawGiftedPlan === 'starter');
               const isBusiness = detectedPlanStr.includes('business') && !isStarter;
               const activePlan: 'Starter' | 'Business' = isStarter ? 'Starter' : isBusiness ? 'Business' : (prev.plan || 'Starter');
-              const activePrice = isGifted ? 'Gifted Plan' : isBusiness ? '₦300,000 / year' : '₦200,000 / year';
+              const activePrice = isGifted ? 'Gifted Plan' : displayPlanPrice(activePlan, acc.currency || activePaidLicense?.currency || prev.currency);
 
-              let accountStatus = prev.accountStatus;
+              let accountStatus: AccountStatus = rawLicenses.length ? 'expired' : 'trial_not_started';
               if (isCancelled) accountStatus = 'cancelled';
               else if (isPaid) accountStatus = activePlan === 'Business' ? 'active_business' : 'active_starter';
               else if (isExpired) accountStatus = 'trial_expired';
@@ -921,8 +934,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                   const isLicStarter = rawLicPlan.includes('starter') || (!rawLicPlan.includes('business') && activePlan === 'Starter');
                   const isLicBusiness = rawLicPlan.includes('business') && !isLicStarter;
                   const licPlan: 'Starter' | 'Business' = isLicStarter ? 'Starter' : isLicBusiness ? 'Business' : activePlan;
-                  const isLicGifted = isGifted || (lic as any).access_type === 'gifted' || lic.price === 'Gifted Plan';
-                  const licPrice = isLicGifted ? 'Gifted Plan' : isLicBusiness ? '₦300,000 / year' : '₦200,000 / year';
+                  const isLicGifted = giftedLicense(lic);
+                  const licPrice = isLicGifted ? 'Gifted Plan' : displayPlanPrice(licPlan, lic.currency || acc.currency || prev.currency);
 
                   // Calculate 1-year expiration accurately
                   let formattedExpiry = '';
@@ -936,24 +949,12 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     } else {
                       formattedExpiry = String(rawExp);
                     }
-                  } else if (rawAct) {
-                    const d = new Date(rawAct);
-                    if (!isNaN(d.getTime())) {
-                      d.setFullYear(d.getFullYear() + 1);
-                      formattedExpiry = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-                    }
-                  }
-
-                  if (!formattedExpiry) {
-                    const oneYear = new Date();
-                    oneYear.setFullYear(oneYear.getFullYear() + 1);
-                    formattedExpiry = oneYear.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
                   }
 
                   const licenseId = String(lic.id || `lic_${(lic.license_key || lic.licenseKey || lic.code || '').replace(/[^a-z0-9]/gi, '').slice(-8) || idx}`);
                   const licenseKey = String(lic.license_key || lic.licenseKey || lic.code || '');
-                  const rawStatus = (lic.status || 'Active').toLowerCase();
-                  const status: LicenseStatus = rawStatus === 'active' ? 'Active' : rawStatus === 'expired' ? 'Expired' : 'Not Activated';
+                  const rawStatus = String(lic.status || '').toLowerCase();
+                  const status: LicenseStatus = rawStatus === 'active' ? 'Active' : rawStatus === 'suspended' ? 'Suspended' : rawStatus === 'revoked' ? 'Revoked' : rawStatus === 'issued' ? 'Not Activated' : 'Expired';
                   const domain = lic.store_domain || lic.connectedDomain || null;
                   const reqDomain = lic.requested_domain || lic.requestedDomain || null;
                   const paymentRef = lic.payment_reference || lic.orderNumber || lic.orderId || '';
@@ -984,27 +985,21 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
               // Authoritative store connection resolution
               const boundLicense = normalizedLicenses.find((l) => Boolean(l.connectedDomain));
-              const trialHasStore = Boolean(acc.trial?.activatedStore?.url || (isTrialActive && acc.connectedStore?.status === 'connected' && acc.connectedStore?.url));
-              const isStoreActuallyConnected = Boolean(boundLicense?.connectedDomain || trialHasStore);
-
-              const storeName = boundLicense?.connectedDomain
-                ? boundLicense.connectedDomain
-                : (acc.connectedStore?.name && acc.connectedStore.name !== 'No store connected'
-                  ? acc.connectedStore.name
-                  : (prev.connectedStore.name !== 'No store connected' ? prev.connectedStore.name : 'No store connected'));
-
-              const storeUrl = boundLicense?.connectedDomain
-                ? (boundLicense.connectedDomain.startsWith('http') ? boundLicense.connectedDomain : `https://${boundLicense.connectedDomain}`)
-                : (acc.connectedStore?.url || prev.connectedStore.url || '');
+              const confirmation = confirmedStore(acc);
+              const isStoreActuallyConnected = Boolean(confirmation);
+              const storeName = confirmation?.name || 'No store connected';
+              const storeUrl = confirmation?.url || '';
 
               const next: CustomerProfile = {
                 ...prev,
                 id: acc.id || prev.id,
-                fullName: acc.fullName || prev.fullName,
-                accessType: isGifted ? 'Gifted' : prev.accessType,
-                giftedDetails: giftedDetails || prev.giftedDetails,
+                currency: acc.currency || activePaidLicense?.currency || prev.currency,
+                country: acc.country || prev.country,
+                fullName: acc.full_name || acc.fullName || prev.fullName,
+                accessType: isGifted ? 'Gifted' : isPaid ? 'Paid' : 'Trial',
+                giftedDetails,
                 accountStatus,
-                plan: isPaid ? activePlan : prev.plan,
+                plan: isPaid ? activePlan : null,
                 planPrice: isPaid ? activePrice : prev.planPrice,
                 billingCycle: 'yearly',
                 nextBillingDate: primaryExpiry || prev.nextBillingDate,
@@ -1026,14 +1021,16 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 },
                 subscription: {
                   ...prev.subscription,
-                  status: isPaid ? 'active' : acc.subscription?.status || prev.subscription.status,
-                  planId: isPaid ? activePlan : prev.subscription.planId,
+                  status: isPaid ? 'active' : isTrialActive ? 'trial' : rawLicenses.length ? 'expired' : 'none',
+                  planId: isPaid ? activePlan : null,
                   planName: isPaid ? `${activePlan} Plan` : prev.subscription.planName,
                   price: isGifted ? '₦0 (Gifted)' : isPaid ? activePrice : prev.subscription.price,
                   billingCycle: 'yearly',
                   renewsAt: primaryExpiry || prev.subscription.renewsAt,
                 },
-                licenses: normalizedLicenses.length > 0 ? normalizedLicenses : prev.licenses,
+                licenses: normalizedLicenses,
+                orders: Array.isArray(acc.billing) ? mapBilling(acc.billing) : [],
+                billingAddress: acc.billing_address || prev.billingAddress,
               };
 
               // Persist synchronized state so refreshes and re-logins retain backend state
@@ -1053,17 +1050,18 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             });
           }
         }
-      } catch {
-        // ZAMERIA cloud offline
-      }
+      } catch (error) {
+        if (active && generation === sessionGeneration.current && ((error as any)?.status === 401 || (error as any)?.status === 403)) persistSession(null);
+      } finally { inFlight = false; }
     };
 
     syncWithBackend();
     const timer = setInterval(syncWithBackend, 3000);
-    return () => clearInterval(timer);
-  }, [customer?.id, customer?.email]);
+    return () => { active = false; clearInterval(timer); };
+  }, [customer?.id, customer?.email, sessionEpoch]);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
+    invalidateAccountRequests();
     await new Promise((resolve) => setTimeout(resolve, 350));
 
     if (!email || !email.trim()) {
@@ -1078,7 +1076,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // ZAMERIA accounts are authoritative. Do not use the legacy ScoreFlip
     // login route or fall back to browser-only accounts when the API rejects.
     try {
-      const res = await fetch(`${ZAMERIA_ACCOUNT_API_BASE}/account/login`, {
+      const res = await fetch('/api/account/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: trimmedEmail, password: pass }),
@@ -1089,7 +1087,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           ? 'We could not find an account with that email and password.'
           : 'We could not sign you in right now. Please try again.') };
       }
-      if (!data.account || !data.token) {
+      if (!data.account || !data.authenticated) {
         return { success: false, error: 'The sign-in service returned an invalid response. Please try again.' };
       }
 
@@ -1097,11 +1095,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const existing = localStorage.getItem(STORAGE_KEY_USERS);
       const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
       const localMatch = users.find((u) => u.email.toLowerCase() === trimmedEmail);
-      let backendLicenses: any[] = [];
+      let backendLicenses: any[] = Array.isArray(acc.licenses) ? acc.licenses : [];
       try {
-        const licensesRes = await fetch(`${ZAMERIA_ACCOUNT_API_BASE}/account/licenses`, {
-          headers: { Authorization: `Bearer ${data.token}` },
-        });
+        const licensesRes = await fetch('/api/account/licenses', { credentials: 'same-origin', cache: 'no-store' });
         if (licensesRes.ok) {
           const licensesData = await licensesRes.json();
           backendLicenses = Array.isArray(licensesData.licenses) ? licensesData.licenses : [];
@@ -1109,7 +1105,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       } catch {
         // Account sign-in remains valid if the optional licence list is unavailable.
       }
-      const activePaidLicense = backendLicenses.find((license) => !license.is_trial && (license.plan || '').toLowerCase() !== 'trial' && license.status === 'active');
+      const activePaidLicense = activeMerchantLicense(backendLicenses);
       const activeTrialLicense = backendLicenses.find((license) => (license.is_trial || (license.plan || '').toLowerCase() === 'trial') && license.status === 'active');
       const issuedTrialLicense = backendLicenses.find((license) => (license.is_trial || (license.plan || '').toLowerCase() === 'trial') && license.status === 'issued');
       const trialEnd = activeTrialLicense?.expires_at || issuedTrialLicense?.expires_at || null;
@@ -1117,8 +1113,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const trialDaysRemaining = activeTrialLicense
         ? Math.max(0, Number(activeTrialLicense.days_remaining) || (Number.isNaN(parsedTrialEnd) ? 0 : Math.ceil((parsedTrialEnd - Date.now()) / 86400000)))
         : issuedTrialLicense ? 7 : 0;
-      const isGifted = acc.access_type === 'Gifted' || acc.accessType === 'Gifted' || Boolean(acc.gifted_details || acc.giftedDetails) || localMatch?.accessType === 'Gifted';
-      const giftedDetails = acc.gifted_details || acc.giftedDetails || localMatch?.giftedDetails;
+      const isGifted = giftedLicense(activePaidLicense);
+      const giftedDetails = isGifted ? {plan: activePaidLicense.plan, expiresAt:activePaidLicense.expires_at, reason:activePaidLicense.gift_reason} as CustomerProfile['giftedDetails'] : undefined;
       const isPaid = Boolean(activePaidLicense) || isGifted;
       const isTrialActive = !isPaid && Boolean(activeTrialLicense) && trialDaysRemaining > 0;
       const isTrialExpired = !isPaid && Boolean(issuedTrialLicense || activeTrialLicense) && !isTrialActive;
@@ -1126,7 +1122,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const storeName = acc.business_name || localMatch?.businessName || 'ZAMERIA Store';
       const storeUrl = acc.store_url || localMatch?.connectedStore.url || '';
       const fullName = acc.full_name || localMatch?.fullName || 'Store Owner';
-      const phone = acc.phone || localMatch?.phone || '+234 800 000 0000';
+      const phone = acc.phone || localMatch?.phone || '';
       const rawPlanStr = String(giftedDetails?.plan || activePaidLicense?.plan || acc.plan || localMatch?.plan || '').toLowerCase();
       const paidPlan = rawPlanStr.includes('starter') ? 'Starter' : rawPlanStr.includes('business') ? 'Business' : 'Starter';
 
@@ -1169,21 +1165,9 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           } else {
             formattedExpiry = String(rawExp);
           }
-        } else if (rawAct) {
-          const d = new Date(rawAct);
-          if (!isNaN(d.getTime())) {
-            d.setFullYear(d.getFullYear() + 1);
-            formattedExpiry = d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-          }
         }
 
-        if (!formattedExpiry) {
-          const oneYear = new Date();
-          oneYear.setFullYear(oneYear.getFullYear() + 1);
-          formattedExpiry = oneYear.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        }
-
-        const isLicGifted = isGifted || (license as any).access_type === 'gifted' || license.price === 'Gifted Plan';
+        const isLicGifted = giftedLicense(license);
 
         licenseItems.push({
           id: String(license.id || `${trimmedEmail}-${index}`),
@@ -1191,7 +1175,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           plan,
           planName: `${plan} Plan`,
           billingCycle: 'yearly',
-          price: isLicGifted ? 'Gifted Plan' : plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year',
+          price: isLicGifted ? 'Gifted Plan' : displayPlanPrice(plan, license.currency || acc.currency),
+          currency: license.currency || acc.currency || 'NGN',
           status,
           connectedDomain: license.activated_domain || license.store_domain || null,
           requestedDomain: license.requested_domain || null,
@@ -1215,13 +1200,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         : (isActuallyConnected ? storeUrl : '');
 
       const profile: CustomerProfile = {
-              id: localMatch?.id || `acc_${encodeURIComponent(trimmedEmail)}`,
+              id: String(acc.id),
+              currency: acc.currency || activePaidLicense?.currency || localMatch?.currency || 'NGN',
+              country: acc.country || localMatch?.country || 'Nigeria',
               fullName,
               businessName: storeName,
               email: trimmedEmail,
               phone,
-              password: pass,
-              accessType: isGifted ? 'Gifted' : localMatch?.accessType || (isPaid ? 'Paid' : 'Trial'),
+              accessType: isGifted ? 'Gifted' : (isPaid ? 'Paid' : 'Trial'),
               giftedDetails,
               accountStatus,
               trial: {
@@ -1245,7 +1231,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 status: isPaid ? 'active' : isTrialActive ? 'trial' : 'none',
                 planId: paidPlan,
                 planName: paidPlan ? `${paidPlan} Plan` : isTrialActive ? 'Free Trial' : 'None (Trial Eligible)',
-                price: isGifted ? '₦0 (Gifted)' : (paidPlan ? (paidPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : '₦0'),
+                price: isGifted ? '₦0 (Gifted)' : (paidPlan ? displayPlanPrice(paidPlan, acc.currency || activePaidLicense?.currency) : '₦0'),
                 billingCycle: 'yearly',
                 startDate: activePaidLicense?.activated_at || activeTrialLicense?.activated_at || null,
                 renewsAt: activePaidLicense?.expires_at || (activePaidLicense ? (() => {
@@ -1258,7 +1244,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               trialDaysRemaining: isTrialActive ? trialDaysRemaining : 0,
               trialEndsAt: trialEnd || '',
               plan: paidPlan,
-              planPrice: isGifted ? 'Gifted Plan' : (paidPlan ? (paidPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year') : 'None (Trial Eligible)'),
+              planPrice: isGifted ? 'Gifted Plan' : (paidPlan ? displayPlanPrice(paidPlan, acc.currency || activePaidLicense?.currency) : 'None (Trial Eligible)'),
               billingCycle: 'yearly',
               nextBillingDate: activePaidLicense?.expires_at || (activePaidLicense ? (() => {
                 const d = new Date(activePaidLicense.activated_at || Date.now());
@@ -1267,37 +1253,25 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               })() : ''),
               storesCount: storeUrl ? 1 : 0,
               staffAllowance: paidPlan === 'Starter' ? 2 : 999,
-              billingAddress: localMatch?.billingAddress || {
+              billingAddress: acc.billing_address || {
                 firstName: fullName.split(' ')[0] || 'Store',
                 lastName: fullName.split(' ').slice(1).join(' ') || 'Owner',
                 company: storeName || 'Business',
-                address: 'Lekki Phase 1',
-                city: 'Lagos',
-                state: 'Lagos State',
+                address: '',
+                city: '',
+                state: '',
                 country: 'Nigeria',
                 phone,
               },
-              paymentMethods: localMatch?.paymentMethods || [],
-              orders: localMatch?.orders || [],
+              paymentMethods: [],
+              orders: Array.isArray(acc.billing) ? mapBilling(acc.billing) : [],
               licenses: licenseItems,
             };
 
+      invalidateAccountRequests();
       persistSession(profile);
       return { success: true };
     } catch {
-      // In local testing or during backend maintenance, allow existing local customer profiles to authenticate
-      try {
-        const existing = localStorage.getItem(STORAGE_KEY_USERS);
-        const users: CustomerProfile[] = existing ? JSON.parse(existing) : [];
-        const localMatch = users.find((u) => u.email.toLowerCase() === trimmedEmail);
-        if (localMatch && (!localMatch.password || localMatch.password === pass)) {
-          persistSession(localMatch);
-          return { success: true };
-        }
-      } catch {
-        // Continue to user-friendly maintenance message
-      }
-
       return {
         success: false,
         error: 'ZAMERIA authentication service is temporarily undergoing maintenance. Please try again shortly or contact support@zameria.co.',
@@ -1321,6 +1295,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     storeUrl?: string;
     storeAddress?: string;
   }): Promise<{ success: boolean; error?: string }> => {
+    invalidateAccountRequests();
     await new Promise((resolve) => setTimeout(resolve, 400));
 
     const trimmedEmail = data.email.trim().toLowerCase();
@@ -1333,13 +1308,13 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const firstName = nameParts[0] || 'Store';
       const lastName = nameParts.slice(1).join(' ') || 'Owner';
 
-      let activationCode = generateActivationCode();
-      let accountId = `acc_zm_${Date.now().toString().slice(-6)}`;
+      let activationCode = '';
+      let accountId = '';
 
       // Register with the live ZAMERIA account service if configured.
       if (SCOREFLIP_BACKEND_URL) {
         try {
-          const backendRes = await fetch(`${ZAMERIA_ACCOUNT_API_BASE}/account/register`, {
+          const backendRes = await fetch('/api/account/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -1350,23 +1325,29 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               phone: data.phone?.trim() || '',
               store_url: data.storeUrl?.trim() || '',
               store_address: data.storeAddress?.trim() || '',
+              campaign: data.campaign || '',
             }),
           });
           if (backendRes.ok) {
             const backendData = await backendRes.json();
+            if (!backendData.account?.id || !backendData.authenticated) return { success: false, error: 'Invalid registration service response.' };
             if (backendData.account) {
-              accountId = `acc_${encodeURIComponent(trimmedEmail)}`;
+              accountId = String(backendData.account.id);
               activationCode = backendData.account.trial?.activationCode || activationCode;
-              const trialRes = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/zameria/trial/request`, {
+              try {
+              const trialRes = await fetch('/api/account/trial/request', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${backendData.token}` },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ business_name: data.businessName.trim(), store_url: data.storeUrl?.trim() || '' }),
               });
               const trialData = await trialRes.json().catch(() => ({}));
               if (!trialRes.ok || !trialData.trial_code) {
-                return { success: false, error: trialData.error || 'Could not issue your trial activation code.' };
+                // Account creation succeeded. A trial code can be requested again on connection.
+                activationCode = '';
+              } else {
+                activationCode = trialData.trial_code;
               }
-              activationCode = trialData.trial_code;
+              } catch { /* The account is created; retry requesting its code when connecting the store. */ }
             }
           } else {
             const errData = await backendRes.json().catch(() => ({}));
@@ -1380,7 +1361,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       }
 
-      const userPhone = data.phone?.trim() || '+234 800 000 0000';
+      const userPhone = data.phone?.trim() || '';
       const isNigeria = data.currency === 'NGN' || isNigerianCountry(data.country || 'Nigeria');
       const userCountry = isNigeria ? 'Nigeria' : (data.country || 'International');
       const userCurrency: 'NGN' | 'USD' = isNigeria ? 'NGN' : 'USD';
@@ -1396,7 +1377,6 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         country: userCountry,
         currency: userCurrency,
         currencySymbol: userCurrencySymbol,
-        password: data.password,
         accountStatus: 'trial_not_started',
         trial: {
           status: 'not_started',
@@ -1454,26 +1434,10 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
       users.push(newCustomer);
       localStorage.setItem(STORAGE_KEY_USERS, JSON.stringify(users));
+      invalidateAccountRequests();
       persistSession(newCustomer);
 
-      // AUTOMATIC LEAD CAPTURE INTEGRATION
-      // Wrapped in try/catch so any failure in CRM/Lead propagation NEVER blocks customer account creation
-      try {
-        leadCaptureClient.captureSignupLead({
-          name: newCustomer.fullName,
-          businessName: newCustomer.businessName,
-          email: newCustomer.email,
-          phone: userPhone,
-          accountId: newCustomer.id,
-          source: data.source || 'Website Signup',
-          campaign: data.campaign,
-          referralPartner: data.referralPartner,
-          storeUrl: data.storeUrl,
-          plan: data.plan,
-        });
-      } catch (leadErr) {
-        console.warn('[ZAMERIA Auth] Non-blocking lead capture notification error:', leadErr);
-      }
+      // Signup attribution and lead capture happen in the authenticated server gateway.
 
       return { success: true };
     } catch {
@@ -1496,7 +1460,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // 1. Authoritative Scoreflip Backend Activation if configured
     if (SCOREFLIP_BACKEND_URL) {
       try {
-        const res = await fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/trial/activate`, {
+        const res = await fetch('/api/account/trial/activate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -1515,7 +1479,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
 
         const data = await res.json();
-        if (data.account) {
+        if (data.account?.trial?.endDate && Date.parse(data.account.trial.endDate) > Date.now()) {
           const acc = data.account;
           const updated: CustomerProfile = {
             ...customer,
@@ -1577,181 +1541,84 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       }
     }
 
-    if (code && expectedCode && code.trim().toUpperCase() !== expectedCode) {
-      return { success: false, error: 'Invalid Trial Activation Code. Please check the code and try again.' };
-    }
-
-    if (customer.subscription?.status === 'active' || (customer.licenses && customer.licenses.length > 0)) {
-      return { success: false, error: 'This account already has an active paid subscription.' };
-    }
-
-    const now = new Date();
-    const trialEndDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const startStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    const endStr = trialEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-
-    const updated: CustomerProfile = {
-      ...customer,
-      accountStatus: 'trial_active',
-      trial: {
-        status: 'active',
-        activationCode: expectedCode || generateActivationCode(),
-        startDate: startStr,
-        endDate: endStr,
-        totalDays: 7,
-        daysRemaining: 7,
-        activatedStore: {
-          name: storeName,
-          url: storeUrl,
-        },
-      },
-      connectedStore: {
-        name: storeName,
-        url: storeUrl,
-        status: 'connected',
-        connectedAt: startStr,
-        lastSyncAt: 'Just now',
-        errorMessage: null,
-      },
-      subscription: {
-        status: 'trial',
-        planId: null,
-        planName: 'Free Trial',
-        price: '₦0',
-        billingCycle: 'monthly',
-        startDate: startStr,
-        renewsAt: null,
-      },
-      trialDaysRemaining: 7,
-      trialEndsAt: endStr,
-      plan: null,
-      planPrice: 'Free Trial (₦0)',
-      nextBillingDate: endStr,
-      storesCount: 1,
-    };
-
-    persistSession(updated);
-
-    // AUTOMATIC LEAD TRIAL ACTIVATION INTEGRATION
-    try {
-      leadCaptureClient.recordTrialStarted({
-        accountId: updated.id,
-        email: updated.email,
-        startDate: startStr,
-        endDate: endStr,
-        storeName,
-        storeUrl,
-        activationCode: updated.trial?.activationCode || expectedCode,
-      });
-    } catch (err) {
-      console.warn('[ZAMERIA Auth] Lead trial activation sync error:', err);
-    }
-
-    return { success: true };
+    return { success: false, error: 'Could not verify trial activation with ZAMERIA. Please retry online.' };
   };
 
   const retryStoreConnection = async (): Promise<{ success: boolean; error?: string }> => {
-    await new Promise((resolve) => setTimeout(resolve, 400));
     if (!customer) return { success: false, error: 'No customer profile.' };
-
-    const updated: CustomerProfile = {
-      ...customer,
-      connectedStore: {
-        ...customer.connectedStore,
-        status: 'connected',
-        lastSyncAt: 'Just now',
-        errorMessage: null,
-      },
-    };
-    persistSession(updated);
-    return { success: true };
+    try {
+      const data = await accountRequest('session');
+      if (String(data.account?.id) !== String(customer.id)) throw new Error('Your account session has changed. Please sign in again.');
+      const confirmed = confirmedStore(data.account);
+      // Use a functional update: an in-flight refresh must not restore a signed-out account.
+      setCustomer(previous => {
+        if (!previous || previous.id !== customer.id) return previous;
+        const updated: CustomerProfile = { ...previous, connectedStore: {
+          ...previous.connectedStore,
+          ...(confirmed || {}),
+          status: confirmed ? 'connected' : 'not_connected',
+          lastSyncAt: previous.connectedStore.lastSyncAt,
+          errorMessage: confirmed ? null : 'Connect ZAMERIA inside your WordPress dashboard first.',
+        } };
+        try { localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(updated)); } catch {}
+        return updated;
+      });
+      return confirmed ? { success: true } : { success: false, error: 'No store connection confirmed yet. Install and connect the plugin in WordPress, then check again.' };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Could not check your store connection. Please retry online.' };
+    }
   };
 
-  const disconnectStore = () => {
-    if (!customer) return;
-    const updated: CustomerProfile = {
-      ...customer,
-      connectedStore: {
-        name: 'No store connected',
-        url: '',
-        status: 'not_connected',
-        connectedAt: null,
-        lastSyncAt: null,
-        errorMessage: null,
-      },
-    };
-    persistSession(updated);
+  const disconnectStore = async (): Promise<{success:boolean;error?:string}> => {
+    if(!customer)return {success:false,error:'Sign in again'};
+    try { const data=await accountRequest('store/disconnect',{store_url:customer.connectedStore.url});
+      if(data.success!==true)throw Error('Store disconnect was not confirmed');
+      setCustomer(previous=>{if(!previous || previous.id!==customer.id)return previous;const updated={...previous,connectedStore:{...previous.connectedStore,status:'not_connected' as const,url:'',name:'No store connected',connectedAt:null}};localStorage.setItem(STORAGE_KEY_AUTH,JSON.stringify(updated));return updated});return {success:true};
+    }catch(e){return {success:false,error:e instanceof Error?e.message:'Could not disconnect store'}}
   };
 
   const logout = () => {
     persistSession(null);
+    void accountRequest('logout', {}).catch(() => {});
   };
 
   const requestPasswordReset = async (email: string): Promise<{ success: boolean; error?: string }> => {
-    await new Promise((resolve) => setTimeout(resolve, 350));
-    if (!email || !email.trim() || !email.includes('@')) {
-      return { success: false, error: 'Please enter a valid email address.' };
-    }
-    return { success: true };
+    try { const data = await accountRequest('forgot-password', { email: email.trim().toLowerCase() });
+      if (data.success !== true) throw new Error('Recovery request was not confirmed'); return { success: true };
+    } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'Could not request recovery' }; }
+  };
+  const updateProfile = async (data: { fullName: string; email: string }): Promise<{ success: boolean; error?: string }> => {
+    if (!customer) return { success: false, error: 'Please sign in again' };
+    if (data.email.trim().toLowerCase() !== customer.email.toLowerCase()) return { success: false, error: 'Email changes require verification. Your login email has not been changed.' };
+    try { const response = await accountRequest('profile', { fullName: data.fullName.trim() });
+      if (String(response.account?.id) !== String(customer.id) || response.account?.email?.toLowerCase() !== customer.email.toLowerCase()) throw new Error('Profile update was not confirmed');
+      setCustomer(previous => {
+        if (!previous || previous.id !== customer.id) return previous;
+        const updated = { ...previous, fullName: response.account.full_name || previous.fullName };
+        try { localStorage.setItem(STORAGE_KEY_AUTH, JSON.stringify(updated)); } catch {}
+        return updated;
+      }); return { success: true };
+    } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'Could not save profile' }; }
   };
 
-  const updateProfile = (data: { fullName: string; email: string }) => {
-    if (!customer) return;
-    const updated = {
-      ...customer,
-      fullName: data.fullName,
-      email: data.email.toLowerCase(),
-    };
-    persistSession(updated);
-
-    // Sync profile to Scoreflip backend if configured
-    if (SCOREFLIP_BACKEND_URL) {
-      fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/auth/update-profile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accountId: customer.id,
-          email: customer.email,
-          fullName: data.fullName,
-          businessName: customer.businessName,
-        }),
-      }).catch(() => {});
-    }
-  };
-
-  const changePassword = (currentPass: string, newPass: string): { success: boolean; error?: string } => {
+  const changePassword = async (currentPass: string, newPass: string): Promise<{ success: boolean; error?: string }> => {
     if (!customer) return { success: false, error: 'Not authenticated' };
-    if (!currentPass) {
-      return { success: false, error: 'Current password is required.' };
+    if (!currentPass) return { success: false, error: 'Current password is required.' };
+    if (newPass.length < 8) return { success: false, error: 'New password must be at least 8 characters.' };
+    try {
+      await accountRequest('change-password', { currentPassword: currentPass, newPassword: newPass });
+      persistSession(null);
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Could not change password' };
     }
-    if (customer.password && customer.password !== currentPass) {
-      return { success: false, error: 'Current password does not match.' };
-    }
-    if (!newPass || newPass.length < 6) {
-      return { success: false, error: 'New password must be at least 6 characters.' };
-    }
-    persistSession({ ...customer, password: newPass });
-
-    // Sync updated password to Scoreflip backend if configured
-    if (SCOREFLIP_BACKEND_URL) {
-      fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/auth/change-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accountId: customer.id,
-          email: customer.email,
-          currentPassword: currentPass,
-          newPassword: newPass,
-        }),
-      }).catch(() => {});
-    }
-
-    return { success: true };
   };
 
-  const updateBillingAddress = (address: BillingAddress) => {
-    if (!customer) return;
-    persistSession({ ...customer, billingAddress: address });
+  const updateBillingAddress = async (address: BillingAddress): Promise<{success:boolean;error?:string}> => {
+    if(!customer)return {success:false,error:'Sign in again'};
+    try{const data=await accountRequest('profile',{billingAddress:address});if(String(data.account?.id)!==customer.id || !data.account?.billing_address)throw Error('Billing address was not confirmed');
+      setCustomer(previous=>{if(!previous||previous.id!==customer.id)return previous;const updated={...previous,billingAddress:data.account.billing_address};localStorage.setItem(STORAGE_KEY_AUTH,JSON.stringify(updated));return updated});return {success:true};
+    }catch(e){return {success:false,error:e instanceof Error?e.message:'Could not save billing address'}}
   };
 
   const addPaymentMethod = (card: Omit<PaymentMethodItem, 'id' | 'isDefault'>) => {
@@ -1785,80 +1652,11 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     persistSession({ ...customer, paymentMethods: nextList });
   };
 
-  // --- Cancel Paid Subscription ---
-  // Access & license stay active until end of current billing period!
-  const cancelSubscription = () => {
-    if (!customer) return;
-    const nowStr = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    const updated: CustomerProfile = {
-      ...customer,
-      accountStatus: 'cancelled',
-      subscription: {
-        ...customer.subscription,
-        status: 'cancelled',
-        cancelledAt: nowStr,
-      },
-    };
-    persistSession(updated);
-
-    if (SCOREFLIP_BACKEND_URL) {
-      try {
-        fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/subscription/cancel`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            accountId: customer.id,
-            email: customer.email,
-          }),
-        }).catch(() => {});
-      } catch {
-        // Ignore network errors
-      }
-    }
-  };
-
-  const resumeSubscription = () => {
-    if (!customer) return;
-    const updated: CustomerProfile = {
-      ...customer,
-      accountStatus: 'active_business',
-      subscription: {
-        ...customer.subscription,
-        status: 'active',
-        cancelledAt: null,
-      },
-    };
-    persistSession(updated);
-  };
-
+  // Annual licenses are purchased once; recurring-provider subscription management is not offered.
+  const cancelSubscription = () => { throw new Error('This annual license has no automatic renewal to cancel.'); };
+  const resumeSubscription = () => { throw new Error('Use secure checkout to renew your annual license.'); };
   const changePlan = (newPlan: 'Starter' | 'Business', _cycle: 'monthly' | 'yearly' = 'yearly') => {
-    if (!customer) return;
-    const isUsd = customer.currency === 'USD' || (customer.country && !isNigerianCountry(customer.country)) || (customer.subscription?.price && customer.subscription.price.includes('$'));
-    const price = isUsd
-      ? (newPlan === 'Starter' ? '$250 / year' : '$400 / year')
-      : (newPlan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year');
-    const amountNumber = isUsd ? (newPlan === 'Starter' ? 250 : 400) : (newPlan === 'Starter' ? 200000 : 300000);
-    const updated: CustomerProfile = {
-      ...customer,
-      plan: newPlan,
-      planPrice: price,
-      currency: isUsd ? 'USD' : 'NGN',
-      currencySymbol: isUsd ? '$' : '₦',
-      billingCycle: 'yearly',
-      subscription: {
-        ...customer.subscription,
-        planId: newPlan,
-        planName: `${newPlan} Plan`,
-        price,
-        currency: isUsd ? 'USD' : 'NGN',
-        currencySymbol: isUsd ? '$' : '₦',
-        amountNumber,
-        billingCycle: 'yearly',
-        status: 'active',
-      },
-      accountStatus: 'active_business',
-    };
-    persistSession(updated);
+    if(typeof window!=='undefined')window.location.assign(`/subscribe?plan=${newPlan.toLowerCase()}`);
   };
 
   // The dashboard only changes after the server has verified a Paystack receipt.
@@ -1987,326 +1785,17 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // --- STATE 4: Paid Subscription & License Generation ---
   // A license is ONLY created after successful payment for a paid plan.
   // Idempotent: checks transactionRef to prevent duplicate subscriptions or licenses.
-  const subscribeToPlan = async (data: {
-    plan: 'Starter' | 'Business';
-    billingCycle?: 'monthly' | 'yearly';
-    paymentMethodId?: string;
-    transactionRef?: string;
-    currency?: 'NGN' | 'USD';
-    country?: string;
-  }): Promise<{ success: boolean; license: LicenseItem; order: OrderItem; isDuplicate?: boolean }> => {
-    if (!customer) throw new Error('Not authenticated');
-
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Idempotency check: if transactionRef already exists, return existing record
-    if (data.transactionRef) {
-      const existingOrder = customer.orders.find((o) => o.transactionRef === data.transactionRef);
-      if (existingOrder && existingOrder.licenseId) {
-        const existingLic = customer.licenses.find((l) => l.id === existingOrder.licenseId);
-        if (existingLic) {
-          return { success: true, license: existingLic, order: existingOrder, isDuplicate: true };
-        }
-      }
-    }
-
-    const now = new Date();
-    const periodEnd = new Date(now);
-    periodEnd.setFullYear(periodEnd.getFullYear() + 1);
-
-    const startStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    const renewStr = periodEnd.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-    const orderDateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
-    const isUsd = (data as any).currency === 'USD'
-      || customer.currency === 'USD'
-      || (customer.country && !isNigerianCountry(customer.country))
-      || (customer.billingAddress?.country && !isNigerianCountry(customer.billingAddress.country));
-
-    const currency: 'NGN' | 'USD' = isUsd ? 'USD' : 'NGN';
-    const currencySymbol: '₦' | '$' = isUsd ? '$' : '₦';
-    const country = customer.country || (isUsd ? 'International' : 'Nigeria');
-
-    let priceStr = isUsd ? '$400 / year' : '₦300,000 / year';
-    let amountNumber = isUsd ? 400 : 300000;
-    let totalStr = isUsd ? '$400' : '₦300,000';
-
-    if (data.plan === 'Starter') {
-      priceStr = isUsd ? '$250 / year' : '₦200,000 / year';
-      amountNumber = isUsd ? 250 : 200000;
-      totalStr = isUsd ? '$250' : '₦200,000';
-    }
-
-    // Generate strict ZMR-XXXX-XXXX-XXXX key
-    const newLicenseKey = generateLicenseKey();
-    const orderNum = `#ZM-${Math.floor(1000 + Math.random() * 9000)}`;
-    const orderId = `ord_${Date.now().toString().slice(-5)}`;
-    const licenseId = `lic_${Date.now().toString().slice(-5)}`;
-
-    const defaultPm = customer.paymentMethods.find((p) => p.isDefault) || customer.paymentMethods[0];
-    const paymentMethodDesc = defaultPm
-      ? `${defaultPm.brand} ending in ${defaultPm.last4}`
-      : 'Card Payment (Mastercard ending in 4092)';
-
-    // Ensure a default card exists on account after payment
-    let updatedPaymentMethods = customer.paymentMethods;
-    if (updatedPaymentMethods.length === 0) {
-      updatedPaymentMethods = [
-        {
-          id: 'pm_4092',
-          brand: 'Mastercard',
-          last4: '4092',
-          expMonth: '09',
-          expYear: '28',
-          isDefault: true,
-        },
-      ];
-    }
-
-    const newLicense: LicenseItem = {
-      id: licenseId,
-      licenseKey: newLicenseKey,
-      plan: data.plan,
-      planName: `${data.plan} Plan`,
-      billingCycle: 'yearly',
-      price: priceStr,
-      currency,
-      currencySymbol,
-      amountNumber,
-      status: 'Active',
-      connectedDomain: null,
-      activationStatus: 'Not Activated',
-      activatedAt: null,
-      expiresAt: renewStr,
-      orderId,
-      orderNumber: orderNum,
-      features:
-        data.plan === 'Starter'
-          ? [
-              '1 WooCommerce store',
-              '1 physical store/location',
-              'Up to 500 products',
-              'Up to 2 staff members',
-              'Point of Sale and inventory synchronization',
-            ]
-          : [
-              '1 WooCommerce store',
-              '1 physical store/location',
-              'Unlimited products',
-              'Unlimited staff members',
-              'Point of Sale and real-time inventory synchronization',
-            ],
-    };
-
-    const newOrder: OrderItem = {
-      id: orderId,
-      orderNumber: orderNum,
-      date: orderDateStr,
-      status: 'Completed',
-      plan: `${data.plan} Plan (${data.billingCycle === 'yearly' ? 'Annual' : 'Monthly'})`,
-      total: totalStr,
-      currency,
-      currencySymbol,
-      amountNumber,
-      invoiceNumber: `INV-${now.getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      paymentMethod: paymentMethodDesc,
-      billingName: `${customer.fullName} • ${customer.businessName}`,
-      billingEmail: customer.email,
-      licenseId,
-      licenseKey: newLicenseKey,
-      licenseStatus: 'Active',
-      connectedDomain: null,
-      transactionRef: data.transactionRef || `txn_${Date.now()}`,
-      items: [
-        `ZAMERIA ${data.plan} Plan Subscription`,
-        'WooCommerce Real-time Sync Entitlement',
-        `License Key ${newLicenseKey} (Generated & Active)`,
-      ],
-    };
-
-    const updatedCustomer: CustomerProfile = {
-      ...customer,
-      accountStatus: 'active_business',
-      plan: data.plan,
-      planPrice: priceStr,
-      country,
-      currency,
-      currencySymbol,
-      billingCycle: data.billingCycle || 'yearly',
-      nextBillingDate: renewStr,
-      paymentMethods: updatedPaymentMethods,
-      trial: {
-        ...customer.trial,
-        status: 'expired',
-        daysRemaining: 0,
-      },
-      trialDaysRemaining: 0,
-      subscription: {
-        status: 'active',
-        planId: data.plan,
-        planName: `${data.plan} Plan`,
-        price: priceStr,
-        currency,
-        currencySymbol,
-        amountNumber,
-        billingCycle: data.billingCycle || 'yearly',
-        startDate: startStr,
-        renewsAt: renewStr,
-        cancelledAt: null,
-      },
-      licenses: [newLicense, ...(customer.licenses || [])],
-      orders: [newOrder, ...(customer.orders || [])],
-    };
-
-    // Synchronize upgrade with authoritative Scoreflip backend if configured
-    if (SCOREFLIP_BACKEND_URL) {
-      try {
-        fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/subscription/upgrade`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            accountId: customer.id,
-            email: customer.email,
-            planName: `${data.plan} Plan`,
-            price: priceStr,
-            licenseKey: newLicenseKey,
-          }),
-        }).catch(() => {});
-      } catch {
-        // Ignore network errors
-      }
-    }
-
-    persistSession(updatedCustomer);
-
-    // AUTOMATIC LEAD PAID CONVERSION INTEGRATION
-    try {
-      leadCaptureClient.recordPaidConversion({
-        accountId: updatedCustomer.id,
-        email: updatedCustomer.email,
-        phone: updatedCustomer.phone,
-        plan: `${data.plan} Plan`,
-        licenseKey: newLicenseKey,
-        orderNumber: orderNum,
-        amount: totalStr,
-        billingCycle: data.billingCycle || 'yearly',
-      });
-    } catch (err) {
-      console.warn('[ZAMERIA Auth] Lead paid conversion sync error:', err);
-    }
-
-    return { success: true, license: newLicense, order: newOrder, isDuplicate: false };
+  const subscribeToPlan = async (_data: any): Promise<{ success: boolean; license: LicenseItem; order: OrderItem; isDuplicate?: boolean }> => {
+    throw new Error('Use secure checkout. Subscriptions require a verified server payment.');
   };
-
-  // Re-use subscribeToPlan for purchasing additional licenses
   const purchaseNewLicense = subscribeToPlan;
-
-  // Domain activation simulator
-  const activateLicenseDomain = (licenseId: string, domain: string): { success: boolean; error?: string } => {
-    if (!customer) return { success: false, error: 'Not authenticated' };
-    if (!domain || !domain.trim()) {
-      return { success: false, error: 'Please enter a store domain (e.g. brandone.com).' };
-    }
-
-    const cleanDomain = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
-    const now = new Date();
-    const activatedAtStr = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-
-    const updatedLicenses = customer.licenses.map((lic) => {
-      if (lic.id === licenseId) {
-        return {
-          ...lic,
-          connectedDomain: cleanDomain,
-          status: 'Active' as LicenseStatus,
-          activationStatus: 'Activated' as const,
-          activatedAt: activatedAtStr,
-        };
-      }
-      return lic;
-    });
-
-    const updatedOrders = customer.orders.map((ord) => {
-      if (ord.licenseId === licenseId) {
-        return {
-          ...ord,
-          connectedDomain: cleanDomain,
-          licenseStatus: 'Active' as LicenseStatus,
-        };
-      }
-      return ord;
-    });
-
-    persistSession({
-      ...customer,
-      connectedStore: {
-        name: cleanDomain,
-        url: cleanDomain.startsWith('http') ? cleanDomain : `https://${cleanDomain}`,
-        status: 'connected',
-        connectedAt: activatedAtStr,
-        lastSyncAt: 'Just now',
-        errorMessage: null,
-      },
-      licenses: updatedLicenses,
-      orders: updatedOrders,
-    });
-
-    if (SCOREFLIP_BACKEND_URL) {
-      try {
-        fetch(`${SCOREFLIP_BACKEND_URL}/api/v1/license/bind`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            accountId: customer.id,
-            licenseId,
-            domain: cleanDomain,
-          }),
-        }).catch(() => {});
-      } catch {
-        // Ignore network errors
-      }
-    }
-
-    return { success: true };
-  };
-
-  const renewLicense = (licenseId: string): { success: boolean; error?: string } => {
-    if (!customer) return { success: false, error: 'Not authenticated' };
-
-    const updatedLicenses = customer.licenses.map((lic) => {
-      if (lic.id === licenseId) {
-        const nextMonth = new Date();
-        nextMonth.setMonth(nextMonth.getMonth() + 1);
-        const expiresAtStr = nextMonth.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        return {
-          ...lic,
-          status: 'Active' as LicenseStatus,
-          expiresAt: expiresAtStr,
-        };
-      }
-      return lic;
-    });
-
-    persistSession({
-      ...customer,
-      licenses: updatedLicenses,
-    });
-
-    return { success: true };
-  };
-
-  const renewExpiredSubscription = async (): Promise<{ success: boolean }> => {
-    if (!customer) return { success: false };
-    const plan = (customer.subscription.planId as 'Starter' | 'Business') || 'Business';
-    const res = await subscribeToPlan({
-      plan,
-      billingCycle: customer.billingCycle || 'yearly',
-      transactionRef: `renew_${Date.now()}`,
-    });
-    return { success: res.success };
-  };
+  const activateLicenseDomain = (_licenseId: string, _domain: string) => ({ success: false, error: 'Connect and activate the plugin inside WordPress.' });
+  const renewLicense = (_licenseId: string) => ({ success: false, error: 'Use secure checkout to renew this licence.' });
+  const renewExpiredSubscription = async () => ({ success: false });
 
   // --- Scenario Quick-Tester (Validating all 8 Lifecycle Tests) ---
   const simulateLifecycleScenario = (scenario: LifecycleScenario) => {
+    if (!(import.meta as any).env?.DEV) return;
     if (!customer) return;
 
     switch (scenario) {
@@ -2444,6 +1933,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       value={{
         customer,
         isAuthenticated: !!customer,
+        isRestoringSession,
         isTrial,
         isTrialNotStarted,
         isPaid,

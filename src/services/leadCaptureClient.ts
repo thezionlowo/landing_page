@@ -18,6 +18,7 @@ export type LeadStage =
 export type LeadSource =
   | 'Website'
   | 'Website Signup'
+  | 'Plugin Signup'
   | 'Trial Signup'
   | 'Assessment'
   | 'Meta Ads'

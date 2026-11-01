@@ -502,7 +502,7 @@ export const Navbar: React.FC = () => {
 
                   {/* 1. ZAMERIA Plugin (Active) */}
                   <a
-                    href={ROUTES.pluginDashboard}
+                    href={ROUTES.account}
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() => setDownloadOpen(false)}
@@ -554,7 +554,7 @@ export const Navbar: React.FC = () => {
                         </span>
                       </div>
                       <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '4px 0 0', lineHeight: 1.4 }}>
-                        Connect ZAMERIA to your WooCommerce store.
+                        Sign in to download the plugin and continue store setup.
                       </p>
                     </div>
                   </a>
@@ -669,7 +669,7 @@ export const Navbar: React.FC = () => {
                         </span>
                       </div>
                       <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '3px 0 0', lineHeight: 1.35 }}>
-                        Use ZAMERIA on your iPhone and iPad.
+                        Your in-store and website orders, together on iPhone and iPad.
                       </p>
                     </div>
                   </div>
@@ -726,7 +726,7 @@ export const Navbar: React.FC = () => {
                         </span>
                       </div>
                       <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '3px 0 0', lineHeight: 1.35 }}>
-                        Use ZAMERIA on Android devices.
+                        Your in-store and website orders, together on Android.
                       </p>
                     </div>
                   </div>
@@ -1361,7 +1361,7 @@ export const Navbar: React.FC = () => {
               >
                 {/* 1. ZAMERIA Plugin */}
                 <a
-                  href={ROUTES.pluginDashboard}
+                  href={ROUTES.account}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setMobileMenuOpen(false)}
@@ -1373,7 +1373,7 @@ export const Navbar: React.FC = () => {
                     <span style={{ fontSize: '9px', fontWeight: 700, color: '#16a34a', backgroundColor: '#f0fdf4', padding: '1px 5px', borderRadius: '4px', marginLeft: 'auto' }}>Live</span>
                   </div>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '4px 0 0 23px', lineHeight: 1.4 }}>
-                    Connect ZAMERIA to your WooCommerce store.
+                    Sign in to download the plugin and continue store setup.
                   </p>
                 </a>
 
@@ -1403,7 +1403,7 @@ export const Navbar: React.FC = () => {
                     <span style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', backgroundColor: '#f1f5f9', padding: '1px 5px', borderRadius: '4px', marginLeft: 'auto' }}>Coming Soon</span>
                   </div>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '4px 0 0 23px', lineHeight: 1.35 }}>
-                    Use ZAMERIA on your iPhone and iPad.
+                    Your in-store and website orders, together on iPhone and iPad.
                   </p>
                 </div>
 
@@ -1417,7 +1417,7 @@ export const Navbar: React.FC = () => {
                     <span style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', backgroundColor: '#f1f5f9', padding: '1px 5px', borderRadius: '4px', marginLeft: 'auto' }}>Coming Soon</span>
                   </div>
                   <p style={{ fontSize: '11.5px', color: 'var(--text-muted)', margin: '4px 0 0 23px', lineHeight: 1.35 }}>
-                    Use ZAMERIA on Android devices.
+                    Your in-store and website orders, together on Android.
                   </p>
                 </div>
               </div>

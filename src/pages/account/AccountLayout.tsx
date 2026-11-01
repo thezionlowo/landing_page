@@ -77,17 +77,17 @@ const NAV_ITEMS: NavItem[] = [
 ];
 
 export const AccountLayout: React.FC = () => {
-  const { customer, isAuthenticated, logout } = useCustomerAuth();
+  const { customer, isAuthenticated, isRestoringSession, logout } = useCustomerAuth();
   const { activeTab, setAccountTab, navigate } = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   // If not authenticated, redirect to login
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isRestoringSession && !isAuthenticated) {
       navigate('/login');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isRestoringSession, isAuthenticated, navigate]);
 
   if (!customer) {
     return (

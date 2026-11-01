@@ -1,3 +1,4 @@
+import { BRAND_SUPPORT } from '../lib/brandMessaging';
 import React from 'react';
 import { ShoppingBag, Globe, Store, RefreshCw } from 'lucide-react';
 
@@ -22,10 +23,10 @@ export const SolutionProduct: React.FC = () => {
               marginBottom: '14px',
             }}
           >
-            One business. One system.
+            Your shop and website, working from the same information
           </h2>
           <p className="lead-text center" style={{ maxWidth: '620px' }}>
-            Sell online or in person. ZAMERIA keeps your products, inventory and orders connected.
+            {BRAND_SUPPORT}
           </p>
         </div>
 
