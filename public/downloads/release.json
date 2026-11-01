@@ -1,8 +1,7 @@
 {
   "source": "21ST SEPT/Zion",
-  "builtAt": "2026-11-01T10:50:58.257Z",
+  "builtAt": "2026-11-01T15:54:12.784Z",
   "sourceFiles": {
-    "zameria_web/src/.DS_Store": "42476dd3fce12e226a9104432621cdbf174e9804a581631e42da416f6f65ddc8",
     "zameria_web/src/App.tsx": "e1af581e592271a6a370348cc527e1e88b0cc96df74afff615bdc81c4880a687",
     "zameria_web/src/components/auth/ProtectedRoute.tsx": "4ca73cb9cb9a6bfb1ba8106b02a8bf4a4a1caa1ea469f9218f591652a9051251",
     "zameria_web/src/components/common/ZameriaSupportChatWidget.tsx": "0eabd6701bd4e02f9faa79ee2dd08342650d60eef6ff4fc6c577823de3ac0251",
@@ -201,5 +200,5 @@
     "uninstall.php": "e586bcad33ce4d54f05d9199f597f0bc8ab08f2b96b2f2b67498cee8fd313a65",
     "zameria.php": "94db92ca6930e2751f5a299911fa506e55f130cf651b45de8276d5db85efb4f0"
   },
-  "zipSha256": "4061e99a6c71d22901e09dbce132f0b068acf8f363d2529ae70b25e249c25404"
+  "zipSha256": "a942c23da415b493c5a2bbcaa62273572d27a5df676bda3f35f06e4eb369262b"
 }
