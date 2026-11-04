@@ -1,6 +1,6 @@
-import { signupLead, deliverSignupLead } from '../../server/signupLead';
+import { signupLead, deliverSignupLead } from '../../server/signupLead.js';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import { backendBase, publicData, readSession, sameOrigin, setSessionCookie } from '../../server/accountSession';
+import { backendBase, publicData, readSession, sameOrigin, setSessionCookie } from '../../server/accountSession.js';
 export default async function handler(req: IncomingMessage & { body?: any }, res: ServerResponse) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Cache-Control', 'no-store');
@@ -57,7 +57,10 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
       res.setHeader('Content-Type', 'application/pdf'); res.setHeader('Content-Disposition', 'attachment; filename="zameria-receipt.pdf"');
       res.statusCode = 200; res.end(file); return;
     }
-    let data = await response.json().catch(() => ({}));
+    let data: any;
+    try { data = await response.json(); }
+    catch { return send(502, { error: 'Account service returned an invalid response' }); }
+    if (!data || typeof data !== 'object' || Array.isArray(data)) return send(502, { error: 'Account service returned an invalid response' });
     if (!response.ok || data.success === false) {
       // A stale rejected request must not clear a newer login's cookie. Explicit logout/password changes clear it.
       return send(response.ok ? 400 : response.status, { error: typeof data.error === 'string' ? data.error : 'Account service rejected the request' });

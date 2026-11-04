@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'http';
-import { resolveGeoPricing, isNigerianCountry } from '../src/lib/geoPricing';
+import { resolveGeoPricing, isNigerianCountry } from '../src/lib/geoPricing.js';
 
 const COUNTRY_NAMES: Record<string, string> = {
   NG: 'Nigeria',
@@ -19,7 +19,7 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 /**
  * Serverless API handler for Server-Side Geo Detection & Pricing
- * Route: GET /api/pricing or GET /api/geo
+ * Route: GET /api/pricing
  *
  * Backend is the single source of truth for country, currency, plan, and price.
  */
@@ -32,22 +32,20 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
   }
 
   // 1. Detect Country Server-Side from Edge & Proxy Headers
-  const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const url = new URL(req.url || '/', 'http://localhost');
   const explicitQueryCountry = url.searchParams.get('country');
-  
-  const vercelCountry = req.headers['x-vercel-ip-country'] as string | undefined;
-  const cfCountry = req.headers['cf-ipcountry'] as string | undefined;
-  const clientCountry = req.headers['client-country'] as string | undefined;
-  const customCountryHeader = req.headers['x-country-code'] as string | undefined;
+  const countryHeader = (name: string) => {
+    const value = req.headers[name];
+    return (Array.isArray(value) ? value[0] : value)?.trim();
+  };
 
-  const rawCountryCode = (
-    explicitQueryCountry ||
-    vercelCountry ||
-    cfCountry ||
-    clientCountry ||
-    customCountryHeader ||
-    'NG' // Default baseline for existing regional deployments
-  ).trim();
+  const rawCountryCode = [
+    explicitQueryCountry,
+    countryHeader('x-vercel-ip-country'),
+    countryHeader('cf-ipcountry'),
+    countryHeader('client-country'),
+    countryHeader('x-country-code'),
+  ].map(value => value?.trim()).find(Boolean) || 'INT';
 
   const codeUpper = rawCountryCode.toUpperCase();
   const isNigeria = isNigerianCountry(codeUpper);
@@ -62,12 +60,11 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     ...pricing,
     country: countryName,
     countryCode: isNigeria ? 'NG' : (codeUpper.length === 2 ? codeUpper : 'INT'),
-    detectedIp: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.socket.remoteAddress || '127.0.0.1',
     serverTimestamp: new Date().toISOString(),
   };
 
   res.statusCode = 200;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-  res.end(JSON.stringify(responseData));
+  res.end(req.method === 'HEAD' ? undefined : JSON.stringify(responseData));
 }

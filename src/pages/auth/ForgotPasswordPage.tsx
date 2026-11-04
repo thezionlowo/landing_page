@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
 import { accountRequest } from '../../lib/accountClient';
-import { AuthHeader } from './AuthHeader';
+import { BrandMark } from '../../components/SiteChrome';
 
 export const ForgotPasswordPage: React.FC = () => {
   const { requestPasswordReset } = useCustomerAuth(); const { navigate } = useRouter();
@@ -16,7 +16,7 @@ export const ForgotPasswordPage: React.FC = () => {
   useEffect(() => { if (reset.token) window.history.replaceState(null, '', window.location.pathname + window.location.search); }, [reset.token]);
   const submit = async (event: React.FormEvent) => {
     event.preventDefault(); setError(''); setMessage('');
-    if (reset.token && (new TextEncoder().encode(password).length < 8 || new TextEncoder().encode(password).length > 72 || password !== confirm)) { setError('Use a password of 8 to 72 bytes and enter the same password twice.'); return; }
+    if (reset.token && (new TextEncoder().encode(password).length < 8 || new TextEncoder().encode(password).length > 72 || password !== confirm)) { setError('Use at least eight characters and enter the same password twice. Very long passwords or special characters may exceed the limit.'); return; }
     setBusy(true);
     try {
       if (reset.token) {
@@ -26,17 +26,17 @@ export const ForgotPasswordPage: React.FC = () => {
       } else {
         const result = await requestPasswordReset(email);
         if (!result.success) throw new Error(result.error || 'Could not request recovery');
-        setMessage('If an account exists for this email, reset instructions have been sent. Open the one-use link in that email.');
+        setMessage('If this email has an account, you’ll receive a password reset link.');
       }
     } catch (reason) { setError(reason instanceof Error ? reason.message : 'Could not complete password recovery'); }
     finally { setBusy(false); }
   };
-  const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: '1px solid #cbd5e1', borderRadius: 10, padding: '12px', fontSize: 16, marginTop: 6 };
-  return <div className="zameria-auth-page">
-    <AuthHeader buttonText="Back to Log In" buttonAction={() => navigate('/login')} showBackIcon />
-    <main className="zameria-auth-main"><section className="zameria-auth-card" style={{ maxWidth: 460 }}>
-      <h1 style={{ fontSize: 26, color: '#071a31', marginBottom: 12 }}>{reset.token ? 'Choose your new password' : 'Reset your password'}</h1>
-      <p style={{ color: '#64748b', lineHeight: 1.6 }}>{reset.token ? 'This recovery link expires after 30 minutes and can be used once.' : 'Enter your ZAMERIA account email to request recovery instructions.'}</p>
+  const input: React.CSSProperties = { width: '100%', boxSizing: 'border-box', border: "1px solid var(--site-line-strong)", borderRadius: "var(--site-radius)", padding: '12px', fontSize: 16, marginTop: 6 };
+  return <div className="site-auth-simple">
+    <header><BrandMark /></header>
+    <main><section>
+      <h1 style={{ fontSize: 26, color: "var(--site-ink)", marginBottom: 12 }}>{reset.token ? 'Choose your new password' : 'Reset your password'}</h1>
+      <p style={{ color: "var(--site-muted)", lineHeight: 1.6 }}>{reset.token ? 'This recovery link expires after 30 minutes and can be used once.' : 'Enter your account email. We’ll send a reset link.'}</p>
       {error && <p role="alert" style={{ color: '#b91c1c' }}>{error}</p>}
       {message && <p role="status" style={{ color: '#047857', lineHeight: 1.6 }}>{message}</p>}
       {!completed && <form onSubmit={submit} style={{ display: 'grid', gap: 18, marginTop: 24 }}>
@@ -45,6 +45,6 @@ export const ForgotPasswordPage: React.FC = () => {
       </form>}
       {completed && <button className="btn btn-primary" onClick={() => navigate('/login')}>Log in</button>}
     </section></main>
-    <footer className="zameria-auth-footer"><button type="button" onClick={() => navigate('/login')}>Back to log in</button></footer>
+    <footer className="site-auth-recovery-footer"><button type="button" onClick={() => navigate('/login')}>Back to log in</button></footer>
   </div>;
 };

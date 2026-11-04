@@ -10,7 +10,10 @@
     "test:seo": "npx tsx src/__tests__/seo-regression-test.ts",
     "test:e2e": "npx tsx src/__tests__/e2e-sync-test.ts",
     "typecheck:server": "tsc -p tsconfig.server.json",
-    "prebuild": "node scripts/verify-plugin-download.mjs"
+    "prebuild": "node scripts/verify-plugin-download.mjs && node scripts/verify-product-preview.mjs",
+    "refresh:product-preview": "node scripts/refresh-product-preview.mjs",
+    "test:checkout": "npx tsx src/__tests__/checkout-comparison-regression.tsx",
+    "test:pricing": "node --import tsx src/__tests__/geo-pricing-runtime-regression.ts"
   },
   "dependencies": {
     "lucide-react": "^1.43.0",
@@ -22,6 +25,7 @@
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "tsx": "4.23.15",
     "typescript": "^5.7.0",
     "vite": "^6.2.0"
   }

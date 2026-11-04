@@ -95,6 +95,26 @@ export const RouterProvider: React.FC<{ children: React.ReactNode; initialPath?:
     return () => window.removeEventListener('popstate', handleLocationChange);
   }, [handleLocationChange]);
 
+  // Deep links can arrive before React has mounted the target section.
+  useEffect(() => {
+    if (!window.location.hash) return;
+    let observer: MutationObserver | undefined;
+    const reveal = () => {
+      let id: string;
+      try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return false; }
+      const element = document.getElementById(id);
+      if (!element) return false;
+      element.scrollIntoView({ behavior: 'instant' });
+      observer?.disconnect();
+      return true;
+    };
+    const frame = requestAnimationFrame(() => {
+      if (!reveal()) { observer = new MutationObserver(reveal); observer.observe(document.getElementById('root') || document.body, { childList: true, subtree: true }); }
+    });
+    const timeout = window.setTimeout(() => observer?.disconnect(), 10000);
+    return () => { cancelAnimationFrame(frame); clearTimeout(timeout); observer?.disconnect(); };
+  }, [path]);
+
   const navigate = useCallback((to: string) => {
     if (typeof window === 'undefined') return;
 
@@ -108,27 +128,19 @@ export const RouterProvider: React.FC<{ children: React.ReactNode; initialPath?:
       }
     }
 
-    // Normal path navigation
-    window.history.pushState(null, '', to);
-    const [newPath, newQuery] = to.split('?');
-    setPath(newPath || '/');
-    setSearch(newQuery ? `?${newQuery}` : '');
-
-    if (newQuery) {
-      const params = new URLSearchParams(newQuery);
-      setActiveTab(normalizeTab(params.get('tab')));
-    } else if (newPath === '/account') {
-      setActiveTab('overview');
-    }
-
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const destination = new URL(to, window.location.origin);
+    window.history.pushState(null, '', destination.pathname + destination.search + destination.hash);
+    setPath(destination.pathname);
+    setSearch(destination.search);
+    setActiveTab(normalizeTab(destination.searchParams.get('tab')));
+    if (!destination.hash) window.scrollTo({ top: 0, behavior: 'instant' });
   }, []);
 
   // Global click interceptor for internal links (href="/login", href="/get-started", etc.)
   useEffect(() => {
     const handleAnchorClick = (e: MouseEvent) => {
       // Don't intercept if modifier key was pressed
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.defaultPrevented) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.defaultPrevented) return;
 
       const target = e.target as HTMLElement | null;
       const anchor = target?.closest('a');
@@ -144,7 +156,7 @@ export const RouterProvider: React.FC<{ children: React.ReactNode; initialPath?:
         !href.startsWith('/#') &&
         !href.startsWith('mailto:') &&
         !href.startsWith('tel:') &&
-        !anchor.getAttribute('download');
+        !anchor.hasAttribute('download');
 
       if (isInternalPath && !anchor.hasAttribute('target')) {
         e.preventDefault();

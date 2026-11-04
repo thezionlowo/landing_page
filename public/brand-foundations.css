@@ -1,0 +1,33 @@
+/* Shared brand primitives for the website and its standalone assessment pages. */
+:root {
+  --site-paper: #ffffff;
+  --site-white: #ffffff;
+  --site-ink: #101d32;
+  --site-muted: #667085;
+  --site-subtle: #6e7c84;
+  --site-blue: #3861f5;
+  --site-blue-hover: #2648d4;
+  --site-blue-soft: #edf0fd;
+  --site-surface: #f3f5f8;
+  --site-line: #e5e9f0;
+  --site-line-strong: #bdc7c9;
+  --site-dark: #0d1729;
+  --site-dark-surface: #172337;
+  --site-dark-line: #304059;
+  --site-on-dark: #e3e9f3;
+  --site-muted-on-dark: #9baac1;
+  --site-primary: var(--site-blue);
+  --site-primary-hover: var(--site-blue-hover);
+  --site-focus: #6485ff;
+  --site-radius: 9px;
+  --site-radius-small: 7px;
+  --site-font:
+    "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --site-mono: "Space Grotesk", monospace;
+  --hm-paper: var(--site-paper);
+  --hm-ink: var(--site-ink);
+  --hm-muted: var(--site-muted);
+  --hm-blue: var(--site-blue);
+  --hm-line: var(--site-line);
+}

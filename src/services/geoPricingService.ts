@@ -1,129 +1,106 @@
 import { useState, useEffect } from 'react';
-import {
-  GeoPricingConfig,
-  NIGERIA_PRICING,
-  INTERNATIONAL_PRICING,
-  resolveGeoPricing,
-  isNigerianCountry,
-  PlanId,
-  PlanTier,
-} from '../lib/geoPricing';
+import { INTERNATIONAL_PRICING, resolveGeoPricing } from '../lib/geoPricing.js';
+import type { GeoPricingConfig } from '../lib/geoPricing.js';
 
-const GEO_STORAGE_KEY = 'zameria_detected_geo_v1';
+// v2 invalidates the old cache, which could silently keep Nigerian fallback prices.
+const GEO_STORAGE_KEY = 'zameria_detected_geo_v2';
 const GEO_EVENT_NAME = 'zameria_geopricing_change';
+const DETECTION_TTL_MS = 15 * 60 * 1000;
+const REQUEST_TIMEOUT_MS = 2500;
 
-// In-memory singleton state
-let activeGeoConfig: GeoPricingConfig = NIGERIA_PRICING;
+let activeGeoConfig: GeoPricingConfig = INTERNATIONAL_PRICING;
 let hasInitialized = false;
 let initPromise: Promise<GeoPricingConfig> | null = null;
+let manualRevision = 0;
 
-/**
- * Attempts to detect country from client runtime clues if API is offline
- */
-function getClientFallbackCountry(): string {
-  try {
-    if (typeof Intl !== 'undefined' && Intl.DateTimeFormat) {
-      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (tz && (tz === 'Africa/Lagos' || tz.includes('Lagos'))) {
-        return 'NG';
-      }
-    }
-    if (typeof navigator !== 'undefined' && navigator.language) {
-      if (navigator.language.toLowerCase().includes('ng')) {
-        return 'NG';
-      }
-    }
-  } catch {
-    // Ignore error
-  }
-  // Default to Nigeria for existing baseline
-  return 'NG';
+/** Accept the detected region, but always use our current fixed plan prices. */
+function normalizePricing(value: unknown): GeoPricingConfig | null {
+  if (!value || typeof value !== 'object') return null;
+  const data = value as Record<string, unknown>;
+  if (typeof data.countryCode !== 'string' || !data.countryCode.trim()) return null;
+  const pricing = resolveGeoPricing(data.countryCode);
+  return data.currency === pricing.currency ? pricing : null;
 }
 
-/**
- * Authoritatively initializes geo pricing from the backend /api/pricing endpoint
- */
+function publish(pricing: GeoPricingConfig): GeoPricingConfig {
+  activeGeoConfig = pricing;
+  hasInitialized = true;
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(GEO_EVENT_NAME, { detail: pricing }));
+  }
+  return pricing;
+}
+
+function cache(pricing: GeoPricingConfig, manual = false) {
+  try {
+    sessionStorage.setItem(GEO_STORAGE_KEY, JSON.stringify({
+      countryCode: pricing.countryCode,
+      currency: pricing.currency,
+      manual,
+      expiresAt: manual ? null : Date.now() + DETECTION_TTL_MS,
+    }));
+  } catch {
+    // Pricing still updates if browser storage is blocked or full.
+  }
+}
+
 export async function initializeGeoPricing(): Promise<GeoPricingConfig> {
   if (hasInitialized) return activeGeoConfig;
   if (initPromise) return initPromise;
+  const revision = manualRevision;
 
   initPromise = (async () => {
-    // 1. Check session storage cache
     if (typeof window !== 'undefined') {
       try {
-        const cached = sessionStorage.getItem(GEO_STORAGE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed && parsed.currency && parsed.plans) {
-            activeGeoConfig = parsed;
-            hasInitialized = true;
-            return activeGeoConfig;
-          }
+        const cached = JSON.parse(sessionStorage.getItem(GEO_STORAGE_KEY) || 'null');
+        const pricing = normalizePricing(cached);
+        if (pricing && (cached.manual === true || cached.expiresAt > Date.now())) {
+          return publish(pricing);
         }
       } catch {
-        // Continue to network fetch
+        // An absent or invalid cache must not block country detection.
       }
     }
 
-    // 2. Fetch authoritative server-side geo detection
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
     try {
       if (typeof window !== 'undefined' && typeof window.fetch === 'function') {
-        const res = await fetch('/api/pricing', { cache: 'no-store' });
-        if (res.ok) {
-          const data: GeoPricingConfig = await res.json();
-          if (data && data.currency && data.plans) {
-            activeGeoConfig = data;
-            hasInitialized = true;
-            try {
-              sessionStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(data));
-            } catch {
-              // Ignore session storage quota
-            }
-            window.dispatchEvent(new CustomEvent(GEO_EVENT_NAME, { detail: data }));
-            return activeGeoConfig;
+        const response = await fetch('/api/pricing', { cache: 'no-store', signal: controller.signal });
+        if (response.ok) {
+          const pricing = normalizePricing(await response.json());
+          if (manualRevision !== revision) return activeGeoConfig;
+          if (pricing) {
+            cache(pricing);
+            return publish(pricing);
           }
         }
       }
     } catch {
-      // Offline or pre-render fallback
+      // Offline, timeout, HTML and malformed responses use international prices.
+    } finally {
+      clearTimeout(timeout);
     }
 
-    // 3. Fallback to locale heuristics if backend is unreachable
-    const fallbackCode = getClientFallbackCountry();
-    activeGeoConfig = resolveGeoPricing(fallbackCode);
-    hasInitialized = true;
-    return activeGeoConfig;
+    if (manualRevision !== revision) return activeGeoConfig;
+    // Do not persist a failed detection as if it were an authoritative location.
+    return publish(INTERNATIONAL_PRICING);
   })();
-
   return initPromise;
 }
 
-/**
- * Manually switch country for testing or user preference
- */
+/** Keep an explicit choice for this browser tab, including during a pending fetch. */
 export function setCountryOverride(countryCodeOrName: string): GeoPricingConfig {
-  activeGeoConfig = resolveGeoPricing(countryCodeOrName);
-  if (typeof window !== 'undefined') {
-    try {
-      sessionStorage.setItem(GEO_STORAGE_KEY, JSON.stringify(activeGeoConfig));
-      window.dispatchEvent(new CustomEvent(GEO_EVENT_NAME, { detail: activeGeoConfig }));
-    } catch {
-      // Ignore error
-    }
-  }
-  return activeGeoConfig;
+  manualRevision++;
+  const pricing = resolveGeoPricing(countryCodeOrName);
+  cache(pricing, true);
+  return publish(pricing);
 }
 
-/**
- * Synchronously returns current active geo pricing
- */
 export function getCurrentGeoPricing(): GeoPricingConfig {
   return activeGeoConfig;
 }
 
-/**
- * React hook for consuming live geo pricing
- */
 export function useGeoPricing(): {
   geo: GeoPricingConfig;
   isNigeria: boolean;
@@ -132,24 +109,20 @@ export function useGeoPricing(): {
   setCountry: (code: string) => void;
 } {
   const [geo, setGeo] = useState<GeoPricingConfig>(activeGeoConfig);
-
   useEffect(() => {
     initializeGeoPricing().then(setGeo);
-
-    const handleGeoChange = (e: Event) => {
-      const detail = (e as CustomEvent<GeoPricingConfig>).detail;
+    const handleGeoChange = (event: Event) => {
+      const detail = (event as CustomEvent<GeoPricingConfig>).detail;
       if (detail) setGeo(detail);
     };
-
     window.addEventListener(GEO_EVENT_NAME, handleGeoChange);
     return () => window.removeEventListener(GEO_EVENT_NAME, handleGeoChange);
   }, []);
-
   return {
     geo,
     isNigeria: geo.isNigeria,
     currency: geo.currency,
     currencySymbol: geo.currencySymbol,
-    setCountry: (code: string) => setGeo(setCountryOverride(code)),
+    setCountry: code => setGeo(setCountryOverride(code)),
   };
 }

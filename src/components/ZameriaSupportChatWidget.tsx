@@ -159,6 +159,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
             }
           }}
           aria-label="Contact ZAMERIA Support"
+          title="Contact ZAMERIA Support"
           style={{
             position: 'fixed',
             bottom: '24px',
@@ -167,10 +168,10 @@ export const ZameriaSupportChatWidget: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: '#071a31',
-            color: '#ffffff',
+            background: "var(--site-ink)",
+            color: "var(--site-white)",
             border: '1px solid rgba(255,255,255,0.18)',
-            borderRadius: '28px',
+            borderRadius: "var(--site-radius)",
             padding: '11px 20px',
             fontSize: '14px',
             fontWeight: 600,
@@ -188,7 +189,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                   top: '-6px',
                   right: '-6px',
                   background: '#ef4444',
-                  color: '#fff',
+                  color: "var(--site-white)",
                   fontSize: '10px',
                   fontWeight: 700,
                   width: '16px',
@@ -218,10 +219,10 @@ export const ZameriaSupportChatWidget: React.FC = () => {
             maxWidth: 'calc(100vw - 32px)',
             height: '520px',
             maxHeight: 'calc(100vh - 48px)',
-            background: '#ffffff',
-            borderRadius: '16px',
+            background: "var(--site-white)",
+            borderRadius: "var(--site-radius)",
             boxShadow: '0 12px 40px rgba(0, 0, 0, 0.22)',
-            border: '1px solid #e2e8f0',
+            border: "1px solid var(--site-line)",
             zIndex: 10000,
             display: 'flex',
             flexDirection: 'column',
@@ -231,8 +232,8 @@ export const ZameriaSupportChatWidget: React.FC = () => {
           {/* Header */}
           <div
             style={{
-              background: '#071a31',
-              color: '#ffffff',
+              background: "var(--site-ink)",
+              color: "var(--site-white)",
               padding: '14px 16px',
               display: 'flex',
               alignItems: 'center',
@@ -284,7 +285,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                       background: 'rgba(16, 185, 129, 0.2)',
                       color: '#6ee7b7',
                       padding: '2px 8px',
-                      borderRadius: '10px',
+                      borderRadius: "var(--site-radius)",
                     }}
                   >
                     Resolved
@@ -296,7 +297,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                     style={{
                       background: 'transparent',
                       border: '1px solid rgba(255, 255, 255, 0.25)',
-                      color: '#e2e8f0',
+                      color: "var(--site-line)",
                       fontSize: '11px',
                       padding: '3px 8px',
                       borderRadius: '6px',
@@ -313,7 +314,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#ffffff',
+                  color: "var(--site-white)",
                   cursor: 'pointer',
                   padding: '4px',
                   display: 'flex',
@@ -349,19 +350,19 @@ export const ZameriaSupportChatWidget: React.FC = () => {
               <div
                 style={{
                   padding: '8px 14px',
-                  background: '#f8fafc',
-                  borderBottom: '1px solid #e2e8f0',
+                  background: "var(--site-paper)",
+                  borderBottom: "1px solid var(--site-line)",
                   fontSize: '11px',
-                  color: '#64748b',
+                  color: "var(--site-muted)",
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
                 }}
               >
                 <span>
-                  Contact: <strong style={{ color: '#0f172a' }}>{conversation.customerName}</strong>
+                  Contact: <strong style={{ color: "var(--site-ink)" }}>{conversation.customerName}</strong>
                 </span>
-                <span style={{ color: conversation.status === 'Resolved' ? '#10b981' : '#2563eb', fontWeight: 600 }}>
+                <span style={{ color: conversation.status === 'Resolved' ? '#10b981' : "var(--site-blue)", fontWeight: 600 }}>
                   Status: {conversation.status}
                 </span>
               </div>
@@ -372,7 +373,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                   flex: 1,
                   overflowY: 'auto',
                   padding: '14px',
-                  background: '#f1f5f9',
+                  background: "var(--site-surface)",
                   display: 'flex',
                   flexDirection: 'column',
                   gap: '10px',
@@ -399,9 +400,9 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                           maxWidth: '82%',
                           padding: '9px 13px',
                           borderRadius: isCustomer ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
-                          background: isCustomer ? '#071a31' : '#ffffff',
-                          color: isCustomer ? '#ffffff' : '#0f172a',
-                          border: isCustomer ? 'none' : '1px solid #cbd5e1',
+                          background: isCustomer ? "var(--site-ink)" : "var(--site-white)",
+                          color: isCustomer ? "var(--site-white)" : "var(--site-ink)",
+                          border: isCustomer ? 'none' : "1px solid var(--site-line-strong)",
                           fontSize: '13px',
                           lineHeight: '1.4',
                           boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
@@ -422,8 +423,8 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                 onSubmit={handleSendMessage}
                 style={{
                   padding: '10px',
-                  borderTop: '1px solid #e2e8f0',
-                  background: '#ffffff',
+                  borderTop: "1px solid var(--site-line)",
+                  background: "var(--site-white)",
                   display: 'flex',
                   gap: '8px',
                   alignItems: 'center',
@@ -438,8 +439,8 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                   }
                   style={{
                     flex: 1,
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '20px',
+                    border: "1px solid var(--site-line-strong)",
+                    borderRadius: "var(--site-radius)",
                     padding: '8px 14px',
                     fontSize: '13px',
                     outline: 'none',
@@ -451,8 +452,8 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                   type="submit"
                   disabled={!messageText.trim() || sending}
                   style={{
-                    background: '#071a31',
-                    color: '#ffffff',
+                    background: "var(--site-ink)",
+                    color: "var(--site-white)",
                     border: 'none',
                     borderRadius: '50%',
                     width: '36px',
@@ -479,15 +480,15 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                 flexDirection: 'column',
                 gap: '12px',
                 overflowY: 'auto',
-                background: '#ffffff',
+                background: "var(--site-white)",
               }}
             >
-              <div style={{ fontSize: '13px', color: '#475569', lineHeight: 1.4, marginBottom: '2px' }}>
+              <div style={{ fontSize: '13px', color: "var(--site-muted)", lineHeight: 1.4, marginBottom: '2px' }}>
                 👋 Have a question about ZAMERIA POS, WooCommerce integration, or pricing? Chat with us directly:
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: "var(--site-ink)", marginBottom: '4px' }}>
                   Your Name *
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -499,7 +500,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '8px 10px 8px 32px',
-                      border: '1px solid #cbd5e1',
+                      border: "1px solid var(--site-line-strong)",
                       borderRadius: '6px',
                       fontSize: '13px',
                       boxSizing: 'border-box',
@@ -511,7 +512,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: "var(--site-ink)", marginBottom: '4px' }}>
                   Email Address *
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -523,7 +524,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '8px 10px 8px 32px',
-                      border: '1px solid #cbd5e1',
+                      border: "1px solid var(--site-line-strong)",
                       borderRadius: '6px',
                       fontSize: '13px',
                       boxSizing: 'border-box',
@@ -535,7 +536,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: "var(--site-ink)", marginBottom: '4px' }}>
                   Phone Number (Optional)
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -546,7 +547,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                     style={{
                       width: '100%',
                       padding: '8px 10px 8px 32px',
-                      border: '1px solid #cbd5e1',
+                      border: "1px solid var(--site-line-strong)",
                       borderRadius: '6px',
                       fontSize: '13px',
                       boxSizing: 'border-box',
@@ -558,7 +559,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: "var(--site-ink)", marginBottom: '4px' }}>
                   How can we help? *
                 </label>
                 <textarea
@@ -568,7 +569,7 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                   style={{
                     width: '100%',
                     padding: '8px 10px',
-                    border: '1px solid #cbd5e1',
+                    border: "1px solid var(--site-line-strong)",
                     borderRadius: '6px',
                     fontSize: '13px',
                     resize: 'none',
@@ -583,8 +584,8 @@ export const ZameriaSupportChatWidget: React.FC = () => {
                 type="submit"
                 style={{
                   marginTop: 'auto',
-                  background: '#071a31',
-                  color: '#ffffff',
+                  background: "var(--site-ink)",
+                  color: "var(--site-white)",
                   border: 'none',
                   borderRadius: '8px',
                   padding: '10px',

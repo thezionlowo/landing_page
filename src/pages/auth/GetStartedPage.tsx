@@ -1,10 +1,9 @@
-import { BRAND_SUPPORT } from '../../lib/brandMessaging';
 import React, { useState, useEffect } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
-import { Eye, EyeOff, Store, Mail, Lock, Globe, ArrowRight, AlertCircle, ShieldCheck, CheckCircle2 } from 'lucide-react';
-import { AuthHeader } from './AuthHeader';
-import { LeadSource } from '../../services/leadCaptureClient';
+import { BrandMark } from '../../components/SiteChrome';
+import type { LeadSource } from '../../services/leadCaptureClient';
 
 export const GetStartedPage: React.FC = () => {
   const { register } = useCustomerAuth();
@@ -14,8 +13,6 @@ export const GetStartedPage: React.FC = () => {
   const [storeUrl, setStoreUrl] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [agreedToTerms, setAgreedToTerms] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -45,30 +42,12 @@ export const GetStartedPage: React.FC = () => {
       setError('Please enter your store name.');
       return;
     }
-    if (!storeUrl.trim()) {
-      setError('Please enter your WooCommerce store URL.');
-      return;
-    }
-    try {
-      new URL(storeUrl.includes('://') ? storeUrl : `https://${storeUrl}`);
-    } catch {
-      setError('Please enter a valid WooCommerce store URL.');
-      return;
-    }
     if (!email.trim() || !email.includes('@') || !email.includes('.')) {
       setError('Please enter a valid email address.');
       return;
     }
     if (!password || password.length < 8) {
       setError('Password must be at least 8 characters long.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      setError('Passwords do not match. Please verify your password confirmation.');
-      return;
-    }
-    if (!agreedToTerms) {
-      setError('Please accept the terms of service and privacy policy to continue.');
       return;
     }
 
@@ -124,381 +103,21 @@ export const GetStartedPage: React.FC = () => {
     }
   };
 
-  return (
-    <div className="zameria-auth-page">
-      {/* Top Header Bar with only ZAMERIA logo */}
-      <AuthHeader
-        actionText="Already have an account?"
-        buttonText="Log In"
-        buttonAction={() => navigate('/login')}
-      />
-
-      {/* Centered Registration Card */}
-      <main className="zameria-auth-main">
-        <div className="zameria-auth-card" style={{ maxWidth: '480px' }}>
-          {/* Header */}
-          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                backgroundColor: '#eff6ff',
-                color: '#2563eb',
-                fontSize: '11px',
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                textTransform: 'uppercase',
-                padding: '4px 12px',
-                borderRadius: '9999px',
-                marginBottom: '12px',
-              }}
-            >
-              <ShieldCheck size={14} />
-              <span>YOUR SHOP + YOUR WEBSITE</span>
-            </div>
-            <h1
-              style={{
-                fontSize: '26px',
-                fontWeight: 800,
-                color: '#071A31',
-                margin: '0 0 8px',
-                letterSpacing: '-0.02em',
-              }}
-            >
-              Create your ZAMERIA account
-            </h1>
-            <p style={{ fontSize: '14px', color: '#64748b', margin: 0, lineHeight: 1.5 }}>
-              {BRAND_SUPPORT}
-            </p>
-          </div>
-
-          {/* Error Banner */}
-          {error && (
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '10px',
-                padding: '12px 14px',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fecaca',
-                borderRadius: '12px',
-                marginBottom: '20px',
-                color: '#b91c1c',
-                fontSize: '13px',
-                lineHeight: 1.45,
-              }}
-            >
-              <AlertCircle size={17} style={{ flexShrink: 0, marginTop: '2px' }} />
-              <div>{error}</div>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* Store Name */}
-            <div>
-              <label
-                htmlFor="reg-business"
-                style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
-              >
-                Store Name
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Store
-                  size={16}
-                  color="#94a3b8"
-                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                />
-                <input
-                  id="reg-business"
-                  type="text"
-                  value={businessName}
-                  onChange={(e) => {
-                    setBusinessName(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  placeholder="e.g. Amara's Boutique"
-                  autoComplete="organization"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '11px 12px 11px 36px',
-                    fontSize: '13.5px',
-                    color: '#071A31',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '12px',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* WooCommerce Store URL */}
-            <div>
-              <label htmlFor="reg-store-url" style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}>
-                WooCommerce Store URL
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Globe size={16} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                <input
-                  id="reg-store-url"
-                  type="text"
-                  value={storeUrl}
-                  onChange={(e) => { setStoreUrl(e.target.value); if (error) setError(null); }}
-                  placeholder="https://yourstore.com"
-                  autoComplete="url"
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '11px 12px 11px 36px', fontSize: '13.5px', color: '#071A31', backgroundColor: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '12px', outline: 'none' }}
-                />
-              </div>
-              <p style={{ margin: '5px 0 0', fontSize: '11px', color: '#64748b' }}>Saved as your primary store. Connect the plugin on this domain to activate your trial.</p>
-            </div>
-
-            {/* Email Address */}
-            <div>
-              <label
-                htmlFor="reg-email"
-                style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
-              >
-                Email
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Mail
-                  size={16}
-                  color="#94a3b8"
-                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                />
-                <input
-                  id="reg-email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  placeholder="name@business.com"
-                  autoComplete="email"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '11px 12px 11px 36px',
-                    fontSize: '13.5px',
-                    color: '#071A31',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '12px',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label
-                htmlFor="reg-pass"
-                style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
-              >
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock
-                  size={16}
-                  color="#94a3b8"
-                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                />
-                <input
-                  id="reg-pass"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  placeholder="At least 8 characters"
-                  autoComplete="new-password"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '11px 36px 11px 36px',
-                    fontSize: '13.5px',
-                    color: '#071A31',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '12px',
-                    outline: 'none',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    color: '#64748b',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-
-            {/* Confirm Password */}
-            <div>
-              <label
-                htmlFor="reg-confirm-pass"
-                style={{ display: 'block', fontSize: '13px', fontWeight: 700, color: '#071A31', marginBottom: '6px' }}
-              >
-                Confirm Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <Lock
-                  size={16}
-                  color="#94a3b8"
-                  style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}
-                />
-                <input
-                  id="reg-confirm-pass"
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => {
-                    setConfirmPassword(e.target.value);
-                    if (error) setError(null);
-                  }}
-                  placeholder="Re-enter your password"
-                  autoComplete="new-password"
-                  style={{
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '11px 12px 11px 36px',
-                    fontSize: '13.5px',
-                    color: '#071A31',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '12px',
-                    outline: 'none',
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Terms and Privacy Agreement */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '2px' }}>
-              <input
-                id="reg-terms"
-                type="checkbox"
-                checked={agreedToTerms}
-                onChange={(e) => setAgreedToTerms(e.target.checked)}
-                style={{ marginTop: '3px', cursor: 'pointer' }}
-              />
-              <label htmlFor="reg-terms" style={{ fontSize: '12.5px', color: '#64748b', lineHeight: 1.4, cursor: 'pointer' }}>
-                I agree to the ZAMERIA Terms of Service and Privacy Policy.
-              </label>
-            </div>
-
-            {/* Trial Guarantees */}
-            <div
-              style={{
-                backgroundColor: '#f8fafc',
-                border: '1px solid #e2e8f0',
-                borderRadius: '12px',
-                padding: '12px 14px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '6px',
-                fontSize: '12px',
-                color: '#475569',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CheckCircle2 size={14} color="#16a34a" />
-                <span>Use the same ZAMERIA account on this website and in the plugin</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CheckCircle2 size={14} color="#16a34a" />
-                <span>7-day trial activates automatically when store is connected</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <CheckCircle2 size={14} color="#16a34a" />
-                <span>No separate trial activation required</span>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={isLoading}
-              style={{
-                marginTop: '4px',
-                width: '100%',
-                padding: '14px 20px',
-                backgroundColor: '#071A31',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '12px',
-                fontSize: '14.5px',
-                fontWeight: 700,
-                cursor: isLoading ? 'not-allowed' : 'pointer',
-                opacity: isLoading ? 0.75 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 12px rgba(7, 26, 49, 0.15)',
-                transition: 'all 0.18s ease',
-              }}
-            >
-              <span>{isLoading ? 'Creating account...' : 'Create Account'}</span>
-              {!isLoading && <ArrowRight size={16} />}
-            </button>
-          </form>
-
-          {/* Log In Link */}
-          <div
-            style={{
-              marginTop: '24px',
-              paddingTop: '18px',
-              borderTop: '1px solid #f1f5f9',
-              textAlign: 'center',
-              fontSize: '13.5px',
-              color: '#64748b',
-            }}
-          >
-            Already have a ZAMERIA account?{' '}
-            <button
-              type="button"
-              onClick={() => navigate('/login')}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                color: '#071A31',
-                fontWeight: 700,
-                cursor: 'pointer',
-                textDecoration: 'underline',
-              }}
-            >
-              Log In
-            </button>
-          </div>
-        </div>
-      </main>
-
-      <footer className="zameria-auth-footer">
-        © {new Date().getFullYear()} ZAMERIA. All rights reserved.
-      </footer>
-    </div>
-  );
+  return <div className="site-auth-simple">
+    <header><BrandMark /></header>
+    <main>
+      <div className="site-auth-simple-heading"><h1>Create your account</h1><p>Your seven-day trial starts when you connect your store.</p></div>
+      {error && <p className="site-auth-error" role="alert">{error}</p>}
+      <form onSubmit={handleSubmit}>
+        <label htmlFor="reg-store-name">Business name<input id="reg-store-name" required autoComplete="organization" placeholder="Your business" value={businessName} disabled={isLoading} onChange={e => { setBusinessName(e.target.value); setError(null); }} /></label>
+        <label htmlFor="reg-email">Email address<input id="reg-email" type="email" required autoComplete="email" placeholder="you@business.com" value={email} disabled={isLoading} onChange={e => { setEmail(e.target.value); setError(null); }} /></label>
+        <div><label htmlFor="reg-password">Password</label><div className="site-auth-password"><input id="reg-password" type={showPassword ? 'text' : 'password'} required minLength={8} autoComplete="new-password" placeholder="At least 8 characters" value={password} disabled={isLoading} onChange={e => { setPassword(e.target.value); setError(null); }} /><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></div>
+        <button className="site-auth-submit" type="submit" disabled={isLoading}>{isLoading ? 'Creating account…' : 'Create account'}</button>
+      </form>
+      <p className="site-auth-switch">Already have an account? <a href="/login">Log in</a></p>
+    </main>
+    <footer>© {new Date().getFullYear()} ZAMERIA</footer>
+  </div>;
 };
 
 export default GetStartedPage;

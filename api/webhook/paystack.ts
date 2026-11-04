@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import crypto from 'crypto';
-import { backendBase } from '../../server/accountSession';
+import { backendBase } from '../../server/accountSession.js';
 
 // Paystack signs the raw body. Disable framework parsing before signature verification.
 export const config = { api: { bodyParser: false } };

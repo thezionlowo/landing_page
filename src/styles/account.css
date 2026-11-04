@@ -1,0 +1,65 @@
+/* Merchant pages use the same type, colour and spacing rules as the public site. */
+.site-account-page { display: grid; gap: 24px; max-width: 1000px; margin: 0 auto; color: var(--site-ink); }
+.site-account-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding-bottom: 4px; }
+.site-account-page h1 { margin: 0 0 8px; font-size: clamp(26px, 3vw, 34px); letter-spacing: -.04em; line-height: 1.2; font-weight: 750; }
+.site-account-page h2, .site-account-dialog h2 { font-size: 19px; letter-spacing: -.025em; margin: 0 0 12px; line-height: 1.35; }
+.site-account-page h3 { font-size: 15px; margin: 0 0 10px; }
+.site-account-page p, .site-account-page address { font-size: 14px; line-height: 1.7; color: var(--site-muted); margin: 0 0 16px; font-style: normal; }
+.site-account-page-heading p, .site-account-panel > :last-child, .site-account-panel-heading h2 { margin-bottom: 0; }
+.site-account-panel { padding: 28px; background: white; border: 1px solid var(--site-line); border-radius: 16px; min-width: 0; }
+.site-account-panel-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+.site-account-tag { font-size: 12px; line-height: 1.4; font-weight: 650; padding: 7px 10px; border-radius: 7px; background: var(--site-blue-soft); color: #2948b9; }
+.site-account-page button, .site-account-page .site-account-actions a, .site-account-dialog button { font: inherit; font-size: 13px; font-weight: 650; display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--site-line-strong); color: var(--site-ink); background: white; border-radius: 9px; padding: 11px 15px; min-height: 42px; cursor: pointer; text-decoration: none; transition: background .15s, border-color .15s; }
+.site-account-page button:hover, .site-account-page .site-account-actions a:hover { background: var(--site-paper); border-color: #a9b9e8; }
+.site-account-page button:disabled, .site-account-dialog button:disabled { opacity: .55; cursor: wait; }
+.site-account-page .site-account-primary, .site-account-dialog .site-account-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 18px; font-size: 13px; font-weight: 650; min-height: 44px; background: var(--site-blue); border: 1px solid var(--site-blue); color: white; border-radius: 9px; text-decoration: none; }
+.site-account-page .site-account-primary:hover, .site-account-dialog .site-account-primary:hover { color: white; background: #294ed8; border-color: #294ed8; }
+.site-account-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.site-account-page .site-account-help { font-size: 12px; line-height: 1.7; margin: 16px 0 0; max-width: 680px; }
+.site-account-definition-list { margin: 8px 0 0; }
+.site-account-definition-list > div { display: grid; grid-template-columns: minmax(130px, .7fr) 2fr; gap: 24px; padding: 17px 0; border-bottom: 1px solid var(--site-line); font-size: 14px; line-height: 1.65; }
+.site-account-definition-list > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.site-account-definition-list dt { font-weight: 650; }
+.site-account-definition-list dd { margin: 0; color: var(--site-muted); }
+.site-account-instructions { padding-left: 22px; color: var(--site-muted); font-size: 14px; line-height: 1.75; margin: 0; }
+.site-account-instructions li + li { margin-top: 12px; }
+.site-account-copy-row { display: flex; gap: 12px; align-items: center; background: #f5f7fc; padding: 12px; border: 1px solid var(--site-line); border-radius: 10px; }
+.site-account-copy-row code { flex: 1; font-size: 13px; overflow-wrap: anywhere; min-width: 0; }
+.site-account-copy-row button { flex-shrink: 0; }
+.site-account-text-link { display: inline-flex; gap: 8px; align-items: center; color: var(--site-blue); font-size: 13px; font-weight: 650; margin-top: 20px; }
+.site-account-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.site-account-summary > button { display: flex; flex-direction: column; text-align: left; align-items: flex-start; justify-content: flex-start; padding: 24px; border-radius: 14px; gap: 12px; min-width: 0; }
+.site-account-summary span { color: var(--site-muted); font-size: 12px; }
+.site-account-summary strong { font-size: 20px; letter-spacing: -.035em; }
+.site-account-summary small { color: var(--site-muted); font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.site-account-notice { padding: 18px 20px; background: #edf2ff; border: 1px solid #cfdbfc; border-radius: 12px; display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.site-account-notice p { margin: 0; }
+.site-account-page .site-account-danger { color: #a82828; }
+.site-account-page .site-account-error, .site-account-dialog .site-account-error { color: #a82828; font-size: 13px; line-height: 1.6; }
+.site-account-form { display: grid; gap: 20px; max-width: 540px; }
+.site-account-form label { display: grid; gap: 8px; font-size: 13px; font-weight: 650; }
+.site-account-form input { box-sizing: border-box; width: 100%; min-width: 0; min-height: 46px; padding: 12px 14px; border: 1px solid var(--site-line-strong); border-radius: 8px; font: inherit; font-size: 14px; color: var(--site-ink); background: white; }
+.site-account-form input[readonly] { background: #f5f7fc; color: var(--site-muted); }
+.site-account-form small { font-size: 12px; font-weight: 400; color: var(--site-muted); }
+.site-account-form > button { justify-self: start; }
+.site-account-password { position: relative; }
+.site-account-password input { padding-right: 50px; }
+.site-account-password button { position: absolute; right: 3px; top: 3px; border: none; min-height: 40px; padding: 10px; }
+.site-account-price { font-size: 28px !important; color: var(--site-ink) !important; font-weight: 700; letter-spacing: -.04em; }
+.site-account-price small { font-size: 14px; font-weight: 400; letter-spacing: 0; color: var(--site-muted); }
+.site-account-license { padding-top: 24px; margin-top: 24px; border-top: 1px solid var(--site-line); }
+.site-account-table-wrap { overflow-x: auto; margin-top: 20px; }
+.site-account-table-wrap table { width: 100%; text-align: left; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+.site-account-table-wrap th, .site-account-table-wrap td { padding: 14px 16px; border-bottom: 1px solid var(--site-line); }
+.site-account-table-wrap thead { background: #f5f7fc; }
+.site-account-table-wrap th { font-weight: 650; }
+.site-account-store-url { overflow-wrap: anywhere; }
+.site-account-dialog { border: 1px solid var(--site-line); border-radius: 16px; padding: 28px; width: min(500px, calc(100vw - 40px)); max-height: calc(100dvh - 48px); color: var(--site-ink); background: white; font-family: var(--site-font); box-shadow: 0 24px 80px #0d172940; }
+.site-account-dialog::backdrop { background: #0d17296b; backdrop-filter: blur(3px); }
+.site-account-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+.site-account-dialog h2 { margin: 0; }
+.site-account-dialog > header button { border: 0; padding: 8px; }
+@media (max-width: 740px) { .site-account-summary { grid-template-columns: 1fr; } .site-account-summary > button { gap: 8px; padding: 20px; } .site-account-panel { padding: 22px; } }
+@media (max-width: 480px) { .site-account-definition-list > div { grid-template-columns: 1fr; gap: 5px; } .site-account-copy-row { align-items: flex-start; flex-direction: column; } .site-account-panel { padding: 20px; } }
+
+.site-account { background: #f3f6fa !important; }

@@ -1,0 +1,2 @@
+# Generated demo bundles include third-party data strings with significant whitespace.
+public/product-preview/assets/* linguist-generated=true -whitespace

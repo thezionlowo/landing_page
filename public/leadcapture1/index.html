@@ -4,9 +4,9 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#071A31" />
-<title>You Have a Website. You Have a Physical Store. But Does Your Stock Know That? | ZAMERIA</title>
-<meta name="description" content="Find out how well your online and physical inventory stay in sync. Free 30-second check." />
-<link rel="canonical" href="https://zameria.co/leadcapture1" />
+<title>Check Your Shop and Website Stock | ZAMERIA</title>
+<meta name="description" content="Check how you manage stock between your shop and WooCommerce website." />
+<link rel="canonical" href="https://www.zameria.co/leadcapture1" />
 
 <!-- Favicon & Site Icons -->
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -15,9 +15,9 @@
 <!-- Open Graph / Meta -->
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="ZAMERIA" />
-<meta property="og:title" content="You Have a Website. You Have a Physical Store. But Does Your Stock Know That?" />
-<meta property="og:description" content="Find out how well your online and physical inventory stay in sync. Free 30-second check." />
-<meta property="og:url" content="https://zameria.co/leadcapture1" />
+<meta property="og:title" content="Check Your Shop and Website Stock" />
+<meta property="og:description" content="Check how you manage stock between your shop and WooCommerce website." />
+<meta property="og:url" content="https://www.zameria.co/leadcapture1" />
 <meta property="og:image" content="https://zameria.co/zameria-logo.png" />
 
 <!-- Google Fonts: Plus Jakarta Sans for crisp modern typography -->
@@ -855,9 +855,11 @@
     .celebrate-confetti { display: none; }
   }
 </style>
+<link rel="stylesheet" href="/brand-foundations.css" />
+<link rel="stylesheet" href="/assessment-theme.css" />
 </head>
 
-<body>
+<body class="zameria-lead-page site-assessment">
 
 <header>
   <div class="header-inner">
@@ -865,11 +867,12 @@
       <!-- Real ZAMERIA logo on dark brand background -->
       <img
         class="header-logo"
-        src="/zameria-logo-white.png"
+        src="/zameria-logo-header.png"
         onerror="if(!this.dataset.tried){this.dataset.tried=1;this.src='data:image/png;base64,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PKhmiI8AcyIBEiABEiABEoiLQCwOxdoD97x83YFfXrTuwD2XuJLnPX7vpWcc+PElXV/87sbGj/9wfetndr/AmnzhtnNaPvat9V1X/8fazv/xrdM7r/4mxTWD13xzTefvfeOMjpd97ZyO3/naC5zKK245u/Ml335h57Yfbu7cvusSi3Jx545dF7W/ZNeeuP7QzIcESIAEUkeABpMACaSeQCwOReopsQAkQAIkQAIkQAIkQAIkUOcEZio+HYqZyHA7CZAACZAACZAACZAACZDArAToUMyKiBFIIG4CzI8ESIAESIAESIAE0kOADkV66oqWkgAJkAAJJI0A7SEBEiABEhA6FDwIHoSEtQAAANdJREFUSIAESIAESIAESIAEap4AC+iOAB0Kd2ypmQRIgARIgARIgARIgARqngAdipqv4rgLyPxIgARIgARIgARIgATqiQAdinqqbZaVBEiABCYS4DoJkAAJkAAJWCBAh8ICRKogARIgARIgARIgAZcEqJsEkkyADkWSa4e2kQAJkAAJkAAJkAAJkEDCCdChmFRB/EECJEACJEACJEACJEACJFAJAToUldBiXBIggeQQoCUkQAIkQAIkQAKJIECHIhHVQCNIgARIgARIoHYJsGQkQAK1TeD/AwAA//9iU6uDAAAABklEQVQDABdGtAsYwEcOAAAAAElFTkSuQmCCikOPecJTur4g4gWijQ9gSakKzBOemsRv7RAVwKHQypJkiiEBEiABEiABEiABEig7ARoQiUAsDoUSdU4kK4vIbBwIlWmQdGpapICoUkXkKjaJEvHyIhmsUGgj16K3UqwJTEcCJEACJEACJEACJEACCSTgxWOTdn5DtrmxQaU88Vo6FopkcdBvViRSkJeegxq1IJ+bEASYhQRIgARIgARIgARIoMoIxORQSLtzbhjvi6fEc3HTtJ8V3dAlflOnKB9OhfBDAiRAAtVOgOUjARIgARIggeIIxONQKGktzpxoqTzJS8o/DiGWixVApHloVEpEme/CDwmQAAmQAAmQAAkkhADNIIEyE7A88l6+NFpL0/JH7O3VUKLSnnimRIFZrrAnWwRCVV5EFWT+O/4ykAAJkAAJkAAJkAAJkAAJxDQ6ViLun/JkfAgvLV7aF1HjklLT1qInk5JKz4g0wKkwT5FqgGPBCB7uOKhGyK4H71ROJO06zol4OG8cPQ4YohuEHxIgARIgARIgARKoUgJeHOVSIp8V0Q9C1zecRS33Kx18Y87v/14+v/3R2fzmH1iLwfmPzM2ue1Qfr39CjrU9KcdbGB0z0M+1PCUj7QdVtvsRNdP9A6dxqvcxyTd+W5T/dcvn5wOi5UEJtLkOD6IZ4iNATSRAAiRAAiRAAnERiMWhOP+ph1+5/anvXbX9qYevcRVf8PT3r73gqYeuaf/4F3fVfeCrO5r+av+LrcWP3Xdx459/bkf77f94ftt/+Nx5bbf/C6NrBq/5l8G2n/vsBa2v+PTFrT/z6Rc7ja+696K2l33+srZbvrqnbe++ayzGq9tu3XdVy8v2PRrXPzT1kAAJkEDFEaDBJEACFU8gFoei4imxACRAAiRAAiRAAiRAAiRQ4wRWKj4dipXIcD8JkAAJkAAJkAAJkAAJkMCaBOhQrImICUggbgLURwIkQAIkQAIkQAKVQ4AOReXUFS0lARIgARJIGgHaQwIkQAIkIHQoeBKQAAmQAAmQAAmQAAlUPQEW0B0BOhTu2FIyCZAACZAACZAACZAACVQ9AToUVV/FcReQ+kiABEiABEiABEiABGqJAB2KWqptlpUESIAElhLgdxIgARIgARKwQIAOhQWIFEECJEACJEACJEACLglQNgkkmQAdiiTXDm0jARIgARIgARIgARIggYQToENxWgXxBwmQAAmQAAmQAAmQAAmQQCkE6FCUQotpSYAEkkOAlpAACZAACZAACSSCAB2KRFQDjSABEiABEiCB6iXAkpEACVQ3gf8PAAD//zfPkHkAAAAGSURBVAMAls2TZdCKnAsAAAAASUVORK5CYII=';}"
         alt="ZAMERIA"
       />
     </a>
+      <a href="/" class="z-header-home-link">Back to the website <span aria-hidden="true">↗</span></a>
   </div>
 </header>
 
@@ -900,7 +903,7 @@ var ZAMERIA_VSL_POSTER    = null;
       id: 'q1_instore_website_knows',
       number: 1,
       category: 'inventory_sync',
-      prompt: 'When you sell the last unit in your physical store, does your website know?',
+      prompt: 'When the last item sells in your shop, does website stock update?',
       answers: [
         { label: 'Yes, it updates straight away', score: 0 },
         { label: 'Someone tells it later', score: 2 },
@@ -912,7 +915,7 @@ var ZAMERIA_VSL_POSTER    = null;
       id: 'q2_online_store_knows',
       number: 2,
       category: 'order_visibility',
-      prompt: 'When someone orders online, does your physical store know?',
+      prompt: 'Can your shop team see new online orders?',
       answers: [
         { label: 'Yes, it appears for the team', score: 0 },
         { label: 'Someone has to check the website', score: 2 },
@@ -924,7 +927,7 @@ var ZAMERIA_VSL_POSTER    = null;
       id: 'q3_shared_number',
       number: 3,
       category: 'overselling_risk',
-      prompt: 'Is there one stock number that both your website and your store read from?',
+      prompt: 'Do your shop and website use one stock count?',
       answers: [
         { label: 'Yes, one shared number', score: 0 },
         { label: 'Two numbers that should match', score: 2 },
@@ -936,7 +939,7 @@ var ZAMERIA_VSL_POSTER    = null;
       id: 'q4_stock_system',
       number: 4,
       category: 'manual_reconciliation',
-      prompt: 'How do you currently keep your online and physical stock aligned?',
+      prompt: 'How do you keep shop and website stock in sync?',
       answers: [
         { label: 'One shared system', score: 0 },
         { label: 'Two separate systems', score: 2 },
@@ -948,7 +951,7 @@ var ZAMERIA_VSL_POSTER    = null;
       id: 'q5_confidence',
       number: 5,
       category: 'stock_visibility',
-      prompt: 'How confident are you that the stock number on your website matches your physical store right now?',
+      prompt: 'Does your website stock match what is in your shop?',
       answers: [
         { label: 'Very confident', score: 0 },
         { label: 'Somewhat confident', score: 1 },
@@ -978,19 +981,19 @@ var ZAMERIA_VSL_POSTER    = null;
 
   var GAPS = {
     inventory_sync: {
-      name: 'Your website and store do not share stock',
-      supporting: 'When something sells in one place, the other side does not find out. Your stock ends up living in two different versions.',
+      name: 'Check how your shop and website share stock',
+      supporting: 'A sale may leave the other stock record out of date.',
       couldMean: [
         'Your website keeps showing sold-out products',
         'Your store holds stock the website says is gone',
         'Someone has to update two places every day'
       ],
-      fixTitle: 'Make your stock know about both sides',
-      fixBody: 'When something sells, both your website and your store should update at the same time.'
+      fixTitle: 'Connect your stock records',
+      fixBody: 'Share stock updates between your shop and website.'
     },
     order_visibility: {
-      name: 'Online orders do not reach your store team',
-      supporting: 'Your physical store has no direct way of knowing about online orders. It depends on someone noticing or relaying them.',
+      name: 'Check how your team receives online orders',
+      supporting: 'Your team may need to check another screen or wait for a message.',
       couldMean: [
         'Online orders sit unread while the store is busy',
         'Staff do not know what to pack or hold',
@@ -1008,11 +1011,11 @@ var ZAMERIA_VSL_POSTER    = null;
         'Repeat buyers lose confidence in your store'
       ],
       fixTitle: 'Give both sides one stock number',
-      fixBody: 'Online and store sales should read from the same stock level, so the last item can only be sold once.'
+      fixBody: 'Use one stock record and check that updates reach both selling channels.'
     },
     manual_reconciliation: {
       name: 'Manual updating is holding your stock together',
-      supporting: 'Your team is updating two sets of records by hand. Every sale adds more work to that.',
+      supporting: 'Updating two records by hand takes time and can lead to mistakes.',
       couldMean: [
         'Hours spent updating or reconciling every week',
         'Mistakes that are hard to trace back',
@@ -1022,8 +1025,8 @@ var ZAMERIA_VSL_POSTER    = null;
       fixBody: 'One record should update the other automatically, with no one retyping stock numbers.'
     },
     stock_visibility: {
-      name: 'You cannot see your real stock position',
-      supporting: 'You are not fully certain what your actual stock is right now. Every restocking decision becomes harder.',
+      name: 'Check your available stock',
+      supporting: 'Unclear stock counts make restocking harder.',
       couldMean: [
         'Restocking becomes guesswork',
         'You hold too much of some items and too little of others',
@@ -1034,7 +1037,7 @@ var ZAMERIA_VSL_POSTER    = null;
     },
     sales_visibility: {
       name: 'Sales are not visible in one place',
-      supporting: 'You cannot see what sold online and what sold in the store together. Getting the full picture takes extra work.',
+      supporting: 'Separate reports make it harder to check total sales.',
       couldMean: [
         'Slow decisions on what to restock',
         'Totals you have to combine by hand',
@@ -1069,24 +1072,24 @@ var ZAMERIA_VSL_POSTER    = null;
   var RISK_LEVELS = {
     LOW: {
       key: 'LOW',
-      label: 'IT KNOWS',
+      label: 'UPDATES CONNECTED',
       cardClass: 'low',
       levelClass: 'low',
-      copy: 'Your stock appears to know about both your website and your physical store. There may still be small gaps worth tightening as you grow.'
+      copy: 'Your answers suggest stock updates are connected. Keep checking that the counts match.'
     },
     MODERATE: {
       key: 'MODERATE',
-      label: 'IT PARTLY KNOWS',
+      label: 'SOME GAPS TO CHECK',
       cardClass: 'moderate',
       levelClass: 'moderate',
-      copy: 'Some of your stock stays in sync, but other parts still depend on manual updates or separate systems.'
+      copy: 'Some updates are connected. Others still need manual checks.'
     },
     HIGH: {
       key: 'HIGH',
-      label: 'IT HAS NO IDEA',
+      label: 'MORE CHECKS NEEDED',
       cardClass: 'high',
       levelClass: 'high',
-      copy: 'Your stock is living in two different versions. Your website and your store are being tracked separately, and it is already causing gaps.'
+      copy: 'Your answers suggest separate records may cause stock differences.'
     }
   };
 
@@ -1379,14 +1382,14 @@ var ZAMERIA_VSL_POSTER    = null;
           '</div>' +
           '<p class="celebrate-eyebrow">You&rsquo;re in</p>' +
           '<h1 class="celebrate-title" id="celebrate-title" data-autofocus tabindex="-1">Thank you for your attention.</h1>' +
-          '<p class="celebrate-sub">It&rsquo;s the one thing no one gets back &mdash; and you gave us yours. We don&rsquo;t take that lightly.</p>' +
-          '<p class="celebrate-body">Our team is reviewing your store right now. You&rsquo;ll hear from us on WhatsApp within the next few hours, and we&rsquo;ll have you fully set up before you know it.</p>' +
+          '<p class="celebrate-sub">Your details have been sent.</p>' +
+          '<p class="celebrate-body">Our team will review your details and contact you about the next steps.</p>' +
           '<div class="celebrate-steps">' +
             '<div class="celebrate-step"><span class="celebrate-step-num" aria-hidden="true">1</span><span class="celebrate-step-text">A human from our team reviews your store</span></div>' +
-            '<div class="celebrate-step"><span class="celebrate-step-num" aria-hidden="true">2</span><span class="celebrate-step-text">We reach out on WhatsApp &mdash; usually within a few hours</span></div>' +
-            '<div class="celebrate-step"><span class="celebrate-step-num" aria-hidden="true">3</span><span class="celebrate-step-text">We get you live &mdash; usually in under 15 minutes</span></div>' +
+            '<div class="celebrate-step"><span class="celebrate-step-num" aria-hidden="true">2</span><span class="celebrate-step-text">We contact you on WhatsApp</span></div>' +
+            '<div class="celebrate-step"><span class="celebrate-step-num" aria-hidden="true">3</span><span class="celebrate-step-text">We help you connect your store</span></div>' +
           '</div>' +
-          '<p class="celebrate-footer">Keep an eye on your phone. We&rsquo;re already on it.</p>' +
+          '<p class="celebrate-footer">Look out for a message from our team.</p>' +
         '</div>' +
       '</div>';
   }
@@ -1456,19 +1459,19 @@ var ZAMERIA_VSL_POSTER    = null;
       '<div class="anim">' +
         '<p class="eyebrow">STOCK AWARENESS CHECK</p>' +
         '<h1 class="h1" data-autofocus tabindex="-1">' +
-          '<span class="h1-line">You have a website.</span>' +
-          '<span class="h1-line">You have a physical store.</span>' +
-          '<span class="h1-hl">But does your stock know that?</span>' +
+          '<span class="h1-line">Your shop. Your website.</span>' +
+          '' +
+          '<span class="h1-hl">Do the stock counts match?</span>' +
         '</h1>' +
-        '<p class="h3-sub">Find out how well your online and physical inventory stay in sync with a quick 30-second check.</p>' +
+        '<p class="h3-sub">Answer six questions about stock updates between your shop and website.</p>' +
         '<div class="cta-wrap">' +
           '<button type="button" class="btn btn-primary" data-action="start">' +
-            '<span>Get My Stock Sync Score</span>' +
+            '<span>Check my stock setup</span>' +
             SVG_ARROW +
           '</button>' +
         '</div>' +
         '<div class="micro-badge-wrap">' +
-          '<span class="micro-item">' + SVG_CHECK + ' 6 quick questions</span>' + '<span class="micro-dot">&bull;</span>' + '<span class="micro-item">30-Seconds</span>' + '<span class="micro-dot">&bull;</span>' + '<span class="micro-item">Instant results</span>' +
+          '<span class="micro-item">' + SVG_CHECK + ' 6 quick questions</span>' + '<span class="micro-dot">&bull;</span>' + '<span class="micro-item">Free check</span>' + '<span class="micro-dot">&bull;</span>' + '<span class="micro-item">Instant results</span>' +
         '</div>' +
       '</div>';
   }
@@ -1529,7 +1532,7 @@ var ZAMERIA_VSL_POSTER    = null;
       '<form id="lead-form" class="anim" novalidate>' +
         '<p class="eyebrow">ALMOST DONE</p>' +
         '<h2 class="h2 h2-lg" data-autofocus tabindex="-1">Your Stock Awareness Check is ready.</h2>' +
-        '<p class="body-muted" style="margin-top:16px">We&rsquo;ve worked out whether your stock actually knows about both your website and your store. Enter your details to see the result.</p>' +
+        '<p class="body-muted" style="margin-top:16px">See where your shop and website stock records may differ.</p>' +
 
         '<div class="z-result-preview-card">' +
           '<div class="z-result-preview-header">' +
@@ -1615,7 +1618,7 @@ var ZAMERIA_VSL_POSTER    = null;
         '</section>' +
 
         '<section class="card card-danger">' +
-          '<p class="card-label" style="color:var(--z-danger)">Your Biggest Blind Spot</p>' +
+          '<p class="card-label" style="color:var(--z-danger)">Your main check</p>' +
           '<p class="gap-title">' + esc(gapTitle) + '</p>' +
           '<p class="body-muted" style="margin-top:14px">' + esc(gapSupporting) + '</p>' +
         '</section>' +

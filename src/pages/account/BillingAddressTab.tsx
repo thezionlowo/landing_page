@@ -73,10 +73,10 @@ export const BillingAddressTab: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '28px', maxWidth: '720px' }}>
       {/* Tab Header */}
       <div>
-        <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#071A31', letterSpacing: '-0.02em', margin: 0 }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 800, color: "var(--site-ink)", letterSpacing: '-0.02em', margin: 0 }}>
           Billing Address
         </h2>
-        <p style={{ fontSize: '14px', color: '#64748b', marginTop: '6px', margin: 0 }}>
+        <p style={{ fontSize: '14px', color: "var(--site-muted)", marginTop: '6px', margin: 0 }}>
           This address will appear on your official ZAMERIA subscription receipts and tax invoices.
         </p>
       </div>
@@ -88,7 +88,7 @@ export const BillingAddressTab: React.FC = () => {
             padding: '14px 18px',
             backgroundColor: '#f0fdf4',
             border: '1px solid #bbf7d0',
-            borderRadius: '12px',
+            borderRadius: "var(--site-radius)",
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -109,7 +109,7 @@ export const BillingAddressTab: React.FC = () => {
             padding: '14px 18px',
             backgroundColor: '#fef2f2',
             border: '1px solid #fecaca',
-            borderRadius: '12px',
+            borderRadius: "var(--site-radius)",
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -124,23 +124,23 @@ export const BillingAddressTab: React.FC = () => {
       {/* Main Billing Form Card */}
       <div
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '20px',
-          border: '1px solid #e2e8f0',
+          backgroundColor: "var(--site-white)",
+          borderRadius: "var(--site-radius)",
+          border: "1px solid var(--site-line)",
           padding: '32px',
           boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
         }}
       >
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
           {/* Name Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="site-responsive-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
               <label
                 style={{
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#334155',
+                  color: "var(--site-ink)",
                   marginBottom: '6px',
                 }}
               >
@@ -157,15 +157,15 @@ export const BillingAddressTab: React.FC = () => {
                   width: '100%',
                   padding: '11px 14px',
                   fontSize: '14px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  borderRadius: "var(--site-radius)",
+                  border: "1px solid var(--site-line-strong)",
                   outline: 'none',
                   boxSizing: 'border-box',
-                  color: '#071A31',
+                  color: "var(--site-ink)",
                   transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                onFocus={(e) => (e.target.style.borderColor = "var(--site-blue)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--site-line-strong)")}
               />
             </div>
 
@@ -175,7 +175,7 @@ export const BillingAddressTab: React.FC = () => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#334155',
+                  color: "var(--site-ink)",
                   marginBottom: '6px',
                 }}
               >
@@ -192,15 +192,15 @@ export const BillingAddressTab: React.FC = () => {
                   width: '100%',
                   padding: '11px 14px',
                   fontSize: '14px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  borderRadius: "var(--site-radius)",
+                  border: "1px solid var(--site-line-strong)",
                   outline: 'none',
                   boxSizing: 'border-box',
-                  color: '#071A31',
+                  color: "var(--site-ink)",
                   transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                onFocus={(e) => (e.target.style.borderColor = "var(--site-blue)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--site-line-strong)")}
               />
             </div>
           </div>
@@ -212,7 +212,7 @@ export const BillingAddressTab: React.FC = () => {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: "var(--site-ink)",
                 marginBottom: '6px',
               }}
             >
@@ -229,15 +229,15 @@ export const BillingAddressTab: React.FC = () => {
                   width: '100%',
                   padding: '11px 14px 11px 38px',
                   fontSize: '14px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  borderRadius: "var(--site-radius)",
+                  border: "1px solid var(--site-line-strong)",
                   outline: 'none',
                   boxSizing: 'border-box',
-                  color: '#071A31',
+                  color: "var(--site-ink)",
                   transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                onFocus={(e) => (e.target.style.borderColor = "var(--site-blue)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--site-line-strong)")}
               />
               <Building2
                 size={16}
@@ -256,7 +256,7 @@ export const BillingAddressTab: React.FC = () => {
                 display: 'block',
                 fontSize: '13px',
                 fontWeight: 600,
-                color: '#334155',
+                color: "var(--site-ink)",
                 marginBottom: '6px',
               }}
             >
@@ -274,15 +274,15 @@ export const BillingAddressTab: React.FC = () => {
                   width: '100%',
                   padding: '11px 14px 11px 38px',
                   fontSize: '14px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  borderRadius: "var(--site-radius)",
+                  border: "1px solid var(--site-line-strong)",
                   outline: 'none',
                   boxSizing: 'border-box',
-                  color: '#071A31',
+                  color: "var(--site-ink)",
                   transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                onFocus={(e) => (e.target.style.borderColor = "var(--site-blue)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--site-line-strong)")}
               />
               <MapPin
                 size={16}
@@ -292,14 +292,14 @@ export const BillingAddressTab: React.FC = () => {
           </div>
 
           {/* City, State Row */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="site-responsive-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
               <label
                 style={{
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#334155',
+                  color: "var(--site-ink)",
                   marginBottom: '6px',
                 }}
               >
@@ -316,15 +316,15 @@ export const BillingAddressTab: React.FC = () => {
                   width: '100%',
                   padding: '11px 14px',
                   fontSize: '14px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  borderRadius: "var(--site-radius)",
+                  border: "1px solid var(--site-line-strong)",
                   outline: 'none',
                   boxSizing: 'border-box',
-                  color: '#071A31',
+                  color: "var(--site-ink)",
                   transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                onFocus={(e) => (e.target.style.borderColor = "var(--site-blue)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--site-line-strong)")}
               />
             </div>
 
@@ -334,7 +334,7 @@ export const BillingAddressTab: React.FC = () => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#334155',
+                  color: "var(--site-ink)",
                   marginBottom: '6px',
                 }}
               >
@@ -351,28 +351,28 @@ export const BillingAddressTab: React.FC = () => {
                   width: '100%',
                   padding: '11px 14px',
                   fontSize: '14px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  borderRadius: "var(--site-radius)",
+                  border: "1px solid var(--site-line-strong)",
                   outline: 'none',
                   boxSizing: 'border-box',
-                  color: '#071A31',
+                  color: "var(--site-ink)",
                   transition: 'border-color 0.15s ease',
                 }}
-                onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                onFocus={(e) => (e.target.style.borderColor = "var(--site-blue)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--site-line-strong)")}
               />
             </div>
           </div>
 
           {/* Country and Phone */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="site-responsive-columns" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
               <label
                 style={{
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#334155',
+                  color: "var(--site-ink)",
                   marginBottom: '6px',
                 }}
               >
@@ -386,12 +386,12 @@ export const BillingAddressTab: React.FC = () => {
                   width: '100%',
                   padding: '11px 14px',
                   fontSize: '14px',
-                  borderRadius: '10px',
-                  border: '1px solid #cbd5e1',
+                  borderRadius: "var(--site-radius)",
+                  border: "1px solid var(--site-line-strong)",
                   outline: 'none',
                   boxSizing: 'border-box',
-                  color: '#071A31',
-                  backgroundColor: '#ffffff',
+                  color: "var(--site-ink)",
+                  backgroundColor: "var(--site-white)",
                 }}
               >
                 <option value="Nigeria">Nigeria</option>
@@ -409,7 +409,7 @@ export const BillingAddressTab: React.FC = () => {
                   display: 'block',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#334155',
+                  color: "var(--site-ink)",
                   marginBottom: '6px',
                 }}
               >
@@ -427,15 +427,15 @@ export const BillingAddressTab: React.FC = () => {
                     width: '100%',
                     padding: '11px 14px 11px 38px',
                     fontSize: '14px',
-                    borderRadius: '10px',
-                    border: '1px solid #cbd5e1',
+                    borderRadius: "var(--site-radius)",
+                    border: "1px solid var(--site-line-strong)",
                     outline: 'none',
                     boxSizing: 'border-box',
-                    color: '#071A31',
+                    color: "var(--site-ink)",
                     transition: 'border-color 0.15s ease',
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = '#2563eb')}
-                  onBlur={(e) => (e.target.style.borderColor = '#cbd5e1')}
+                  onFocus={(e) => (e.target.style.borderColor = "var(--site-blue)")}
+                  onBlur={(e) => (e.target.style.borderColor = "var(--site-line-strong)")}
                 />
                 <Phone
                   size={16}
@@ -446,16 +446,16 @@ export const BillingAddressTab: React.FC = () => {
           </div>
 
           {/* Action Button */}
-          <div style={{ paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-start' }}>
+          <div style={{ paddingTop: '10px', borderTop: "1px solid var(--site-surface)", display: 'flex', justifyContent: 'flex-start' }}>
             <button
               type="submit"
               disabled={isSaving}
               style={{
                 padding: '12px 28px',
-                backgroundColor: '#071A31',
-                color: '#ffffff',
+                backgroundColor: "var(--site-primary)",
+                color: "var(--site-white)",
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: "var(--site-radius)",
                 fontSize: '14px',
                 fontWeight: 700,
                 cursor: isSaving ? 'not-allowed' : 'pointer',
@@ -470,7 +470,7 @@ export const BillingAddressTab: React.FC = () => {
                 if (!isSaving) e.currentTarget.style.backgroundColor = '#0c284d';
               }}
               onMouseLeave={(e) => {
-                if (!isSaving) e.currentTarget.style.backgroundColor = '#071A31';
+                if (!isSaving) e.currentTarget.style.backgroundColor = "var(--site-ink)";
               }}
             >
               <Save size={16} />

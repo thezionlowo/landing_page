@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { resolveSubscriptionState, useCustomerAuth, CustomerProfile } from '../../context/CustomerAuthContext';
+import { calculateTrialDaysRemaining, resolveSubscriptionState, useCustomerAuth, CustomerProfile } from '../../context/CustomerAuthContext';
 import { useRouter, AccountTab } from '../../router/Router';
 import { ROUTES } from '../../lib/routes';
 import { OverviewTab } from './OverviewTab';
@@ -36,24 +36,24 @@ const NAV_ITEMS: NavItem[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   {
     id: 'store',
-    label: 'Store & Sync',
+    label: 'Store',
     icon: Store,
     getBadge: (c) => {
       const status = c.connectedStore?.status;
-      if (status === 'connected') return { text: 'Synced', color: '#16a34a', bg: '#f0fdf4' };
+      if (status === 'connected') return { text: 'Connected', color: '#16a34a', bg: '#f0fdf4' };
       if (status === 'error') return { text: 'Error', color: '#dc2626', bg: '#fef2f2' };
       return { text: 'Connect', color: '#d97706', bg: '#fffbeb' };
     },
   },
   {
     id: 'billing',
-    label: 'Subscription & Billing',
+    label: 'Plan & billing',
     icon: CreditCard,
     getBadge: (c) => {
       const state = resolveSubscriptionState(c);
       if (state === 'trial_active') {
-        const d = c.trial?.daysRemaining ?? c.trialDaysRemaining ?? 7;
-        return { text: `${d}d Trial`, color: '#2563eb', bg: '#eff6ff' };
+        const d = calculateTrialDaysRemaining(c);
+        return { text: `${d}d Trial`, color: "var(--site-blue)", bg: "var(--site-blue-soft)" };
       }
       if (state === 'paid_active') return { text: 'Active', color: '#16a34a', bg: '#f0fdf4' };
       return null;
@@ -61,17 +61,17 @@ const NAV_ITEMS: NavItem[] = [
   },
   {
     id: 'devices',
-    label: 'Registers & Hardware',
+    label: 'Devices & hardware',
     icon: Monitor,
   },
   {
     id: 'team',
-    label: 'Team & Cashiers',
+    label: 'Team access',
     icon: Users,
   },
   {
     id: 'settings',
-    label: 'Account & Security',
+    label: 'Settings',
     icon: Settings,
   },
 ];
@@ -91,14 +91,14 @@ export const AccountLayout: React.FC = () => {
 
   if (!customer) {
     return (
-      <div
-        style={{
-          minHeight: '100vh',
+      <div className="site-account"
+      style={{
+        minHeight: '100vh',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#f8fafc',
-          fontFamily: 'Inter, system-ui, sans-serif',
+          backgroundColor: "var(--site-paper)",
+          fontFamily: "var(--site-font)",
         }}
       >
         <div style={{ textAlign: 'center' }}>
@@ -106,14 +106,14 @@ export const AccountLayout: React.FC = () => {
             style={{
               width: '40px',
               height: '40px',
-              border: '3px solid #e2e8f0',
-              borderTopColor: '#071A31',
+              border: "3px solid var(--site-line)",
+              borderTopColor: "var(--site-ink)",
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto 16px',
             }}
           />
-          <p style={{ fontSize: '14px', color: '#64748b' }}>Loading your ZAMERIA merchant portal...</p>
+          <p style={{ fontSize: '14px', color: "var(--site-muted)" }}>Loading your account…</p>
         </div>
       </div>
     );
@@ -122,7 +122,7 @@ export const AccountLayout: React.FC = () => {
   const subscriptionState = resolveSubscriptionState(customer);
   const isTrial = subscriptionState === 'trial_active';
   const isTrialNotStarted = subscriptionState === 'no_active_plan' && (customer.trial?.status === 'not_started' || customer.accountStatus === 'trial_not_started');
-  const daysLeft = customer.trial?.daysRemaining ?? customer.trialDaysRemaining ?? 7;
+  const daysLeft = calculateTrialDaysRemaining(customer);
   const isPaid = subscriptionState === 'paid_active';
 
   const rawPlanStr = String(
@@ -154,21 +154,21 @@ export const AccountLayout: React.FC = () => {
   };
 
   return (
-    <div
+    <div className="site-account"
       style={{
         minHeight: '100vh',
-        backgroundColor: '#f8fafc',
+        backgroundColor: "var(--site-paper)",
         display: 'flex',
         flexDirection: 'column',
-        fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-        color: '#071A31',
+        fontFamily: "var(--site-font)",
+        color: "var(--site-ink)",
       }}
     >
       {/* 1. TOP HEADER / BRAND BAR */}
-      <header
+      <header className="site-account-header"
         style={{
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
+          backgroundColor: "var(--site-white)",
+          borderBottom: "1px solid var(--site-line)",
           position: 'sticky',
           top: 0,
           zIndex: 40,
@@ -177,7 +177,7 @@ export const AccountLayout: React.FC = () => {
       >
         <div
           style={{
-            maxWidth: '1400px',
+            maxWidth: '1328px',
             margin: '0 auto',
             padding: '0 20px',
             height: '70px',
@@ -196,10 +196,12 @@ export const AccountLayout: React.FC = () => {
                 border: 'none',
                 padding: '6px',
                 cursor: 'pointer',
-                color: '#071A31',
+                color: "var(--site-ink)",
               }}
               className="zameria-mobile-nav-toggle"
               aria-label="Toggle navigation"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="merchant-mobile-navigation"
             >
               {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -218,7 +220,7 @@ export const AccountLayout: React.FC = () => {
               aria-label="ZAMERIA Home"
             >
               <img
-                src="/zameria-logo.png"
+                src="/zameria-logo-header.png"
                 alt="ZAMERIA"
                 style={{
                   height: '28px',
@@ -234,7 +236,7 @@ export const AccountLayout: React.FC = () => {
               style={{
                 height: '20px',
                 width: '1px',
-                backgroundColor: '#cbd5e1',
+                backgroundColor: "var(--site-line-strong)",
                 margin: '0 4px',
               }}
               className="zameria-desktop-divider"
@@ -244,7 +246,7 @@ export const AccountLayout: React.FC = () => {
               style={{
                 fontSize: '12.5px',
                 fontWeight: 700,
-                color: '#64748b',
+                color: "var(--site-muted)",
                 textTransform: 'uppercase',
                 letterSpacing: '0.06em',
               }}
@@ -264,20 +266,20 @@ export const AccountLayout: React.FC = () => {
               style={{
                 fontSize: '13px',
                 fontWeight: 700,
-                color: '#071A31',
+                color: "var(--site-ink)",
                 textDecoration: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
                 padding: '7px 14px',
                 borderRadius: '8px',
-                backgroundColor: '#f1f5f9',
-                border: '1px solid #cbd5e1',
+                backgroundColor: "var(--site-surface)",
+                border: "1px solid var(--site-line-strong)",
                 transition: 'background-color 0.15s ease',
               }}
               className="zameria-back-to-site"
             >
-              <Monitor size={14} style={{ color: '#2563eb' }} />
+              <Monitor size={14} style={{ color: "var(--site-blue)" }} />
               <span>Launch POS</span>
               <ExternalLink size={12} style={{ color: '#94a3b8' }} />
             </a>
@@ -291,8 +293,8 @@ export const AccountLayout: React.FC = () => {
                   alignItems: 'center',
                   gap: '10px',
                   padding: '6px 12px 6px 6px',
-                  backgroundColor: userDropdownOpen ? '#f1f5f9' : '#ffffff',
-                  border: '1px solid #e2e8f0',
+                  backgroundColor: userDropdownOpen ? "var(--site-surface)" : "var(--site-white)",
+                  border: "1px solid var(--site-line)",
                   borderRadius: '9999px',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
@@ -303,8 +305,8 @@ export const AccountLayout: React.FC = () => {
                     width: '32px',
                     height: '32px',
                     borderRadius: '50%',
-                    backgroundColor: '#071A31',
-                    color: '#ffffff',
+                    backgroundColor: "var(--site-ink)",
+                    color: "var(--site-white)",
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -315,14 +317,14 @@ export const AccountLayout: React.FC = () => {
                   {getInitials(customer.fullName || 'Merchant')}
                 </div>
                 <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column' }} className="zameria-user-text">
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#071A31', lineHeight: 1.2 }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: "var(--site-ink)", lineHeight: 1.2 }}>
                     {customer.businessName || customer.fullName}
                   </span>
                   <span
                     style={{
                       fontSize: '11px',
                       fontWeight: 700,
-                      color: isTrial ? '#2563eb' : isPaid ? '#16a34a' : '#64748b',
+                      color: isTrial ? "var(--site-blue)" : isPaid ? '#16a34a' : "var(--site-muted)",
                       lineHeight: 1.2,
                     }}
                   >
@@ -333,7 +335,7 @@ export const AccountLayout: React.FC = () => {
                       : `${planLabel} · Active`}
                   </span>
                 </div>
-                <ChevronDown size={14} style={{ color: '#64748b' }} />
+                <ChevronDown size={14} style={{ color: "var(--site-muted)" }} />
               </button>
 
               {/* Profile Dropdown */}
@@ -349,26 +351,26 @@ export const AccountLayout: React.FC = () => {
                       right: 0,
                       top: 'calc(100% + 8px)',
                       width: '260px',
-                      backgroundColor: '#ffffff',
-                      borderRadius: '14px',
-                      border: '1px solid #e2e8f0',
+                      backgroundColor: "var(--site-white)",
+                      borderRadius: "var(--site-radius)",
+                      border: "1px solid var(--site-line)",
                       boxShadow: '0 12px 30px -4px rgba(7, 26, 49, 0.12)',
                       padding: '8px 0',
                       zIndex: 60,
                     }}
                   >
-                    <div style={{ padding: '10px 16px', borderBottom: '1px solid #f1f5f9' }}>
-                      <div style={{ fontSize: '13px', fontWeight: 700, color: '#071A31' }}>
+                    <div style={{ padding: '10px 16px', borderBottom: "1px solid var(--site-surface)" }}>
+                      <div style={{ fontSize: '13px', fontWeight: 700, color: "var(--site-ink)" }}>
                         {customer.fullName}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '12px', color: "var(--site-muted)", overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {customer.email}
                       </div>
                       <div
                         style={{
                           fontSize: '11px',
                           fontWeight: 700,
-                          color: isTrial ? '#2563eb' : '#16a34a',
+                          color: isTrial ? "var(--site-blue)" : '#16a34a',
                           marginTop: '4px',
                         }}
                       >
@@ -377,7 +379,8 @@ export const AccountLayout: React.FC = () => {
                     </div>
 
                     <div style={{ padding: '4px 0' }}>
-                      {NAV_ITEMS.map((item) => {
+
+          {NAV_ITEMS.map((item) => {
                         const Icon = item.icon;
                         return (
                           <button
@@ -388,14 +391,14 @@ export const AccountLayout: React.FC = () => {
                             }}
                             className="user-menu-item"
                           >
-                            <Icon size={15} style={{ color: '#64748b' }} />
+                            <Icon size={15} style={{ color: "var(--site-muted)" }} />
                             <span>{item.label}</span>
                           </button>
                         );
                       })}
                     </div>
 
-                    <div style={{ borderTop: '1px solid #f1f5f9', marginTop: '4px', paddingTop: '4px' }}>
+                    <div style={{ borderTop: "1px solid var(--site-surface)", marginTop: '4px', paddingTop: '4px' }}>
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
@@ -432,8 +435,8 @@ export const AccountLayout: React.FC = () => {
       {mobileMenuOpen && (
         <div
           style={{
-            backgroundColor: '#ffffff',
-            borderBottom: '1px solid #e2e8f0',
+            backgroundColor: "var(--site-white)",
+            borderBottom: "1px solid var(--site-line)",
             padding: '16px 20px 24px',
             boxShadow: '0 12px 24px -4px rgba(7, 26, 49, 0.08)',
             zIndex: 35,
@@ -442,21 +445,22 @@ export const AccountLayout: React.FC = () => {
             gap: '8px',
           }}
           className="zameria-mobile-nav-drawer"
+          id="merchant-mobile-navigation"
         >
           {/* User profile pill */}
           <div
             style={{
               padding: '12px 14px',
-              backgroundColor: '#f8fafc',
-              borderRadius: '12px',
-              border: '1px solid #e2e8f0',
+              backgroundColor: "var(--site-paper)",
+              borderRadius: "var(--site-radius)",
+              border: "1px solid var(--site-line)",
               marginBottom: '6px',
             }}
           >
-            <div style={{ fontSize: '13.5px', fontWeight: 800, color: '#071A31' }}>
+            <div style={{ fontSize: '13.5px', fontWeight: 800, color: "var(--site-ink)" }}>
               {customer.fullName}
             </div>
-            <div style={{ fontSize: '12px', color: '#64748b' }}>
+            <div style={{ fontSize: '12px', color: "var(--site-muted)" }}>
               {customer.email}
             </div>
           </div>
@@ -469,6 +473,8 @@ export const AccountLayout: React.FC = () => {
             return (
               <button
                 key={item.id}
+                className={`site-account-mobile-item ${isActive ? "is-active" : ""}`}
+                aria-pressed={isActive}
                 onClick={() => {
                   setAccountTab(item.id);
                   setMobileMenuOpen(false);
@@ -478,10 +484,10 @@ export const AccountLayout: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '11px 16px',
-                  borderRadius: '10px',
+                  borderRadius: "var(--site-radius)",
                   border: 'none',
-                  backgroundColor: isActive ? '#071A31' : 'transparent',
-                  color: isActive ? '#ffffff' : '#334155',
+                  backgroundColor: isActive ? "var(--site-primary)" : 'transparent',
+                  color: isActive ? "var(--site-white)" : "var(--site-ink)",
                   fontSize: '14px',
                   fontWeight: isActive ? 700 : 500,
                   cursor: 'pointer',
@@ -492,7 +498,7 @@ export const AccountLayout: React.FC = () => {
                   <Icon
                     size={18}
                     style={{
-                      color: isActive ? '#60a5fa' : '#64748b',
+                      color: isActive ? '#60a5fa' : "var(--site-muted)",
                     }}
                   />
                   <span>{item.label}</span>
@@ -503,7 +509,7 @@ export const AccountLayout: React.FC = () => {
                       fontSize: '11px',
                       fontWeight: 700,
                       backgroundColor: isActive ? 'rgba(255, 255, 255, 0.15)' : badge.bg,
-                      color: isActive ? '#ffffff' : badge.color,
+                      color: isActive ? "var(--site-white)" : badge.color,
                       padding: '2px 8px',
                       borderRadius: '9999px',
                     }}
@@ -515,7 +521,7 @@ export const AccountLayout: React.FC = () => {
             );
           })}
 
-          <div style={{ height: '1px', backgroundColor: '#e2e8f0', margin: '6px 0' }} />
+          <div style={{ height: '1px', backgroundColor: "var(--site-line)", margin: '6px 0' }} />
 
           <button
             onClick={() => {
@@ -527,7 +533,7 @@ export const AccountLayout: React.FC = () => {
               alignItems: 'center',
               gap: '10px',
               padding: '10px 16px',
-              borderRadius: '10px',
+              borderRadius: "var(--site-radius)",
               border: 'none',
               backgroundColor: '#fef2f2',
               color: '#dc2626',
@@ -548,7 +554,7 @@ export const AccountLayout: React.FC = () => {
           maxWidth: '1400px',
           width: '100%',
           margin: '0 auto',
-          padding: '24px 20px 60px',
+          padding: '40px 32px 70px',
           display: 'flex',
           gap: '32px',
           flex: 1,
@@ -563,8 +569,9 @@ export const AccountLayout: React.FC = () => {
             flexDirection: 'column',
             gap: '4px',
           }}
-          className="zameria-account-sidebar"
+          className="zameria-account-sidebar site-account-sidebar"
         >
+          <div className="site-account-sidebar-title"><span>YOUR WORKSPACE</span><strong>{customer.businessName || customer.fullName || "Your business"}</strong><small>Your store and account.</small></div>
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const isTabActive =
@@ -580,16 +587,18 @@ export const AccountLayout: React.FC = () => {
             return (
               <button
                 key={item.id}
+                className={`site-account-nav-item ${isTabActive ? "is-active" : ""}`}
+                aria-pressed={isTabActive}
                 onClick={() => setAccountTab(item.id)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '10px 16px',
-                  borderRadius: '10px',
+                  borderRadius: "var(--site-radius)",
                   border: 'none',
-                  backgroundColor: isTabActive ? '#071A31' : 'transparent',
-                  color: isTabActive ? '#ffffff' : '#475569',
+                  backgroundColor: isTabActive ? "var(--site-primary)" : 'transparent',
+                  color: isTabActive ? "var(--site-white)" : "var(--site-muted)",
                   fontSize: '13.5px',
                   fontWeight: isTabActive ? 700 : 500,
                   cursor: 'pointer',
@@ -598,14 +607,14 @@ export const AccountLayout: React.FC = () => {
                 }}
                 onMouseEnter={(e) => {
                   if (!isTabActive) {
-                    e.currentTarget.style.backgroundColor = '#f1f5f9';
-                    e.currentTarget.style.color = '#071A31';
+                    e.currentTarget.style.backgroundColor = "var(--site-surface)";
+                    e.currentTarget.style.color = "var(--site-ink)";
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!isTabActive) {
                     e.currentTarget.style.backgroundColor = 'transparent';
-                    e.currentTarget.style.color = '#475569';
+                    e.currentTarget.style.color = "var(--site-muted)";
                   }
                 }}
               >
@@ -613,7 +622,7 @@ export const AccountLayout: React.FC = () => {
                   <Icon
                     size={17}
                     style={{
-                      color: isTabActive ? '#60a5fa' : '#64748b',
+                      color: isTabActive ? '#60a5fa' : "var(--site-muted)",
                     }}
                   />
                   <span>{item.label}</span>
@@ -624,7 +633,7 @@ export const AccountLayout: React.FC = () => {
                       fontSize: '10.5px',
                       fontWeight: 700,
                       backgroundColor: isTabActive ? 'rgba(255, 255, 255, 0.15)' : badge.bg,
-                      color: isTabActive ? '#ffffff' : badge.color,
+                      color: isTabActive ? "var(--site-white)" : badge.color,
                       padding: '2px 8px',
                       borderRadius: '9999px',
                     }}
@@ -639,7 +648,7 @@ export const AccountLayout: React.FC = () => {
           <div
             style={{
               height: '1px',
-              backgroundColor: '#e2e8f0',
+              backgroundColor: "var(--site-line)",
               margin: '12px 0',
             }}
           />
@@ -651,7 +660,7 @@ export const AccountLayout: React.FC = () => {
               alignItems: 'center',
               gap: '12px',
               padding: '11px 16px',
-              borderRadius: '10px',
+              borderRadius: "var(--site-radius)",
               border: 'none',
               backgroundColor: 'transparent',
               color: '#dc2626',
@@ -670,7 +679,7 @@ export const AccountLayout: React.FC = () => {
         </aside>
 
         {/* MAIN TAB CONTENT */}
-        <main style={{ flex: 1, minWidth: 0 }}>
+        <main className="site-account-content" style={{ flex: 1, minWidth: 0 }}>
           {activeTab === 'overview' && <OverviewTab />}
           {activeTab === 'store' && <ConnectedStoreTab />}
           {(activeTab === 'billing' ||
@@ -693,7 +702,7 @@ export const AccountLayout: React.FC = () => {
           background: none;
           text-align: left;
           font-size: 13px;
-          color: #334155;
+          color: var(--site-ink);
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -701,7 +710,7 @@ export const AccountLayout: React.FC = () => {
           transition: background-color 0.12s ease;
         }
         .user-menu-item:hover {
-          background-color: #f8fafc;
+          background-color: var(--site-paper);
         }
         @media (max-width: 860px) {
           .zameria-mobile-nav-toggle {

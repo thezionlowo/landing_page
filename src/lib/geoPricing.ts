@@ -44,18 +44,18 @@ export interface GeoPricingConfig {
 
 export const STARTER_FEATURES = [
   '1 WooCommerce store',
-  '1 physical store/location',
+  '1 physical location',
   'Up to 500 products',
   'Up to 2 staff members',
-  'Point of Sale and inventory synchronization',
+  'POS checkout and stock sync',
 ];
 
 export const BUSINESS_FEATURES = [
   '1 WooCommerce store',
-  '1 physical store/location',
+  '1 physical location',
   'Unlimited products',
   'Unlimited staff members',
-  'Point of Sale and real-time inventory synchronization',
+  'POS checkout and stock sync',
 ];
 
 const ngStarterPlan: PlanPricing = {

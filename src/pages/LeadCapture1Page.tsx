@@ -20,7 +20,7 @@ const QUESTIONS: QuestionDef[] = [
     id: 'q1_instore_website_knows',
     number: 1,
     category: 'inventory_sync',
-    prompt: 'When you sell the last unit in your physical store, does your website know?',
+    prompt: 'When the last item sells in your shop, does website stock update?',
     answers: [
       { label: 'Yes, it updates straight away', score: 0 },
       { label: 'Someone tells it later', score: 2 },
@@ -32,7 +32,7 @@ const QUESTIONS: QuestionDef[] = [
     id: 'q2_online_store_knows',
     number: 2,
     category: 'order_visibility',
-    prompt: 'When someone orders online, does your physical store know?',
+    prompt: 'Can your shop team see new online orders?',
     answers: [
       { label: 'Yes, it appears for the team', score: 0 },
       { label: 'Someone has to check the website', score: 2 },
@@ -44,7 +44,7 @@ const QUESTIONS: QuestionDef[] = [
     id: 'q3_shared_number',
     number: 3,
     category: 'overselling_risk',
-    prompt: 'Is there one stock number that both your website and your store read from?',
+    prompt: 'Do your shop and website use one stock count?',
     answers: [
       { label: 'Yes, one shared number', score: 0 },
       { label: 'Two numbers that should match', score: 2 },
@@ -56,7 +56,7 @@ const QUESTIONS: QuestionDef[] = [
     id: 'q4_stock_system',
     number: 4,
     category: 'manual_reconciliation',
-    prompt: 'How do you currently keep your online and physical stock aligned?',
+    prompt: 'How do you keep shop and website stock in sync?',
     answers: [
       { label: 'One shared system', score: 0 },
       { label: 'Two separate systems', score: 2 },
@@ -68,7 +68,7 @@ const QUESTIONS: QuestionDef[] = [
     id: 'q5_confidence',
     number: 5,
     category: 'stock_visibility',
-    prompt: 'How confident are you that the stock number on your website matches your physical store right now?',
+    prompt: 'Does your website stock match what is in your shop?',
     answers: [
       { label: 'Very confident', score: 0 },
       { label: 'Somewhat confident', score: 1 },
@@ -103,19 +103,19 @@ interface GapDetail {
 
 const GAPS: Record<string, GapDetail> = {
   inventory_sync: {
-    name: 'Your website and store do not share stock',
-    supporting: 'When something sells in one place, the other side does not find out. Your stock ends up living in two different versions.',
+    name: 'Check how your shop and website share stock',
+    supporting: 'A sale may leave the other stock record out of date.',
     couldMean: [
       'Your website keeps showing sold-out products',
       'Your store holds stock the website says is gone',
       'Someone has to update two places every day'
     ],
-    fixTitle: 'Make your stock know about both sides',
-    fixBody: 'When something sells, both your website and your store should update at the same time.'
+    fixTitle: 'Connect your stock records',
+    fixBody: 'Share stock updates between your shop and website.'
   },
   order_visibility: {
-    name: 'Online orders do not reach your store team',
-    supporting: 'Your physical store has no direct way of knowing about online orders. It depends on someone noticing or relaying them.',
+    name: 'Check how your team receives online orders',
+    supporting: 'Your team may need to check another screen or wait for a message.',
     couldMean: [
       'Online orders sit unread while the store is busy',
       'Staff do not know what to pack or hold',
@@ -133,11 +133,11 @@ const GAPS: Record<string, GapDetail> = {
       'Repeat buyers lose confidence in your store'
     ],
     fixTitle: 'Give both sides one stock number',
-    fixBody: 'Online and store sales should read from the same stock level, so the last item can only be sold once.'
+    fixBody: 'Use one stock record and check that updates reach both selling channels.'
   },
   manual_reconciliation: {
     name: 'Manual updating is holding your stock together',
-    supporting: 'Your team is updating two sets of records by hand. Every sale adds more work to that.',
+    supporting: 'Updating two records by hand takes time and can lead to mistakes.',
     couldMean: [
       'Hours spent updating or reconciling every week',
       'Mistakes that are hard to trace back',
@@ -147,8 +147,8 @@ const GAPS: Record<string, GapDetail> = {
     fixBody: 'One record should update the other automatically, with no one retyping stock numbers.'
   },
   stock_visibility: {
-    name: 'You cannot see your real stock position',
-    supporting: 'You are not fully certain what your actual stock is right now. Every restocking decision becomes harder.',
+    name: 'Check your available stock',
+    supporting: 'Unclear stock counts make restocking harder.',
     couldMean: [
       'Restocking becomes guesswork',
       'You hold too much of some items and too little of others',
@@ -159,7 +159,7 @@ const GAPS: Record<string, GapDetail> = {
   },
   sales_visibility: {
     name: 'Sales are not visible in one place',
-    supporting: 'You cannot see what sold online and what sold in the store together. Getting the full picture takes extra work.',
+    supporting: 'Separate reports make it harder to check total sales.',
     couldMean: [
       'Slow decisions on what to restock',
       'Totals you have to combine by hand',
@@ -202,24 +202,24 @@ interface RiskLevel {
 const RISK_LEVELS: Record<string, RiskLevel> = {
   LOW: {
     key: 'LOW',
-    label: 'IT KNOWS',
+    label: 'UPDATES CONNECTED',
     cardClass: 'low',
     levelClass: 'low',
-    copy: 'Your stock appears to know about both your website and your physical store. There may still be small gaps worth tightening as you grow.'
+    copy: 'Your answers suggest stock updates are connected. Keep checking that the counts match.'
   },
   MODERATE: {
     key: 'MODERATE',
-    label: 'IT PARTLY KNOWS',
+    label: 'SOME GAPS TO CHECK',
     cardClass: 'moderate',
     levelClass: 'moderate',
-    copy: 'Some of your stock stays in sync, but other parts still depend on manual updates or separate systems.'
+    copy: 'Some updates are connected. Others still need manual checks.'
   },
   HIGH: {
     key: 'HIGH',
-    label: 'IT HAS NO IDEA',
+    label: 'MORE CHECKS NEEDED',
     cardClass: 'high',
     levelClass: 'high',
-    copy: 'Your stock is living in two different versions. Your website and your store are being tracked separately, and it is already causing gaps.'
+    copy: 'Your answers suggest separate records may cause stock differences.'
   }
 };
 
@@ -485,13 +485,14 @@ export const LeadCapture1Page: React.FC = () => {
   const result = calculateResult(answers);
 
   return (
-    <div className="zameria-lead-page">
+    <div className="zameria-lead-page site-assessment">
       {/* Header */}
       <header className="z-header">
         <div className="z-header-inner">
           <a href="/" className="z-header-logo-link" aria-label="ZAMERIA Home">
-            <img src="/zameria-logo-white.png" alt="ZAMERIA" className="z-header-logo" />
+            <img src="/zameria-logo-header.png" alt="ZAMERIA" className="z-header-logo" />
           </a>
+          <a href="/" className="z-header-home-link">Back to the website <span aria-hidden="true">↗</span></a>
         </div>
       </header>
 
@@ -502,12 +503,11 @@ export const LeadCapture1Page: React.FC = () => {
           <div className="z-anim">
             <p className="z-eyebrow">STOCK AWARENESS CHECK</p>
             <h1 className="z-h1">
-              <span className="z-h1-line">You have a website.</span>
-              <span className="z-h1-line">You have a physical store.</span>
-              <span className="z-h1-hl">But does your stock know that?</span>
+              <span className="z-h1-line">Your shop. Your website.</span>
+              <span className="z-h1-hl">Do the stock counts match?</span>
             </h1>
             <p className="z-h3-sub">
-              Find out how well your online and physical inventory stay in sync with a quick 30-second check.
+              Answer six questions about stock updates between your shop and website.
             </p>
             <div className="z-cta-wrap">
               <button
@@ -519,7 +519,7 @@ export const LeadCapture1Page: React.FC = () => {
                   window.scrollTo(0, 0);
                 }}
               >
-                <span>Get My Stock Sync Score</span>
+                <span>Check my stock setup</span>
                 <svg className="z-btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
@@ -534,7 +534,7 @@ export const LeadCapture1Page: React.FC = () => {
                 6 quick questions
               </span>
               <span className="z-micro-dot">&bull;</span>
-              <span className="z-micro-item">30-Seconds</span>
+              <span className="z-micro-item">Free check</span>
               <span className="z-micro-dot">&bull;</span>
               <span className="z-micro-item">Instant results</span>
             </div>
@@ -608,7 +608,7 @@ export const LeadCapture1Page: React.FC = () => {
             <p className="z-eyebrow">ALMOST DONE</p>
             <h2 className="z-h2 z-h2-lg">Your Stock Awareness Check is ready.</h2>
             <p className="z-body-muted" style={{ marginTop: '16px' }}>
-              We&rsquo;ve worked out whether your stock actually knows about both your website and your store. Enter your details to see the result.
+              See where your shop and website stock records may differ.
             </p>
 
             <div className="z-result-preview-card">
@@ -738,7 +738,7 @@ export const LeadCapture1Page: React.FC = () => {
 
             {/* Blind Spot */}
             <section className="z-card z-card-danger">
-              <p className="z-card-label" style={{ color: 'var(--z-danger)' }}>Your Biggest Blind Spot</p>
+              <p className="z-card-label" style={{ color: 'var(--z-danger)' }}>Your main check</p>
               <p className="z-gap-title">{result.biggestGap ? result.biggestGap.name : 'Your stock already knows about both sides'}</p>
               <p className="z-body-muted" style={{ marginTop: '14px' }}>
                 {result.biggestGap
@@ -849,10 +849,10 @@ export const LeadCapture1Page: React.FC = () => {
               <p className="z-celebrate-eyebrow">You&rsquo;re in</p>
               <h1 className="z-celebrate-title">Thank you for your attention.</h1>
               <p className="z-celebrate-sub">
-                It&rsquo;s the one thing no one gets back &mdash; and you gave us yours. We don&rsquo;t take that lightly.
+                Your details have been sent.
               </p>
               <p className="z-celebrate-body">
-                Our team is reviewing your store right now. You&rsquo;ll hear from us on WhatsApp within the next few hours, and we&rsquo;ll have you fully set up before you know it.
+                Our team will review your details and contact you about the next steps.
               </p>
               <div className="z-celebrate-steps">
                 <div className="z-celebrate-step">
@@ -861,14 +861,14 @@ export const LeadCapture1Page: React.FC = () => {
                 </div>
                 <div className="z-celebrate-step">
                   <span className="z-celebrate-step-num">2</span>
-                  <span className="z-celebrate-step-text">We reach out on WhatsApp &mdash; usually within a few hours</span>
+                  <span className="z-celebrate-step-text">We contact you on WhatsApp</span>
                 </div>
                 <div className="z-celebrate-step">
                   <span className="z-celebrate-step-num">3</span>
-                  <span className="z-celebrate-step-text">We get you live &mdash; usually in under 15 minutes</span>
+                  <span className="z-celebrate-step-text">We help you connect your store</span>
                 </div>
               </div>
-              <p className="z-celebrate-footer">Keep an eye on your phone. We&rsquo;re already on it.</p>
+              <p className="z-celebrate-footer">Look out for a message from our team.</p>
               <div style={{ marginTop: '28px' }}>
                 <a href="/" className="z-btn z-btn-ghost" style={{ display: 'inline-flex' }}>
                   Return to Home

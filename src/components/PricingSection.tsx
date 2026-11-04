@@ -1,3 +1,5 @@
+import { getCurrentGeoPricing } from '../services/geoPricingService';
+import { planCheckoutUrl } from '../lib/checkoutPricing';
 import React from 'react';
 import { ArrowRight, Check, ShieldCheck } from 'lucide-react';
 import { useGeoPricing } from '../services/geoPricingService';
@@ -60,7 +62,7 @@ function PlanCard({ name, price, description, features, featured = false, plan }
         </div>
       </div>
       <a
-        href={`/subscribe?plan=${plan}`}
+        href={planCheckoutUrl(plan, getCurrentGeoPricing())}
         className={`btn ${featured ? 'btn-hero-gradient' : 'btn-secondary'} pricing-cta-btn`}
       >
         <span>Subscribe securely</span>
@@ -103,14 +105,14 @@ export const PricingSection: React.FC = () => {
         <div className="pricing-two-grid">
           <PlanCard
             name="Starter"
-            price={geo.plans.starter.priceFormatted}
+            price={geo.plans.starter.displayPrice}
             description="For a retailer setting up their first connected store and POS."
             features={starterFeatures}
             plan="starter"
           />
           <PlanCard
             name="Business"
-            price={geo.plans.business.priceFormatted}
+            price={geo.plans.business.displayPrice}
             description="For growing retailers with unlimited products and staff."
             features={businessFeatures}
             featured

@@ -31,7 +31,7 @@ const QUESTIONS: QuestionDef[] = [
     id: 'q2_sync_method',
     number: 2,
     category: 'manual_stock',
-    prompt: 'How does your stock count stay in sync between your online store and your physical store?',
+    prompt: 'How do you update stock between your shop and website?',
     answers: [
       { label: 'It syncs automatically', score: 0 },
       { label: 'Someone updates it manually', score: 2 },
@@ -67,7 +67,7 @@ const QUESTIONS: QuestionDef[] = [
     id: 'q5_update_delay',
     number: 5,
     category: 'stock_sync',
-    prompt: 'When stock changes in one place, how long before the other channel catches up?',
+    prompt: 'How long does a stock update take to reach the other store?',
     answers: [
       { label: 'Instantly', score: 0 },
       { label: 'Within a few minutes', score: 1 },
@@ -79,7 +79,7 @@ const QUESTIONS: QuestionDef[] = [
     id: 'q6_single_view',
     number: 6,
     category: 'channel_visibility',
-    prompt: 'If your store and online shop are both selling right now, can you see all your stock in one place?',
+    prompt: 'Can you see shop and website stock in one place?',
     answers: [
       { label: 'Yes, one live dashboard', score: 0 },
       { label: 'Mostly, with some gaps', score: 1 },
@@ -102,41 +102,41 @@ interface GapDetail {
 
 const GAPS: Record<string, GapDetail> = {
   stock_sync: {
-    name: 'Your online and store stock are drifting apart',
-    supporting: 'When the same product lives in two places and both places can sell it, the counts drift apart. That gap is what causes oversells.',
+    name: 'Check for differences in stock records',
+    supporting: 'Separate stock records can fall out of step after a sale.',
     couldMean: [
       'You sell the last item twice',
       'You refund or apologise to a customer who paid first',
       'You lose trust with repeat buyers'
     ],
     fixTitle: 'Sync stock across both channels',
-    fixBody: 'One stock count, updated the moment either channel sells, so the same item can never be sold twice.'
+    fixBody: 'Use one stock record and check how quickly sales update it.'
   },
   manual_stock: {
     name: 'Stock counts depend on someone updating them',
-    supporting: 'If stock only stays accurate because someone remembers to update it, it will drift. Every gap between a sale and an update is a chance to oversell.',
+    supporting: 'Missed or late manual updates can leave stock counts out of date.',
     couldMean: [
       'Counts are wrong by the time you check',
       'Updates depend on who is working that day',
       'You cannot trust the number you see'
     ],
     fixTitle: 'Let the system update stock automatically',
-    fixBody: 'Stock should change the second a sale happens, in either channel, without anyone having to touch it.'
+    fixBody: 'Use automatic stock updates and check that sales sync successfully.'
   },
   oversell_discovery: {
-    name: 'You find out you oversold from the customer',
-    supporting: 'The worst part of an oversell is not the oversell itself — it is finding out from the customer who already paid and is now waiting.',
+    name: 'Check stock before a customer reports a problem',
+    supporting: 'Finding a stock error after payment can lead to refunds and delays.',
     couldMean: [
       'Refunds and apologies become part of your day',
       'Customers leave and do not come back',
       'Your reviews and reputation take the hit'
     ],
     fixTitle: 'Know about oversells before the customer does',
-    fixBody: 'The system should catch the conflict the moment a second sale is attempted, not after the money changes hands.'
+    fixBody: 'Check stock availability before payment and review any sync warnings.'
   },
   channel_visibility: {
     name: 'You cannot see both channels in one place',
-    supporting: 'If online sales and store sales live in separate systems, no single screen shows you the real stock position. Every decision waits on you stitching two pictures together.',
+    supporting: 'Separate records make it harder to see what is available.',
     couldMean: [
       'You cannot tell what is actually left',
       'You approve orders you cannot fulfil',
@@ -147,14 +147,14 @@ const GAPS: Record<string, GapDetail> = {
   },
   no_reservation: {
     name: 'Sold items are not held fast enough',
-    supporting: 'When a sale in one channel does not immediately hold the item in the other, the same product stays open to being sold again for as long as the update takes.',
+    supporting: 'A delayed stock update can leave a sold item available elsewhere.',
     couldMean: [
       'The last item gets promised to two people',
       'Store staff and online orders clash over the same stock',
-      'You spend your day putting out fires'
+      'You spend time fixing stock conflicts'
     ],
     fixTitle: 'Hold the item the moment it sells',
-    fixBody: 'Every sale should lock the item out of the other channel instantly — no window for a second sale.'
+    fixBody: 'Check how your store reserves stock and handles sales made before updates arrive.'
   }
 };
 
@@ -177,24 +177,24 @@ interface RiskLevel {
 const RISK_LEVELS: Record<string, RiskLevel> = {
   LOW: {
     key: 'LOW',
-    label: 'FULLY SYNCED',
+    label: 'UPDATES CONNECTED',
     cardClass: 'low',
     levelClass: 'low',
-    copy: 'Your online and store stock appear to stay in step. The risks below are still worth watching as you grow.'
+    copy: 'Your answers suggest stock updates are connected. Keep checking for differences.'
   },
   MODERATE: {
     key: 'MODERATE',
     label: 'DRIFTING',
     cardClass: 'moderate',
     levelClass: 'moderate',
-    copy: 'Part of your stock stays in sync, but other parts depend on someone updating them. That is where oversells start.'
+    copy: 'Some stock updates depend on manual work. Check for delays and missed updates.'
   },
   HIGH: {
     key: 'HIGH',
     label: 'OVERSELL RISK',
     cardClass: 'high',
     levelClass: 'high',
-    copy: 'Your stock counts are drifting between channels. Every gap is a chance to sell the same item twice.'
+    copy: 'Your answers suggest a higher chance of stock differences. Start with the checks below.'
   }
 };
 
@@ -450,13 +450,14 @@ export const LeadCapture2Page: React.FC = () => {
   const result = calculateResult(answers);
 
   return (
-    <div className="zameria-lead-page">
+    <div className="zameria-lead-page site-assessment">
       {/* Header with real ZAMERIA white logo */}
       <header className="z-header">
         <div className="z-header-inner">
           <a href="/" className="z-header-logo-link" aria-label="ZAMERIA Home">
-            <img src="/zameria-logo-white.png" alt="ZAMERIA" className="z-header-logo" />
+            <img src="/zameria-logo-header.png" alt="ZAMERIA" className="z-header-logo" />
           </a>
+          <a href="/" className="z-header-home-link">Back to the website <span aria-hidden="true">↗</span></a>
         </div>
       </header>
 
@@ -467,11 +468,11 @@ export const LeadCapture2Page: React.FC = () => {
           <div className="z-anim">
             <p className="z-eyebrow">STOCK SYNC CHECK</p>
             <h1 className="z-h1">
-              <span className="z-h1-line">Ever Sold Something Online</span>
-              <span className="z-h1-hl">That Was Already Sold in Store?</span>
+              <span className="z-h1-line">Sold online. Already gone?</span>
+              <span className="z-h1-hl">Check your stock updates.</span>
             </h1>
             <p className="z-h3-sub">
-              Take our free 30-second assessment to find where your online and store stock are drifting apart.
+              Answer six questions to find stock checks worth reviewing.
             </p>
             <div className="z-cta-wrap">
               <button
@@ -483,7 +484,7 @@ export const LeadCapture2Page: React.FC = () => {
                   window.scrollTo(0, 0);
                 }}
               >
-                <span>SEE WHAT&rsquo;S WRONG</span>
+                <span>Check my stock setup</span>
                 <svg className="z-btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
@@ -498,7 +499,7 @@ export const LeadCapture2Page: React.FC = () => {
                 6 quick questions
               </span>
               <span className="z-micro-dot">&bull;</span>
-              <span className="z-micro-item">30-Seconds</span>
+              <span className="z-micro-item">Free check</span>
               <span className="z-micro-dot">&bull;</span>
               <span className="z-micro-item">Instant results</span>
             </div>
@@ -572,7 +573,7 @@ export const LeadCapture2Page: React.FC = () => {
             <p className="z-eyebrow">ALMOST DONE</p>
             <h2 className="z-h2 z-h2-lg">Your Stock Sync Report Is Ready.</h2>
             <p className="z-body-muted" style={{ marginTop: '16px' }}>
-              We&rsquo;ve identified where your online and store stock are most likely to drift apart.
+              Your answers highlight stock checks to review.
             </p>
 
             <div className="z-result-preview-card">
@@ -617,7 +618,7 @@ export const LeadCapture2Page: React.FC = () => {
             </div>
 
             <div className="z-callout">
-              <p>The problem is the sync, not your team.</p>
+              <p>Check the process behind the stock difference.</p>
             </div>
 
             <div className="z-fields">
@@ -716,7 +717,7 @@ export const LeadCapture2Page: React.FC = () => {
             </section>
 
             <div className="z-callout">
-              <p>The problem is the sync, not your team.</p>
+              <p>Check the process behind the stock difference.</p>
             </div>
 
             {/* What this is costing you */}
@@ -757,7 +758,7 @@ export const LeadCapture2Page: React.FC = () => {
               <p className="z-eyebrow">SEE IT IN ACTION</p>
               <h2 className="z-h2 z-h2-lg">Watch how ZAMERIA keeps your stock in sync.</h2>
               <p className="z-body-muted" style={{ marginTop: '16px' }}>
-                Watch this short video to see how ZAMERIA keeps your Website and physical store selling the same stock — without oversells.
+                Watch this short video to see how ZAMERIA keeps your Website and physical store selling the same stock — with connected stock records.
               </p>
               <div className="z-vsl">
                 {!vslPlaying ? (
@@ -821,10 +822,10 @@ export const LeadCapture2Page: React.FC = () => {
               <p className="z-celebrate-eyebrow">You&rsquo;re in</p>
               <h1 className="z-celebrate-title">Thank you for your attention.</h1>
               <p className="z-celebrate-sub">
-                It&rsquo;s the one thing no one gets back &mdash; and you gave us yours. We don&rsquo;t take that lightly.
+                Your details have been sent.
               </p>
               <p className="z-celebrate-body">
-                Our team is reviewing your store right now. You&rsquo;ll hear from us on WhatsApp within the next few hours, and we&rsquo;ll have you fully set up before you know it.
+                Our team will review your details and contact you about the next steps.
               </p>
               <div className="z-celebrate-steps">
                 <div className="z-celebrate-step">
@@ -833,14 +834,14 @@ export const LeadCapture2Page: React.FC = () => {
                 </div>
                 <div className="z-celebrate-step">
                   <span className="z-celebrate-step-num">2</span>
-                  <span className="z-celebrate-step-text">We reach out on WhatsApp &mdash; usually within a few hours</span>
+                  <span className="z-celebrate-step-text">We contact you on WhatsApp</span>
                 </div>
                 <div className="z-celebrate-step">
                   <span className="z-celebrate-step-num">3</span>
-                  <span className="z-celebrate-step-text">We sync your Website and physical store &mdash; usually in under 15 minutes</span>
+                  <span className="z-celebrate-step-text">We help you connect your shop and website</span>
                 </div>
               </div>
-              <p className="z-celebrate-footer">Keep an eye on your phone. We&rsquo;re already on it.</p>
+              <p className="z-celebrate-footer">Look out for a message from our team.</p>
               <div style={{ marginTop: '28px' }}>
                 <a href="/" className="z-btn z-btn-ghost" style={{ display: 'inline-flex' }}>
                   Return to Home

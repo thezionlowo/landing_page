@@ -117,10 +117,10 @@ export const PaymentMethodsTab: React.FC = () => {
       {/* Tab Header & Action */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#071A31', letterSpacing: '-0.02em', margin: 0 }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: "var(--site-ink)", letterSpacing: '-0.02em', margin: 0 }}>
             Payment Methods
           </h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '6px', margin: 0 }}>
+          <p style={{ fontSize: '14px', color: "var(--site-muted)", marginTop: '6px', margin: 0 }}>
             Manage and secure debit or credit cards used for your automated ZAMERIA subscription renewal.
           </p>
         </div>
@@ -128,10 +128,10 @@ export const PaymentMethodsTab: React.FC = () => {
           onClick={() => setIsAddModalOpen(true)}
           style={{
             padding: '10px 18px',
-            backgroundColor: '#071A31',
-            color: '#ffffff',
+            backgroundColor: "var(--site-primary)",
+            color: "var(--site-white)",
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: "var(--site-radius)",
             fontSize: '13px',
             fontWeight: 600,
             cursor: 'pointer',
@@ -142,7 +142,7 @@ export const PaymentMethodsTab: React.FC = () => {
             transition: 'all 0.15s ease',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0c284d')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#071A31')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--site-ink)")}
         >
           <Plus size={16} />
           <span>Add Payment Method</span>
@@ -156,7 +156,7 @@ export const PaymentMethodsTab: React.FC = () => {
             padding: '14px 18px',
             backgroundColor: feedback.type === 'success' ? '#f0fdf4' : '#fef2f2',
             border: `1px solid ${feedback.type === 'success' ? '#bbf7d0' : '#fecaca'}`,
-            borderRadius: '12px',
+            borderRadius: "var(--site-radius)",
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -175,9 +175,9 @@ export const PaymentMethodsTab: React.FC = () => {
       {/* Saved Payment Methods List */}
       <div
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '20px',
-          border: '1px solid #e2e8f0',
+          backgroundColor: "var(--site-white)",
+          borderRadius: "var(--site-radius)",
+          border: "1px solid var(--site-line)",
           padding: '28px',
           boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
         }}
@@ -190,7 +190,7 @@ export const PaymentMethodsTab: React.FC = () => {
                 width: '64px',
                 height: '64px',
                 borderRadius: '50%',
-                backgroundColor: '#f1f5f9',
+                backgroundColor: "var(--site-surface)",
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -200,18 +200,18 @@ export const PaymentMethodsTab: React.FC = () => {
             >
               <CreditCard size={28} />
             </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#071A31', margin: '0 0 6px' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 700, color: "var(--site-ink)", margin: '0 0 6px' }}>
               No payment methods added
             </h3>
-            <p style={{ fontSize: '13px', color: '#64748b', maxWidth: '400px', margin: '0 auto 20px' }}>
+            <p style={{ fontSize: '13px', color: "var(--site-muted)", maxWidth: '400px', margin: '0 auto 20px' }}>
               Add a payment method to make future payments easier and ensure uninterrupted POS syncing service.
             </p>
             <button
               onClick={() => setIsAddModalOpen(true)}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#071A31',
-                color: '#ffffff',
+                backgroundColor: "var(--site-primary)",
+                color: "var(--site-white)",
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '13px',
@@ -236,9 +236,9 @@ export const PaymentMethodsTab: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '20px',
-                  borderRadius: '14px',
-                  border: pm.isDefault ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                  backgroundColor: pm.isDefault ? '#f8faff' : '#ffffff',
+                  borderRadius: "var(--site-radius)",
+                  border: pm.isDefault ? "2px solid var(--site-blue)" : "1px solid var(--site-line)",
+                  backgroundColor: pm.isDefault ? '#f8faff' : "var(--site-white)",
                   transition: 'all 0.15s ease',
                   flexWrap: 'wrap',
                   gap: '14px',
@@ -250,8 +250,8 @@ export const PaymentMethodsTab: React.FC = () => {
                       width: '52px',
                       height: '38px',
                       borderRadius: '8px',
-                      backgroundColor: '#071A31',
-                      color: '#ffffff',
+                      backgroundColor: "var(--site-ink)",
+                      color: "var(--site-white)",
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -266,7 +266,7 @@ export const PaymentMethodsTab: React.FC = () => {
 
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '15px', fontWeight: 700, color: '#071A31' }}>
+                      <span style={{ fontSize: '15px', fontWeight: 700, color: "var(--site-ink)" }}>
                         {pm.brand} ending in {pm.last4}
                       </span>
                       {pm.isDefault && (
@@ -274,8 +274,8 @@ export const PaymentMethodsTab: React.FC = () => {
                           style={{
                             fontSize: '11px',
                             fontWeight: 700,
-                            color: '#2563eb',
-                            backgroundColor: '#eff6ff',
+                            color: "var(--site-blue)",
+                            backgroundColor: "var(--site-blue-soft)",
                             padding: '2px 8px',
                             borderRadius: '9999px',
                             border: '1px solid #bfdbfe',
@@ -289,7 +289,7 @@ export const PaymentMethodsTab: React.FC = () => {
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '3px' }}>
+                    <div style={{ fontSize: '12px', color: "var(--site-muted)", marginTop: '3px' }}>
                       Expires {pm.expMonth}/{pm.expYear}
                     </div>
                   </div>
@@ -301,22 +301,22 @@ export const PaymentMethodsTab: React.FC = () => {
                       onClick={() => handleSetDefault(pm.id)}
                       style={{
                         padding: '7px 14px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
+                        backgroundColor: "var(--site-white)",
+                        border: "1px solid var(--site-line-strong)",
                         borderRadius: '8px',
                         fontSize: '12px',
                         fontWeight: 600,
-                        color: '#475569',
+                        color: "var(--site-muted)",
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = '#f1f5f9';
+                        e.currentTarget.style.backgroundColor = "var(--site-surface)";
                         e.currentTarget.style.borderColor = '#94a3b8';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = '#ffffff';
-                        e.currentTarget.style.borderColor = '#cbd5e1';
+                        e.currentTarget.style.backgroundColor = "var(--site-white)";
+                        e.currentTarget.style.borderColor = "var(--site-line-strong)";
                       }}
                     >
                       Set as default
@@ -362,11 +362,11 @@ export const PaymentMethodsTab: React.FC = () => {
           style={{
             marginTop: '24px',
             paddingTop: '20px',
-            borderTop: '1px solid #f1f5f9',
+            borderTop: "1px solid var(--site-surface)",
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            color: '#64748b',
+            color: "var(--site-muted)",
             fontSize: '12px',
           }}
         >
@@ -395,8 +395,8 @@ export const PaymentMethodsTab: React.FC = () => {
         >
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '20px',
+              backgroundColor: "var(--site-white)",
+              borderRadius: "var(--site-radius)",
               maxWidth: '480px',
               width: '100%',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -408,15 +408,15 @@ export const PaymentMethodsTab: React.FC = () => {
             <div
               style={{
                 padding: '20px 24px',
-                borderBottom: '1px solid #e2e8f0',
+                borderBottom: "1px solid var(--site-line)",
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <CreditCard size={20} style={{ color: '#2563eb' }} />
-                <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#071A31', margin: 0 }}>
+                <CreditCard size={20} style={{ color: "var(--site-blue)" }} />
+                <h3 style={{ fontSize: '18px', fontWeight: 800, color: "var(--site-ink)", margin: 0 }}>
                   Add Payment Method
                 </h3>
               </div>
@@ -425,7 +425,7 @@ export const PaymentMethodsTab: React.FC = () => {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#64748b',
+                  color: "var(--site-muted)",
                   cursor: 'pointer',
                   padding: '4px',
                 }}
@@ -458,7 +458,7 @@ export const PaymentMethodsTab: React.FC = () => {
 
               {/* Supported Cards Badge Row */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748b' }}>
+                <span style={{ fontSize: '12px', fontWeight: 600, color: "var(--site-muted)" }}>
                   Supported Cards:
                 </span>
                 <div style={{ display: 'flex', gap: '6px' }}>
@@ -470,9 +470,9 @@ export const PaymentMethodsTab: React.FC = () => {
                       style={{
                         padding: '4px 10px',
                         borderRadius: '6px',
-                        border: cardBrand === b ? '1px solid #2563eb' : '1px solid #e2e8f0',
-                        backgroundColor: cardBrand === b ? '#eff6ff' : '#f8fafc',
-                        color: cardBrand === b ? '#2563eb' : '#64748b',
+                        border: cardBrand === b ? "1px solid var(--site-blue)" : "1px solid var(--site-line)",
+                        backgroundColor: cardBrand === b ? "var(--site-blue-soft)" : "var(--site-paper)",
+                        color: cardBrand === b ? "var(--site-blue)" : "var(--site-muted)",
                         fontSize: '11px',
                         fontWeight: 700,
                         cursor: 'pointer',
@@ -486,7 +486,7 @@ export const PaymentMethodsTab: React.FC = () => {
 
               {/* Name on card */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: "var(--site-ink)", marginBottom: '6px' }}>
                   Name on Card
                 </label>
                 <input
@@ -500,7 +500,7 @@ export const PaymentMethodsTab: React.FC = () => {
                     padding: '10px 12px',
                     fontSize: '14px',
                     borderRadius: '8px',
-                    border: '1px solid #cbd5e1',
+                    border: "1px solid var(--site-line-strong)",
                     boxSizing: 'border-box',
                     outline: 'none',
                   }}
@@ -509,7 +509,7 @@ export const PaymentMethodsTab: React.FC = () => {
 
               {/* Card Number */}
               <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: "var(--site-ink)", marginBottom: '6px' }}>
                   Card Number
                 </label>
                 <div style={{ position: 'relative' }}>
@@ -524,7 +524,7 @@ export const PaymentMethodsTab: React.FC = () => {
                       padding: '10px 12px 10px 38px',
                       fontSize: '14px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: "1px solid var(--site-line-strong)",
                       boxSizing: 'border-box',
                       outline: 'none',
                       letterSpacing: '0.04em',
@@ -538,9 +538,9 @@ export const PaymentMethodsTab: React.FC = () => {
               </div>
 
               {/* Expiry & CVV */}
-              <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px', marginBottom: '22px' }}>
+              <div className="site-responsive-columns" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '14px', marginBottom: '22px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: "var(--site-ink)", marginBottom: '6px' }}>
                     Expiration Date
                   </label>
                   <div style={{ display: 'flex', gap: '6px' }}>
@@ -552,8 +552,8 @@ export const PaymentMethodsTab: React.FC = () => {
                         padding: '10px 8px',
                         fontSize: '14px',
                         borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        backgroundColor: '#ffffff',
+                        border: "1px solid var(--site-line-strong)",
+                        backgroundColor: "var(--site-white)",
                       }}
                     >
                       {Array.from({ length: 12 }, (_, i) => {
@@ -573,8 +573,8 @@ export const PaymentMethodsTab: React.FC = () => {
                         padding: '10px 8px',
                         fontSize: '14px',
                         borderRadius: '8px',
-                        border: '1px solid #cbd5e1',
-                        backgroundColor: '#ffffff',
+                        border: "1px solid var(--site-line-strong)",
+                        backgroundColor: "var(--site-white)",
                       }}
                     >
                       {['26', '27', '28', '29', '30', '31', '32'].map((y) => (
@@ -587,7 +587,7 @@ export const PaymentMethodsTab: React.FC = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: "var(--site-ink)", marginBottom: '6px' }}>
                     CVV / CVC
                   </label>
                   <input
@@ -602,7 +602,7 @@ export const PaymentMethodsTab: React.FC = () => {
                       padding: '10px 12px',
                       fontSize: '14px',
                       borderRadius: '8px',
-                      border: '1px solid #cbd5e1',
+                      border: "1px solid var(--site-line-strong)",
                       boxSizing: 'border-box',
                       outline: 'none',
                     }}
@@ -617,12 +617,12 @@ export const PaymentMethodsTab: React.FC = () => {
                   onClick={() => setIsAddModalOpen(false)}
                   style={{
                     padding: '10px 16px',
-                    backgroundColor: '#ffffff',
-                    border: '1px solid #cbd5e1',
+                    backgroundColor: "var(--site-white)",
+                    border: "1px solid var(--site-line-strong)",
                     borderRadius: '8px',
                     fontSize: '13px',
                     fontWeight: 600,
-                    color: '#64748b',
+                    color: "var(--site-muted)",
                     cursor: 'pointer',
                   }}
                 >
@@ -633,8 +633,8 @@ export const PaymentMethodsTab: React.FC = () => {
                   disabled={isSubmitting}
                   style={{
                     padding: '10px 20px',
-                    backgroundColor: '#071A31',
-                    color: '#ffffff',
+                    backgroundColor: "var(--site-primary)",
+                    color: "var(--site-white)",
                     border: 'none',
                     borderRadius: '8px',
                     fontSize: '13px',

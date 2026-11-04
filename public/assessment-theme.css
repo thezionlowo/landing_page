@@ -1,0 +1,204 @@
+/* The assessment journey uses the same brand as the main website. */
+.site-assessment.zameria-lead-page {
+  --z-bg: var(--site-paper);
+  --z-bg-alt: var(--site-paper);
+  --z-surface: var(--site-white);
+  --z-surface-2: var(--site-surface);
+  --z-border: var(--site-line);
+  --z-border-strong: var(--site-line-strong);
+  --z-text: var(--site-ink);
+  --z-text-muted: var(--site-muted);
+  --z-text-soft: var(--site-subtle);
+  --z-accent: var(--site-primary);
+  --z-accent-hover: var(--site-primary-hover);
+  --z-accent-soft: var(--site-blue-soft);
+  --z-on-accent: #fff;
+  --z-dark: var(--site-ink);
+  --z-radius: 9px;
+  --z-radius-sm: 7px;
+  --z-shadow: none;
+  --z-shadow-sm: none;
+  --z-shadow-lg: 0 8px 24px #142b4010;
+  background: #f3f6fa;
+  color: var(--site-ink);
+  font-family: var(--site-font);
+}
+.site-assessment :is(.z-header, .header) {
+  background: #f3f6fa;
+  color: var(--site-ink);
+  border-bottom: 1px solid var(--site-line);
+  padding: 25px 24px;
+  position: relative;
+}
+.site-assessment :is(.z-header-inner, .header-inner) {
+  max-width: 1232px;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+.site-assessment :is(.z-header-logo, .header-logo) {
+  width: 150px;
+  height: auto;
+}
+.site-assessment :is(.z-header-home-link, .header-home-link) {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  font-size: 11px;
+  color: var(--site-ink);
+  padding: 11px 15px;
+  border: 1px solid var(--site-line-strong);
+  border-radius: 7px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.site-assessment :is(.z-main, .main) {
+  padding-top: 65px;
+  max-width: 800px;
+}
+.site-assessment :is(.z-eyebrow, .eyebrow) {
+  color: var(--site-ink);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+.site-assessment :is(.z-h1, .h1),
+.site-assessment :is(.z-h2, .h2),
+.site-assessment :is(.z-q-title, .q-title),
+.site-assessment :is(.z-celebrate-title, .celebrate-title) {
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1.15;
+}
+.site-assessment :is(.z-h1, .h1) {
+  font-size: clamp(38px, 5.2vw, 65px);
+}
+.site-assessment :is(.z-h1-hl, .h1-hl) {
+  background: none;
+  color: var(--site-blue);
+  -webkit-text-fill-color: var(--site-blue);
+}
+.site-assessment :is(.z-h3-sub, .h3-sub) {
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--site-muted);
+}
+.site-assessment :is(.z-btn, .btn) {
+  border-radius: 7px;
+  font-family: var(--site-font);
+  font-weight: 500;
+  font-size: 13px;
+  box-shadow: none;
+}
+.site-assessment :is(.z-btn-primary, .btn-primary) {
+  background: var(--site-primary);
+}
+.site-assessment :is(.z-btn-primary, .btn-primary):hover:not(:disabled) {
+  background: var(--site-primary-hover);
+  box-shadow: 0 5px 13px #142b4010;
+}
+.site-assessment :is(.z-card, .card),
+.site-assessment :is(.z-option, .option) {
+  border-radius: 9px;
+  box-shadow: none;
+}
+.site-assessment :is(.z-input, .input),
+.site-assessment input,
+.site-assessment select {
+  font-family: var(--site-font);
+  border-radius: 7px;
+}
+.site-assessment :is(.z-option, .option) {
+  border-color: var(--site-line);
+}
+.site-assessment :is(.z-option, .option).selected,
+.site-assessment :is(.z-option, .option)[aria-checked="true"] {
+  background: var(--site-blue-soft);
+  border-color: var(--site-blue);
+}
+.site-assessment :is(.z-micro-item, .micro-item) {
+  color: var(--site-muted);
+}
+.site-assessment a:focus-visible,
+.site-assessment button:focus-visible {
+  outline: 3px solid #e89b54;
+  outline-offset: 4px;
+}
+.site-assessment input:focus-visible {
+  outline: 2px solid var(--site-blue);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .site-assessment :is(.z-header, .header) {
+    padding: 20px;
+  }
+  .site-assessment :is(.z-header-logo, .header-logo) {
+    width: 120px;
+  }
+  .site-assessment :is(.z-header-home-link, .header-home-link) {
+    font-size: 9px;
+    padding: 9px 11px;
+    gap: 7px;
+  }
+  .site-assessment :is(.z-main, .main) {
+    padding-top: 40px;
+  }
+  .site-assessment :is(.z-h1, .h1) {
+    font-size: 39px;
+  }
+  .site-assessment :is(.z-h3-sub, .h3-sub) {
+    font-size: 13px;
+  }
+}
+@media (max-width: 360px) {
+  .site-assessment :is(.z-header, .header) {
+    padding: 18px 16px;
+  }
+  .site-assessment :is(.z-header-logo, .header-logo) {
+    width: 105px;
+  }
+  .site-assessment :is(.z-header-home-link, .header-home-link) {
+    font-size: 8px;
+    padding: 8px;
+  }
+  .site-assessment :is(.z-h1, .h1) {
+    font-size: 34px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-assessment *,
+  .site-assessment *::before,
+  .site-assessment *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.site-assessment :is(.z-vsl-poster-fallback, .vsl-poster-fallback) {
+  background: var(--site-primary);
+}
+.site-assessment :is(.z-vsl-play, .vsl-play) {
+  background: var(--site-blue);
+  box-shadow: none;
+}
+.site-assessment :is(.z-celebrate, .celebrate) {
+  background: #f3f6fa;
+}
+.site-assessment :is(.z-celebrate-card, .celebrate-card) {
+  background: var(--site-white);
+  border-radius: 10px;
+  box-shadow: none;
+}
+.site-assessment :is(.z-celebrate-glow, .celebrate-glow) {
+  display: none;
+}
+
+.site-assessment { --z-bg: #f3f6fa; --z-bg-alt: #eef2f8; --z-surface: #fff; --z-text: var(--site-ink); --z-text-muted: var(--site-muted); --z-border: var(--site-line); --z-accent: var(--site-blue); --z-accent-hover: var(--site-blue-hover); --z-accent-soft: var(--site-blue-soft); background: #f3f6fa; font-family: var(--site-font); }
+.site-assessment > header { background: white; color: var(--site-ink); border-bottom: 1px solid var(--site-line); }
+.site-assessment :is(.header-logo, .z-header-logo) { width: 148px; height: auto; }
+.site-assessment :is(.header-home-link, .z-header-home-link) { color: var(--site-ink); border: 1px solid var(--site-line); border-radius: 8px; }
+.site-assessment :is(.card, .z-card, .form-card, .z-form-card, .quiz-card, .z-quiz-card) { background: white; border: 1px solid var(--site-line); border-radius: 14px; padding: clamp(22px, 4vw, 36px); box-shadow: 0 12px 36px -28px #0d17293d; }
+.site-assessment :is(.body-muted, .z-body-muted, .h3-sub, .z-h3-sub) { font-size: 15px; line-height: 1.75; color: #5e6c80; }
+.site-assessment :is(.eyebrow, .z-eyebrow) { font-size: 11px; color: var(--site-blue); }
+.site-assessment a:focus-visible, .site-assessment button:focus-visible { outline-color: var(--site-blue); }

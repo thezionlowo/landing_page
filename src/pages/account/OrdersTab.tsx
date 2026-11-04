@@ -93,10 +93,10 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
         }}
       >
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#071A31', margin: '0 0 6px', letterSpacing: '-0.02em' }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: "var(--site-ink)", margin: '0 0 6px', letterSpacing: '-0.02em' }}>
             Orders &amp; Purchases
           </h2>
-          <p style={{ fontSize: '14px', color: '#64748b', margin: 0 }}>
+          <p style={{ fontSize: '14px', color: "var(--site-muted)", margin: 0 }}>
             View your complete ZAMERIA purchase history, subscription receipts, and associated licenses.
           </p>
         </div>
@@ -105,10 +105,10 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
           onClick={() => setIsAddModalOpen(true)}
           style={{
             padding: '11px 20px',
-            backgroundColor: '#071A31',
-            color: '#ffffff',
+            backgroundColor: "var(--site-primary)",
+            color: "var(--site-white)",
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: "var(--site-radius)",
             fontSize: '13px',
             fontWeight: 700,
             cursor: 'pointer',
@@ -119,7 +119,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
             transition: 'all 0.15s ease',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0c284d')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#071A31')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--site-ink)")}
         >
           <Plus size={16} />
           <span>{(customer?.licenses?.length || 0) > 0 ? 'Add Plan / License' : 'Choose a Plan'}</span>
@@ -133,7 +133,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
             padding: '14px 18px',
             backgroundColor: '#f0fdf4',
             border: '1px solid #bbf7d0',
-            borderRadius: '12px',
+            borderRadius: "var(--site-radius)",
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
@@ -150,9 +150,9 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
       {/* Orders Table Container */}
       <div
         style={{
-          backgroundColor: '#ffffff',
-          borderRadius: '20px',
-          border: '1px solid #e2e8f0',
+          backgroundColor: "var(--site-white)",
+          borderRadius: "var(--site-radius)",
+          border: "1px solid var(--site-line)",
           overflow: 'hidden',
           boxShadow: '0 4px 20px -4px rgba(7, 26, 49, 0.04)',
         }}
@@ -161,26 +161,26 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '760px' }}>
               <thead>
-                <tr style={{ backgroundColor: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                <tr style={{ backgroundColor: "var(--site-paper)", borderBottom: "1px solid var(--site-line)" }}>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase' }}>
                     Order
                   </th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase' }}>
                     Date
                   </th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase' }}>
                     Plan
                   </th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase' }}>
                     Amount
                   </th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase' }}>
                     Status
                   </th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase' }}>
                     License
                   </th>
-                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', textAlign: 'right' }}>
+                  <th style={{ padding: '16px 20px', fontSize: '12px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase', textAlign: 'right' }}>
                     Action
                   </th>
                 </tr>
@@ -199,29 +199,29 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                     <tr
                       key={order.id}
                       style={{
-                        borderBottom: idx === orders.length - 1 ? 'none' : '1px solid #f1f5f9',
+                        borderBottom: idx === orders.length - 1 ? 'none' : "1px solid var(--site-surface)",
                         transition: 'background-color 0.15s ease',
                       }}
                       onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#fafafa')}
                       onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                     >
                       {/* Order Number */}
-                      <td style={{ padding: '18px 20px', fontWeight: 800, color: '#071A31', fontSize: '14px' }}>
+                      <td style={{ padding: '18px 20px', fontWeight: 800, color: "var(--site-ink)", fontSize: '14px' }}>
                         {order.orderNumber}
                       </td>
 
                       {/* Date */}
-                      <td style={{ padding: '18px 20px', color: '#64748b', fontSize: '13px' }}>
+                      <td style={{ padding: '18px 20px', color: "var(--site-muted)", fontSize: '13px' }}>
                         {order.date}
                       </td>
 
                       {/* Plan */}
-                      <td style={{ padding: '18px 20px', color: '#071A31', fontWeight: 700, fontSize: '13px' }}>
+                      <td style={{ padding: '18px 20px', color: "var(--site-ink)", fontWeight: 700, fontSize: '13px' }}>
                         {order.plan}
                       </td>
 
                       {/* Amount */}
-                      <td style={{ padding: '18px 20px', fontWeight: 800, color: '#071A31', fontSize: '14px' }}>
+                      <td style={{ padding: '18px 20px', fontWeight: 800, color: "var(--site-ink)", fontSize: '14px' }}>
                         {order.total}
                       </td>
 
@@ -276,7 +276,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                             <span>License: {licStatus}</span>
                           </span>
                           {licDomain && (
-                            <span style={{ fontSize: '11px', color: '#64748b' }}>
+                            <span style={{ fontSize: '11px', color: "var(--site-muted)" }}>
                               {licDomain}
                             </span>
                           )}
@@ -291,8 +291,8 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                           style={{
                             fontSize: '12.5px',
                             fontWeight: 700,
-                            color: '#2563eb',
-                            backgroundColor: '#eff6ff',
+                            color: "var(--site-blue)",
+                            backgroundColor: "var(--site-blue-soft)",
                             border: '1px solid #bfdbfe',
                             padding: '6px 14px',
                             borderRadius: '8px',
@@ -306,7 +306,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                             e.currentTarget.style.backgroundColor = '#dbeafe';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = '#eff6ff';
+                            e.currentTarget.style.backgroundColor = "var(--site-blue-soft)";
                           }}
                         >
                           <Eye size={13} />
@@ -327,7 +327,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                 width: '56px',
                 height: '56px',
                 borderRadius: '50%',
-                backgroundColor: '#f1f5f9',
+                backgroundColor: "var(--site-surface)",
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -337,18 +337,18 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
             >
               <Package size={28} />
             </div>
-            <h4 style={{ fontSize: '17px', fontWeight: 800, color: '#071A31', margin: '0 0 6px' }}>
+            <h4 style={{ fontSize: '17px', fontWeight: 800, color: "var(--site-ink)", margin: '0 0 6px' }}>
               No orders yet
             </h4>
-            <p style={{ fontSize: '13.5px', color: '#64748b', maxWidth: '380px', margin: '0 auto 20px' }}>
+            <p style={{ fontSize: '13.5px', color: "var(--site-muted)", maxWidth: '380px', margin: '0 auto 20px' }}>
               Your ZAMERIA subscription orders and invoices will appear here once processed.
             </p>
             <button
               onClick={() => setIsAddModalOpen(true)}
               style={{
                 padding: '10px 20px',
-                backgroundColor: '#071A31',
-                color: '#ffffff',
+                backgroundColor: "var(--site-primary)",
+                color: "var(--site-white)",
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '13px',
@@ -398,8 +398,8 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
           >
             <div
               style={{
-                backgroundColor: '#ffffff',
-                borderRadius: '24px',
+                backgroundColor: "var(--site-white)",
+                borderRadius: "var(--site-radius)",
                 maxWidth: '620px',
                 width: '100%',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -414,16 +414,16 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
               <div
                 style={{
                   padding: '20px 24px',
-                  borderBottom: '1px solid #e2e8f0',
+                  borderBottom: "1px solid var(--site-line)",
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  backgroundColor: '#f8fafc',
+                  backgroundColor: "var(--site-paper)",
                 }}
               >
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#071A31', margin: 0 }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: "var(--site-ink)", margin: 0 }}>
                       Order {selectedOrder.orderNumber}
                     </h3>
                     <span
@@ -439,7 +439,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                       Status: {selectedOrder.status}
                     </span>
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748b', marginTop: '3px' }}>
+                  <div style={{ fontSize: '12px', color: "var(--site-muted)", marginTop: '3px' }}>
                     Invoice: {selectedOrder.invoiceNumber}
                   </div>
                 </div>
@@ -450,7 +450,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: '#64748b',
+                    color: "var(--site-muted)",
                     cursor: 'pointer',
                     padding: '6px',
                   }}
@@ -466,33 +466,33 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                   <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '10px' }}>
                     Order Information
                   </div>
-                  <div
+                  <div className="site-responsive-columns"
                     style={{
                       display: 'grid',
                       gridTemplateColumns: '1fr 1fr',
                       gap: '12px',
                       padding: '16px',
-                      backgroundColor: '#f8fafc',
-                      borderRadius: '12px',
-                      border: '1px solid #f1f5f9',
+                      backgroundColor: "var(--site-paper)",
+                      borderRadius: "var(--site-radius)",
+                      border: "1px solid var(--site-surface)",
                       fontSize: '13px',
                     }}
                   >
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '11.5px' }}>Plan Purchased</div>
-                      <div style={{ fontWeight: 800, color: '#071A31', marginTop: '2px' }}>{selectedOrder.plan}</div>
+                      <div style={{ color: "var(--site-muted)", fontSize: '11.5px' }}>Plan Purchased</div>
+                      <div style={{ fontWeight: 800, color: "var(--site-ink)", marginTop: '2px' }}>{selectedOrder.plan}</div>
                     </div>
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '11.5px' }}>Purchase Date</div>
-                      <div style={{ fontWeight: 700, color: '#071A31', marginTop: '2px' }}>{selectedOrder.date}</div>
+                      <div style={{ color: "var(--site-muted)", fontSize: '11.5px' }}>Purchase Date</div>
+                      <div style={{ fontWeight: 700, color: "var(--site-ink)", marginTop: '2px' }}>{selectedOrder.date}</div>
                     </div>
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '11.5px' }}>Payment Method</div>
-                      <div style={{ fontWeight: 600, color: '#071A31', marginTop: '2px' }}>{selectedOrder.paymentMethod}</div>
+                      <div style={{ color: "var(--site-muted)", fontSize: '11.5px' }}>Payment Method</div>
+                      <div style={{ fontWeight: 600, color: "var(--site-ink)", marginTop: '2px' }}>{selectedOrder.paymentMethod}</div>
                     </div>
                     <div>
-                      <div style={{ color: '#64748b', fontSize: '11.5px' }}>Total Amount Paid</div>
-                      <div style={{ fontWeight: 800, color: '#071A31', fontSize: '15px', marginTop: '2px' }}>{selectedOrder.total}</div>
+                      <div style={{ color: "var(--site-muted)", fontSize: '11.5px' }}>Total Amount Paid</div>
+                      <div style={{ fontWeight: 800, color: "var(--site-ink)", fontSize: '15px', marginTop: '2px' }}>{selectedOrder.total}</div>
                     </div>
                   </div>
                 </div>
@@ -505,22 +505,22 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                   <div
                     style={{
                       padding: '18px',
-                      backgroundColor: '#ffffff',
-                      border: '1.5px solid #2563eb',
-                      borderRadius: '14px',
+                      backgroundColor: "var(--site-white)",
+                      border: "1.5px solid var(--site-blue)",
+                      borderRadius: "var(--site-radius)",
                       boxShadow: '0 4px 14px -3px rgba(37, 99, 235, 0.08)',
                     }}
                   >
                     {/* License Key Row */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                       <div>
-                        <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>License Key</div>
+                        <div style={{ fontSize: '11px', color: "var(--site-muted)", fontWeight: 600 }}>License Key</div>
                         <code
                           style={{
-                            fontFamily: 'monospace',
+                            fontFamily: "var(--site-font)",
                             fontSize: '14px',
                             fontWeight: 800,
-                            color: '#071A31',
+                            color: "var(--site-ink)",
                             letterSpacing: '0.05em',
                           }}
                         >
@@ -532,9 +532,9 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                         onClick={() => handleCopyLicenseKey(keyToShow)}
                         style={{
                           padding: '6px 12px',
-                          backgroundColor: copiedKey ? '#f0fdf4' : '#f8fafc',
-                          color: copiedKey ? '#16a34a' : '#071A31',
-                          border: `1px solid ${copiedKey ? '#bbf7d0' : '#cbd5e1'}`,
+                          backgroundColor: copiedKey ? '#f0fdf4' : "var(--site-paper)",
+                          color: copiedKey ? '#16a34a' : "var(--site-ink)",
+                          border: `1px solid ${copiedKey ? '#bbf7d0' : "var(--site-line-strong)"}`,
                           borderRadius: '6px',
                           fontSize: '12px',
                           fontWeight: 600,
@@ -550,18 +550,18 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                     </div>
 
                     {/* License Status & Domain Details */}
-                    <div
+                    <div className="site-responsive-columns"
                       style={{
                         display: 'grid',
                         gridTemplateColumns: '1fr 1fr',
                         gap: '12px',
                         paddingTop: '12px',
-                        borderTop: '1px solid #f1f5f9',
+                        borderTop: "1px solid var(--site-surface)",
                         fontSize: '12.5px',
                       }}
                     >
                       <div>
-                        <div style={{ color: '#64748b', fontSize: '11px' }}>License Status</div>
+                        <div style={{ color: "var(--site-muted)", fontSize: '11px' }}>License Status</div>
                         <span
                           style={{
                             fontSize: '11px',
@@ -579,11 +579,11 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                       </div>
 
                       <div>
-                        <div style={{ color: '#64748b', fontSize: '11px' }}>Connected Domain</div>
-                        <div style={{ fontWeight: 700, color: '#071A31', marginTop: '2px' }}>
+                        <div style={{ color: "var(--site-muted)", fontSize: '11px' }}>Connected Domain</div>
+                        <div style={{ fontWeight: 700, color: "var(--site-ink)", marginTop: '2px' }}>
                           {connectedDomain ? (
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                              <Globe size={13} style={{ color: '#2563eb' }} />
+                              <Globe size={13} style={{ color: "var(--site-blue)" }} />
                               {connectedDomain}
                             </span>
                           ) : (
@@ -593,29 +593,29 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                       </div>
 
                       <div>
-                        <div style={{ color: '#64748b', fontSize: '11px' }}>Activation</div>
-                        <div style={{ fontWeight: 600, color: '#071A31', marginTop: '2px' }}>
+                        <div style={{ color: "var(--site-muted)", fontSize: '11px' }}>Activation</div>
+                        <div style={{ fontWeight: 600, color: "var(--site-ink)", marginTop: '2px' }}>
                           {connectedDomain ? 'Activated' : 'Pending Activation'}
                         </div>
                       </div>
 
                       <div>
-                        <div style={{ color: '#64748b', fontSize: '11px' }}>Expiry / Renewal</div>
-                        <div style={{ fontWeight: 600, color: '#071A31', marginTop: '2px' }}>
+                        <div style={{ color: "var(--site-muted)", fontSize: '11px' }}>Expiry / Renewal</div>
+                        <div style={{ fontWeight: 600, color: "var(--site-ink)", marginTop: '2px' }}>
                           {expiryDate}
                         </div>
                       </div>
                     </div>
 
                     {/* View License Details CTA */}
-                    <div style={{ paddingTop: '14px', marginTop: '12px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'flex-end' }}>
+                    <div style={{ paddingTop: '14px', marginTop: '12px', borderTop: "1px solid var(--site-surface)", display: 'flex', justifyContent: 'flex-end' }}>
                       <button
                         type="button"
                         onClick={() => handleViewLicenseDetails(matchingLicense?.id)}
                         style={{
                           padding: '8px 16px',
-                          backgroundColor: '#071A31',
-                          color: '#ffffff',
+                          backgroundColor: "var(--site-primary)",
+                          color: "var(--site-white)",
                           border: 'none',
                           borderRadius: '8px',
                           fontSize: '12.5px',
@@ -639,7 +639,7 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                   <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '10px' }}>
                     Purchased Features
                   </div>
-                  <div style={{ backgroundColor: '#f8fafc', borderRadius: '12px', padding: '12px 16px' }}>
+                  <div style={{ backgroundColor: "var(--site-paper)", borderRadius: "var(--site-radius)", padding: '12px 16px' }}>
                     {selectedOrder.items.map((item, i) => (
                       <div
                         key={i}
@@ -649,8 +649,8 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                           justifyContent: 'space-between',
                           padding: '6px 0',
                           fontSize: '12.5px',
-                          color: '#334155',
-                          borderBottom: i === selectedOrder.items.length - 1 ? 'none' : '1px solid #e2e8f0',
+                          color: "var(--site-ink)",
+                          borderBottom: i === selectedOrder.items.length - 1 ? 'none' : "1px solid var(--site-line)",
                         }}
                       >
                         <span>{item}</span>
@@ -665,8 +665,8 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
               <div
                 style={{
                   padding: '16px 24px',
-                  backgroundColor: '#f8fafc',
-                  borderTop: '1px solid #e2e8f0',
+                  backgroundColor: "var(--site-paper)",
+                  borderTop: "1px solid var(--site-line)",
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
@@ -678,9 +678,9 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                   onClick={() => handleDownloadInvoice(selectedOrder)}
                   style={{
                     padding: '8px 16px',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: "var(--site-white)",
                     border: '1px solid #bfdbfe',
-                    color: '#2563eb',
+                    color: "var(--site-blue)",
                     borderRadius: '8px',
                     fontSize: '12.5px',
                     fontWeight: 600,
@@ -699,8 +699,8 @@ export const OrdersTab: React.FC<OrdersTabProps> = ({
                   onClick={closeOrderModal}
                   style={{
                     padding: '8px 18px',
-                    backgroundColor: '#071A31',
-                    color: '#ffffff',
+                    backgroundColor: "var(--site-primary)",
+                    color: "var(--site-white)",
                     border: 'none',
                     borderRadius: '8px',
                     fontSize: '13px',

@@ -63,6 +63,78 @@
           "value": "strict-origin-when-cross-origin"
         }
       ]
+    },
+    {
+      "source": "/login",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/get-started",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/forgot-password",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/subscribe",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/payment/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/account",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/account/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/product-preview/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
     }
   ],
   "redirects": [
@@ -130,6 +202,61 @@
       "source": "/woocommerce-offline-pos-system",
       "destination": "/solutions/offline-pos",
       "permanent": true
+    },
+    {
+      "source": "/pos-for-woocommerce",
+      "destination": "/woocommerce-pos",
+      "permanent": true
+    },
+    {
+      "source": "/woocommerce-stock-management",
+      "destination": "/woocommerce-inventory-management",
+      "permanent": true
+    },
+    {
+      "source": "/woocommerce-physical-store",
+      "destination": "/woocommerce-retail-pos",
+      "permanent": true
+    },
+    {
+      "source": "/woocommerce-pos-inventory",
+      "destination": "/woocommerce-inventory-sync",
+      "permanent": true
+    },
+    {
+      "source": "/best-woocommerce-pos",
+      "destination": "/woocommerce-pos-comparison",
+      "permanent": true
+    },
+    {
+      "source": "/solutions/multi-store-inventory-sync",
+      "destination": "/woocommerce-inventory-sync",
+      "permanent": true
+    },
+    {
+      "source": "/industries/clothing-boutique-pos",
+      "destination": "/industries/fashion",
+      "permanent": true
+    },
+    {
+      "source": "/industries/electronics-pos",
+      "destination": "/industries/electronics",
+      "permanent": true
+    },
+    {
+      "source": "/solutions/stop-overselling-rush-hours",
+      "destination": "/solutions/prevent-overselling",
+      "permanent": true
+    },
+    {
+      "source": "/nigeria/lagos-retail-pos",
+      "destination": "/woocommerce-pos-nigeria",
+      "permanent": true
+    },
+    {
+      "source": "/comparisons/foosales-vs-oliver-pos",
+      "destination": "/alternatives",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -150,8 +277,130 @@
       "destination": "/leadcapture2/index.html"
     },
     {
-      "source": "/((?!api/|downloads/).*)",
+      "source": "/woocommerce-pos",
+      "destination": "/woocommerce-pos/index.html"
+    },
+    {
+      "source": "/woocommerce-pos-plugin",
+      "destination": "/woocommerce-pos-plugin/index.html"
+    },
+    {
+      "source": "/woocommerce-inventory-management",
+      "destination": "/woocommerce-inventory-management/index.html"
+    },
+    {
+      "source": "/woocommerce-retail-pos",
+      "destination": "/woocommerce-retail-pos/index.html"
+    },
+    {
+      "source": "/woocommerce-inventory-sync",
+      "destination": "/woocommerce-inventory-sync/index.html"
+    },
+    {
+      "source": "/woocommerce-pos-nigeria",
+      "destination": "/woocommerce-pos-nigeria/index.html"
+    },
+    {
+      "source": "/industries/fashion",
+      "destination": "/industries/fashion/index.html"
+    },
+    {
+      "source": "/industries/beauty",
+      "destination": "/industries/beauty/index.html"
+    },
+    {
+      "source": "/industries/electronics",
+      "destination": "/industries/electronics/index.html"
+    },
+    {
+      "source": "/industries/supermarkets",
+      "destination": "/industries/supermarkets/index.html"
+    },
+    {
+      "source": "/industries/pharmacies",
+      "destination": "/industries/pharmacies/index.html"
+    },
+    {
+      "source": "/industries/jewelry",
+      "destination": "/industries/jewelry/index.html"
+    },
+    {
+      "source": "/hardware-compatibility",
+      "destination": "/hardware-compatibility/index.html"
+    },
+    {
+      "source": "/woocommerce-pos-comparison",
+      "destination": "/woocommerce-pos-comparison/index.html"
+    },
+    {
+      "source": "/solutions/prevent-overselling",
+      "destination": "/solutions/prevent-overselling/index.html"
+    },
+    {
+      "source": "/solutions/stock-mismatch",
+      "destination": "/solutions/stock-mismatch/index.html"
+    },
+    {
+      "source": "/solutions/woocommerce-stock-not-updating",
+      "destination": "/solutions/woocommerce-stock-not-updating/index.html"
+    },
+    {
+      "source": "/solutions/offline-pos",
+      "destination": "/solutions/offline-pos/index.html"
+    },
+    {
+      "source": "/features/split-payments",
+      "destination": "/features/split-payments/index.html"
+    },
+    {
+      "source": "/alternatives",
+      "destination": "/alternatives/index.html"
+    },
+    {
+      "source": "/alternatives/foosales",
+      "destination": "/alternatives/foosales/index.html"
+    },
+    {
+      "source": "/alternatives/oliver-pos",
+      "destination": "/alternatives/oliver-pos/index.html"
+    },
+    {
+      "source": "/alternatives/wcpos",
+      "destination": "/alternatives/wcpos/index.html"
+    },
+    {
+      "source": "/alternatives/wepos",
+      "destination": "/alternatives/wepos/index.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/login/index.html"
+    },
+    {
+      "source": "/get-started",
+      "destination": "/get-started/index.html"
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/forgot-password/index.html"
+    },
+    {
+      "source": "/subscribe",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/payment/complete",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/account",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/account/(.*)",
       "destination": "/index.html"
     }
-  ]
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
 }

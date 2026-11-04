@@ -1,38 +1,9 @@
-# Robots.txt for ZAMERIA (https://www.zameria.co)
 User-agent: *
 Allow: /
-Allow: /get-started
-Allow: /login
-Allow: /woocommerce-pos
-Allow: /woocommerce-pos-plugin
-Allow: /pos-for-woocommerce
-Allow: /woocommerce-inventory-management
-Allow: /woocommerce-stock-management
-Allow: /woocommerce-retail-pos
-Allow: /woocommerce-physical-store
-Allow: /woocommerce-pos-inventory
-Allow: /woocommerce-inventory-sync
-Allow: /woocommerce-pos-nigeria
-Allow: /industries/
-Allow: /solutions/
-Allow: /hardware-compatibility
-Allow: /woocommerce-pos-comparison
-Allow: /best-woocommerce-pos
-Allow: /alternatives
-Allow: /alternatives/
-Allow: /comparisons/
-Allow: /features/
-Allow: /nigeria/
-Allow: /leadcapture1
-Allow: /leadcapture2
-
-# Disallow private customer account, auth reset, and internal checkout paths
 Disallow: /account
-Disallow: /account/*
-Disallow: /forgot-password
+Disallow: /api/
+Disallow: /product-preview/
 Disallow: /subscribe
 Disallow: /payment/
 
-# Search Engine Sitemaps
 Sitemap: https://www.zameria.co/sitemap.xml
-

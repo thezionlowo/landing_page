@@ -1606,7 +1606,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     if (!currentPass) return { success: false, error: 'Current password is required.' };
     if (newPass.length < 8) return { success: false, error: 'New password must be at least 8 characters.' };
     try {
-      await accountRequest('change-password', { currentPassword: currentPass, newPassword: newPass });
+      const confirmation = await accountRequest('change-password', { currentPassword: currentPass, newPassword: newPass });
+      if (confirmation.success !== true) throw new Error('Password change was not confirmed. Please try again.');
       persistSession(null);
       return { success: true };
     } catch (error) {

@@ -1,38 +1,59 @@
-import React, { useState } from 'react';
-import { ArrowLeft, ArrowRight, Lock } from 'lucide-react';
-import { useRouter } from '../router/Router';
-import { startZameriaCheckout, ZameriaPlan } from '../lib/zameriaCheckout';
-import { useCustomerAuth } from '../context/CustomerAuthContext';
+import { AuthHeader } from "./auth/AuthHeader";
+import React, { useState } from "react";
+import {
+  ArrowRight,
+  Lock,
+} from "lucide-react";
+import { useRouter } from "../router/Router";
+import { startZameriaCheckout, ZameriaPlan } from "../lib/zameriaCheckout";
+import { useCustomerAuth } from "../context/CustomerAuthContext";
 
-import { useGeoPricing } from '../services/geoPricingService';
-import { isNigerianCountry } from '../lib/geoPricing';
+import { useGeoPricing } from "../services/geoPricingService";
+import { checkoutPricing, planCheckoutUrl } from "../lib/checkoutPricing";
+import { usePlanComparison } from "../components/PlanComparison";
+import { useEffect } from "react";
 
 export const SubscribePage: React.FC = () => {
   const { navigate, search } = useRouter();
   const { customer } = useCustomerAuth();
   const { geo } = useGeoPricing();
-  const requestedPlan = new URLSearchParams(search).get('plan');
-  const [plan, setPlan] = useState<ZameriaPlan>(requestedPlan === 'starter' ? 'starter' : 'business');
-  const [email, setEmail] = useState(customer?.email || '');
-  const [businessName, setBusinessName] = useState(customer?.businessName || '');
-  const [storeUrl, setStoreUrl] = useState(customer?.connectedStore?.url || '');
-  const [error, setError] = useState('');
+  const openComparison = usePlanComparison();
+  const params = new URLSearchParams(search);
+  const requestedPlan = params.get("plan");
+  const [plan, setPlan] = useState<ZameriaPlan>(
+    requestedPlan === "starter" ? "starter" : "business",
+  );
+  const [email, setEmail] = useState(customer?.email || "");
+  const [businessName, setBusinessName] = useState(
+    customer?.businessName || "",
+  );
+  const [storeUrl, setStoreUrl] = useState(customer?.connectedStore?.url || "");
+  const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Customer's locked country takes precedence if logged in; otherwise use detected geo
-  const customerCountry = customer?.country || customer?.billingAddress?.country;
-  const isNigeria = customerCountry ? isNigerianCountry(customerCountry) : geo.isNigeria;
-  const targetCountry = isNigeria ? 'Nigeria' : (customerCountry || geo.country || 'International');
-  const currency = isNigeria ? 'NGN' : 'USD';
+  useEffect(() => {
+    setPlan(requestedPlan === 'starter' ? 'starter' : 'business');
+  }, [requestedPlan]);
 
-  const starterPrice = isNigeria ? '₦200,000' : '$250';
-  const businessPrice = isNigeria ? '₦300,000' : '$400';
-  const price = plan === 'starter' ? starterPrice : businessPrice;
-  const amount = plan === 'starter' ? (isNigeria ? 200000 : 250) : (isNigeria ? 300000 : 400);
+  const pricing = checkoutPricing(customer, params.get('country'), params.get('currency'), geo);
+  const selected = pricing.plans[plan];
+  const targetCountry = pricing.country;
+  const currency = pricing.currency;
+  const price = selected.displayPrice;
+  const amount = selected.amount;
+
+  const comparePlans = () => openComparison({
+    country: pricing.isNigeria ? 'NG' : pricing.country,
+    selectedPlan: plan,
+    onSelect: nextPlan => {
+      setPlan(nextPlan);
+      navigate(planCheckoutUrl(nextPlan, pricing));
+    },
+  });
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setError('');
+    setError("");
     setSubmitting(true);
     try {
       const checkout = await startZameriaCheckout({
@@ -45,37 +66,48 @@ export const SubscribePage: React.FC = () => {
         amount,
         callbackUrl: `${window.location.origin}/payment/complete`,
       });
-      sessionStorage.setItem('zameria_pending_checkout', JSON.stringify({ email, businessName, storeUrl, reference: checkout.reference, country: targetCountry, currency, amount }));
+      sessionStorage.setItem(
+        "zameria_pending_checkout",
+        JSON.stringify({
+          email,
+          businessName,
+          storeUrl,
+          reference: checkout.reference,
+          country: targetCountry,
+          currency,
+          amount,
+        }),
+      );
       window.location.assign(checkout.authorization_url);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'Unable to start checkout.');
+      setError(
+        reason instanceof Error ? reason.message : "Unable to start checkout.",
+      );
       setSubmitting(false);
     }
   };
 
   return (
-    <main style={{ minHeight: '100vh', background: '#f8fafc', padding: '48px 20px' }}>
-      <div style={{ maxWidth: 620, margin: '0 auto', background: '#fff', border: '1px solid #e2e8f0', borderRadius: 20, padding: 32, boxShadow: '0 20px 45px -30px rgba(7,26,49,.35)' }}>
-        <button onClick={() => navigate('/')} style={{ border: 0, background: 'transparent', color: '#334155', cursor: 'pointer', display: 'inline-flex', gap: 8, alignItems: 'center', padding: 0 }}><ArrowLeft size={16} /> Back</button>
-        <h1 style={{ color: '#071a31', fontSize: 28, margin: '24px 0 8px' }}>Complete your ZAMERIA subscription</h1>
-        <p style={{ color: '#64748b', lineHeight: 1.5, marginTop: 0 }}>
-          Region: <strong style={{ color: '#071a31' }}>{targetCountry} ({currency})</strong>. Your subscription and license key activate immediately upon payment confirmation.
-        </p>
-        <form onSubmit={submit} style={{ display: 'grid', gap: 16, marginTop: 24 }}>
-          <label style={{ color: '#334155', fontWeight: 700 }}>Plan
-            <select value={plan} onChange={(e) => setPlan(e.target.value as ZameriaPlan)} style={{ display: 'block', width: '100%', marginTop: 6, padding: 12, border: '1px solid #cbd5e1', borderRadius: 10 }}>
-              <option value="starter">Starter — {starterPrice}/year</option>
-              <option value="business">Business — {businessPrice}/year</option>
-            </select>
-          </label>
-          <label style={{ color: '#334155', fontWeight: 700 }}>Business name<input required value={businessName} onChange={(e) => setBusinessName(e.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginTop: 6, padding: 12, border: '1px solid #cbd5e1', borderRadius: 10 }} /></label>
-          <label style={{ color: '#334155', fontWeight: 700 }}>Email<input required type="email" value={email} onChange={(e) => setEmail(e.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginTop: 6, padding: 12, border: '1px solid #cbd5e1', borderRadius: 10 }} /></label>
-          <label style={{ color: '#334155', fontWeight: 700 }}>WooCommerce store URL<input required type="url" placeholder="https://yourstore.com" value={storeUrl} onChange={(e) => setStoreUrl(e.target.value)} style={{ display: 'block', width: '100%', boxSizing: 'border-box', marginTop: 6, padding: 12, border: '1px solid #cbd5e1', borderRadius: 10 }} /></label>
-          {error && <p role="alert" style={{ color: '#b91c1c', margin: 0 }}>{error}</p>}
-          <button disabled={submitting} type="submit" style={{ padding: '14px 18px', border: 0, borderRadius: 10, cursor: submitting ? 'wait' : 'pointer', color: '#fff', background: '#071a31', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}><Lock size={16} /> {submitting ? 'Opening checkout…' : `Continue to checkout — ${price}`} <ArrowRight size={16} /></button>
-        </form>
-      </div>
-    </main>
+    <div className="site-checkout site-checkout-simple">
+      <AuthHeader buttonText="Back" buttonAction={() => navigate('/')} showBackIcon />
+      <main className="site-checkout-main">
+        <section className="site-checkout-panel" aria-labelledby="checkout-heading">
+          <h1 id="checkout-heading">Checkout</h1>
+          <p className="site-checkout-intro">Enter your store details to continue to secure payment.</p>
+          <div className="site-checkout-selection">
+            <div><strong>{selected.plan}</strong><span>{price}<small> / year</small></span></div>
+            <button type="button" onClick={comparePlans} aria-haspopup="dialog">Compare plans</button>
+          </div>
+          <form onSubmit={submit}>
+            <label htmlFor="checkout-business">Business name<input id="checkout-business" required autoComplete="organization" value={businessName} onChange={event => setBusinessName(event.target.value)} placeholder="Your store name" disabled={submitting} /></label>
+            <label htmlFor="checkout-email">Email address<input id="checkout-email" required type="email" autoComplete="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@business.com" disabled={submitting} /></label>
+            <label htmlFor="checkout-store">WooCommerce store URL<input id="checkout-store" required type="url" autoComplete="url" placeholder="https://yourstore.com" value={storeUrl} onChange={event => setStoreUrl(event.target.value)} disabled={submitting} /></label>
+            {error && <p role="alert" className="site-auth-error">{error}</p>}
+            <button disabled={submitting} type="submit" className="hm-button"><Lock size={15} /><span>{submitting ? 'Opening checkout…' : `Continue to checkout — ${price}`}</span><ArrowRight size={16} /></button>
+          </form>
+        </section>
+      </main>
+      <footer className="zameria-auth-footer">© {new Date().getFullYear()} ZAMERIA</footer>
+    </div>
   );
 };
-

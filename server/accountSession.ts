@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 export const COOKIE = 'zameria_account_session';
-export interface AccountSession { token: string; accountId: string; email: string; expiresAt: number; pendingSignupLead?: import('./signupLead').SignupLead }
+export interface AccountSession { token: string; accountId: string; email: string; expiresAt: number; pendingSignupLead?: import('./signupLead.js').SignupLead }
 function key() {
   const secret = process.env.ZAMERIA_SESSION_SECRET || '';
   if (secret.length < 32) throw new Error('Account sessions are not configured');

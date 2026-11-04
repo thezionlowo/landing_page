@@ -1,23 +1,17 @@
-/* ============================================================================
-   ZAMERIA — Badass Product-Led SaaS Design System
-   Aesthetic: Linear / Stripe / Vercel + Boom Video Editorial Precision
-   Core Palette: Deep Authority Navy (#071A31), Obsidian (#040E1B), 
-                 Signature Bluish-Purple Gradient (#1D4ED8 -> #4F46E5 -> #6366F1 -> #7C3AED),
-                 Electric Sky (#60A5FA), Vivid Emerald (#10B981), Soft Canvas (#F8FAFC)
-   ============================================================================ */
+/* ZAMERIA shared style aliases. Brand primitives live in public/brand-foundations.css. */
 
 :root {
   /* Core Tokens */
-  --brand-navy: #071a31;
-  --brand-navy-dark: #040e1b;
-  --brand-navy-light: #0c2340;
-  --brand-navy-border: #153258;
+  --brand-navy: var(--site-ink);
+  --brand-navy-dark: var(--site-ink);
+  --brand-navy-light: var(--site-ink);
+  --brand-navy-border: var(--site-dark-line);
 
   /* Signature Bluish-Purple Gradient */
-  --purple-start: #1d4ed8;
-  --purple-mid: #4f46e5;
-  --purple-end: #6366f1;
-  --purple-violet: #7c3aed;
+  --purple-start: var(--site-blue);
+  --purple-mid: var(--site-blue);
+  --purple-end: var(--site-blue);
+  --purple-violet: var(--site-blue);
 
   /* Accent Signals */
   --accent-sky: #60a5fa;
@@ -28,22 +22,22 @@
   --accent-amber-soft: #fffbeb;
 
   /* Surfaces & Canvas */
-  --canvas-bg: #f8fafc;
-  --surface-white: #ffffff;
-  --surface-subtle: #f1f5f9;
-  --border-subtle: #e2e8f0;
-  --border-strong: #cbd5e1;
+  --canvas-bg: var(--site-paper);
+  --surface-white: var(--site-white);
+  --surface-subtle: var(--site-surface);
+  --border-subtle: var(--site-line);
+  --border-strong: var(--site-line-strong);
 
   /* Typography */
-  --text-headline: #071a31;
-  --text-body: #475569;
-  --text-muted: #64748b;
-  --text-dim: #94a3b8;
+  --text-headline: var(--site-ink);
+  --text-body: var(--site-muted);
+  --text-muted: var(--site-muted);
+  --text-dim: var(--site-subtle);
   --text-white: #ffffff;
   --text-white-subtle: #cbd5e1;
 
-  --font-display: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'Space Grotesk', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-display: var(--site-font);
+  --font-mono: var(--site-mono);
 
   /* Shadows */
   --shadow-xs: 0 1px 2px rgba(7, 26, 49, 0.04);
@@ -56,9 +50,9 @@
   /* Layout */
   --container-max: 1240px;
   --radius-sm: 8px;
-  --radius-md: 14px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
+  --radius-md: 9px;
+  --radius-lg: 9px;
+  --radius-xl: 12px;
   --radius-full: 9999px;
 }
 

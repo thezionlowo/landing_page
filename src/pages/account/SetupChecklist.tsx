@@ -1,4 +1,3 @@
-import { BRAND_SUPPORT } from '../../lib/brandMessaging';
 import React, { useState } from 'react';
 import { getPosAppUrl } from '../../lib/routes';
 
@@ -21,22 +20,36 @@ export function SetupChecklist({ connected, storeUrl, email, checkConnection }: 
     finally { setChecking(false); }
   };
   const posUrl = getPosAppUrl(`/login${connected && storeUrl ? `?store=${encodeURIComponent(storeUrl)}` : ''}`);
-  return <section aria-labelledby="store-setup-heading" style={{ padding: '24px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '16px', color: '#071a31' }}>
-    <h2 id="store-setup-heading" style={{ margin: '0 0 8px', fontSize: '22px' }}>Set up your store</h2>
-    <p style={{ color: '#64748b', lineHeight: 1.6 }}>{BRAND_SUPPORT} Use the same ZAMERIA account on the website and in the plugin, then follow these steps.</p>
-    <ol style={{ paddingLeft: '22px', lineHeight: 1.7 }}>
-      <li><strong>Account created</strong><p style={{ marginTop: 0 }}>{email} — use this account in the WordPress plugin too.</p></li>
-      <li><strong>{connected ? 'Plugin installed and store connected' : 'Install the plugin and connect your store'}</strong>
-        <p style={{ marginTop: 0 }}>On your computer, download the ZIP. In WordPress, go to Plugins → Add New → Upload Plugin, install and activate it. Open ZAMERIA and log in with your existing ZAMERIA account.</p>
-        <a href="/downloads/zameria.zip" download>Download WordPress plugin</a>{' · '}
-        <button type="button" disabled={checking} onClick={check}>{checking ? 'Checking…' : 'Check connection'}</button>
-        <p role="status" style={{ color: '#475569' }}>{message || (connected ? 'Store connection confirmed by ZAMERIA.' : 'A website address or plugin download alone does not confirm a connection.')}</p>
+  return <section className="site-setup-checklist" aria-labelledby="store-setup-heading">
+    <div className="site-setup-intro">
+      <span className="hm-eyebrow">GET STARTED</span>
+      <h2 id="store-setup-heading">Set up your store</h2>
+      <p>Install the plugin, connect WooCommerce and open your POS.</p>
+    </div>
+    <ol>
+      <li>
+        <strong>Account created</strong>
+        <p>{email} — use this account in the WordPress plugin too.</p>
       </li>
-      <li><strong>Connect your POS device</strong><p style={{ marginTop: 0 }}>Once the store is connected, open POS on your till or phone. Use an authorised WordPress staff account. Ask your store administrator for access if you are joining a store.</p>
-        {connected ? <a href={posUrl} target="_blank" rel="noopener noreferrer">Open POS</a> : <span>Connect the plugin before signing in to POS.</span>}
+      <li>
+        <strong>{connected ? 'Plugin installed and store connected' : 'Install the plugin and connect your store'}</strong>
+        <p>Download the ZIP, then go to Plugins → Add New → Upload Plugin in WordPress. Install and activate ZAMERIA, then log in with your existing account.</p>
+        <div className="site-setup-actions">
+          <a href="/downloads/zameria.zip" download="zameria.zip">Download plugin</a>
+          <button type="button" disabled={checking} onClick={check}>{checking ? 'Checking…' : 'Check connection'}</button>
+        </div>
+        <p role="status" className="site-setup-status">{message || (connected ? 'Store connection confirmed by ZAMERIA.' : 'Check after signing in to the plugin.')}</p>
       </li>
-      <li><strong>Finish the first sync and start selling</strong><p style={{ marginTop: 0 }}>Wait for the catalogue to finish syncing in POS. Check your products and prices before making your first sale. Device sync progress is shown on that device.</p></li>
+      <li>
+        <strong>Connect your POS device</strong>
+        <p>Open POS and sign in with your authorised WordPress staff account.</p>
+        {connected ? <div className="site-setup-actions"><a href={posUrl} target="_blank" rel="noopener noreferrer">Open POS</a></div> : <p className="site-setup-status">Connect the plugin before signing in to POS.</p>}
+      </li>
+      <li>
+        <strong>Finish the first sync and start selling</strong>
+        <p>Wait for the first sync. Check your products and prices, then make a test sale.</p>
+      </li>
     </ol>
-    <p style={{ marginBottom: 0, color: '#64748b', fontSize: '13px' }}>For eligible stores, the trial begins when the store is successfully connected. Downloading the plugin or adding a device does not start another trial.</p>
+    <p className="site-setup-footnote">Your eligible seven-day trial starts when the store connection is confirmed.</p>
   </section>;
 }

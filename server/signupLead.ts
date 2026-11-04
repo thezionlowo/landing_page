@@ -1,4 +1,4 @@
-import { backendBase } from './accountSession';
+import { backendBase } from './accountSession.js';
 export interface SignupLead {
   event: 'signup'; account_id: string; email: string; name: string; business_name: string;
   phone: string; store_url: string; source: 'Website Signup'; registration_source: 'website';

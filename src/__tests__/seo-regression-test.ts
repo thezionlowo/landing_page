@@ -1,101 +1,82 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { MARKETING_PAGES, PAGE_REDIRECTS } from '../content/marketingPages';
+import { HOME_FAQS } from '../content/homeFaqs';
+import { routeSeo, SITE_ORIGIN } from '../lib/siteSeo';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const distDir = path.resolve(__dirname, '../../dist');
-const publicDir = path.resolve(__dirname, '../../public');
-const vercelConfigPath = path.resolve(__dirname, '../../vercel.json');
-
-function assert(condition: boolean, message: string) {
-  if (!condition) {
-    console.error(`❌ [FAIL] ${message}`);
-    throw new Error(`[ASSERTION FAILED] ${message}`);
+const root = process.cwd();
+const dist = path.join(root, 'dist');
+const hosting = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+const decode = (s: string) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+const publicRoutes = ['/', ...Object.keys(MARKETING_PAGES)];
+const privateRoutes = ['/login', '/get-started', '/forgot-password', '/subscribe', '/payment/complete', '/account'];
+const leadRoutes = ['/leadcapture1', '/leadcapture2'];
+const knownRoutes = new Set([...publicRoutes, ...privateRoutes, ...leadRoutes, ...Object.keys(PAGE_REDIRECTS)]);
+const sitemap = fs.readFileSync(path.join(dist, 'sitemap.xml'), 'utf8');
+const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1]);
+assert.deepEqual([...locations].sort(), publicRoutes.map(route => SITE_ORIGIN + route).sort(), 'Sitemap must contain only the canonical public pages');
+assert.equal(new Set(locations).size, locations.length, 'No duplicate sitemap URLs');
+const titles = new Set<string>();
+const descriptions = new Set<string>();
+let linksChecked = 0;
+for (const route of publicRoutes) {
+  const html = fs.readFileSync(path.join(dist, route === '/' ? 'index.html' : route.slice(1) + '/index.html'), 'utf8');
+  const config = routeSeo(route);
+  const title = decode(html.match(/<title>(.*?)<\/title>/s)?.[1] || '');
+  const description = decode(html.match(/<meta name="description" content="([^"]+)"/s)?.[1] || '');
+  assert.equal(title, config.title, `${route}: title`);
+  assert.equal(description, config.description, `${route}: description`);
+  assert(!titles.has(title), `${route}: unique title`); titles.add(title);
+  assert(!descriptions.has(description), `${route}: unique description`); descriptions.add(description);
+  assert.equal((html.match(/<h1\b/g) || []).length, 1, `${route}: one clear page heading`);
+  const plain = decode(html.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ');
+  assert(plain.includes(config.h1!), `${route}: visible H1`);
+  assert(html.includes(`rel="canonical" href="${config.canonical}"`), `${route}: canonical`);
+  assert(html.includes(`property="og:url" content="${config.canonical}"`), `${route}: share URL`);
+  assert(!/localhost|127\.0\.0\.1/.test(html), `${route}: no local URLs in public HTML`);
+  assert(!html.includes('noindex'), `${route}: indexable`);
+  const schemas = [...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>(.*?)<\/script>/gs)];
+  assert.equal(schemas.length, 1, `${route}: one structured data graph`);
+  const graph = JSON.parse(schemas[0][1])['@graph'];
+  assert(graph.some((node: any) => node['@type'] === 'WebPage' && node.url === config.canonical));
+  assert(!JSON.stringify(graph).match(/aggregateRating|reviewCount/), 'No invented ratings');
+  const faq = graph.find((node: any) => node['@type'] === 'FAQPage');
+  const expectedFaqs = route === '/' ? HOME_FAQS : MARKETING_PAGES[route].faqs;
+  assert.equal(faq.mainEntity.length, expectedFaqs.length);
+  for (const [question, answer] of expectedFaqs) {
+    assert(plain.includes(question) && plain.includes(answer), `${route}: schema FAQ must be visible`);
+    assert(faq.mainEntity.some((node: any) => node.name === question && node.acceptedAnswer.text === answer));
+  }
+  for (const match of html.matchAll(/(?:href|src)="(\/[^"]*)"/g)) {
+    const value = decode(match[1]);
+    if (value.startsWith('//')) continue;
+    const parsed = new URL(value, SITE_ORIGIN);
+    const file = path.join(dist, decodeURIComponent(parsed.pathname));
+    assert(knownRoutes.has(parsed.pathname) || fs.existsSync(file), `${route}: broken internal target ${value}`);
+    if (parsed.pathname === route && parsed.hash) assert(html.includes(`id="${parsed.hash.slice(1)}"`), `${route}: missing anchor ${value}`);
+    linksChecked++;
   }
 }
-
-async function runSeoRegressionTest() {
-  console.log('================================================================');
-  console.log(' ZAMERIA SEO ARCHITECTURE & REGRESSION TEST SUITE');
-  console.log('================================================================\n');
-
-  // Test 1: Vercel JSON Redirects
-  console.log('--- TEST 1: vercel.json Redirects & Headers ---');
-  assert(fs.existsSync(vercelConfigPath), 'vercel.json must exist');
-  const vercelJson = JSON.parse(fs.readFileSync(vercelConfigPath, 'utf8'));
-  assert(Array.isArray(vercelJson.redirects), 'vercel.json redirects must be an array');
-  const hasPosRedirect = vercelJson.redirects.some((r: any) => r.source === '/woocommerce-pos-vs-traditional-pos' && r.destination === '/woocommerce-pos-comparison');
-  assert(hasPosRedirect, 'vercel.json must redirect /woocommerce-pos-vs-traditional-pos to /woocommerce-pos-comparison');
-  console.log('✅ [PASS] vercel.json configuration verified.\n');
-
-  // Test 2: Sitemap XML Validity
-  console.log('--- TEST 2: sitemap.xml Coverage ---');
-  const sitemapPath = path.resolve(publicDir, 'sitemap.xml');
-  assert(fs.existsSync(sitemapPath), 'sitemap.xml must exist');
-  const sitemapContent = fs.readFileSync(sitemapPath, 'utf8');
-  assert(sitemapContent.includes('<urlset'), 'sitemap.xml must contain <urlset>');
-  assert(sitemapContent.includes('https://www.zameria.co/woocommerce-pos-plugin'), 'sitemap.xml must include /woocommerce-pos-plugin');
-  assert(sitemapContent.includes('https://www.zameria.co/pos-for-woocommerce'), 'sitemap.xml must include /pos-for-woocommerce');
-  assert(sitemapContent.includes('https://www.zameria.co/woocommerce-inventory-management'), 'sitemap.xml must include /woocommerce-inventory-management');
-  assert(sitemapContent.includes('https://www.zameria.co/woocommerce-stock-management'), 'sitemap.xml must include /woocommerce-stock-management');
-  assert(sitemapContent.includes('https://www.zameria.co/woocommerce-retail-pos'), 'sitemap.xml must include /woocommerce-retail-pos');
-  assert(sitemapContent.includes('https://www.zameria.co/woocommerce-physical-store'), 'sitemap.xml must include /woocommerce-physical-store');
-  assert(sitemapContent.includes('https://www.zameria.co/alternatives'), 'sitemap.xml must include /alternatives');
-  assert(sitemapContent.includes('https://www.zameria.co/alternatives/wcpos'), 'sitemap.xml must include /alternatives/wcpos');
-  assert(sitemapContent.includes('https://www.zameria.co/alternatives/wepos'), 'sitemap.xml must include /alternatives/wepos');
-  console.log('✅ [PASS] sitemap.xml coverage verified.\n');
-
-  // Test 3: robots.txt Rules
-  console.log('--- TEST 3: robots.txt Rules ---');
-  const robotsPath = path.resolve(publicDir, 'robots.txt');
-  assert(fs.existsSync(robotsPath), 'robots.txt must exist');
-  const robotsContent = fs.readFileSync(robotsPath, 'utf8');
-  assert(robotsContent.includes('Allow: /woocommerce-pos-plugin'), 'robots.txt must allow /woocommerce-pos-plugin');
-  assert(robotsContent.includes('Allow: /alternatives'), 'robots.txt must allow /alternatives');
-  assert(robotsContent.includes('Disallow: /account'), 'robots.txt must protect customer account');
-  console.log('✅ [PASS] robots.txt configuration verified.\n');
-
-  // Test 4: Pre-rendered HTML Inspection
-  console.log('--- TEST 4: Pre-rendered HTML & Canonical Verification ---');
-  const expectedRoutes = [
-    'woocommerce-pos',
-    'woocommerce-pos-plugin',
-    'pos-for-woocommerce',
-    'woocommerce-inventory-management',
-    'woocommerce-stock-management',
-    'woocommerce-retail-pos',
-    'woocommerce-physical-store',
-    'woocommerce-pos-inventory',
-    'woocommerce-pos-comparison',
-    'alternatives',
-    'alternatives/wcpos',
-    'alternatives/wepos',
-    'solutions/woocommerce-stock-not-updating',
-  ];
-
-  for (const r of expectedRoutes) {
-    const htmlPath = path.resolve(distDir, `${r}.html`);
-    const indexPath = path.resolve(distDir, r, 'index.html');
-    const targetFile = fs.existsSync(htmlPath) ? htmlPath : indexPath;
-    assert(fs.existsSync(targetFile), `Pre-rendered file for ${r} must exist (checked ${htmlPath} and ${indexPath})`);
-
-    const content = fs.readFileSync(targetFile, 'utf8');
-    assert(content.includes('<title>'), `Pre-rendered ${r} must contain a <title> tag`);
-    assert(content.includes('name="description"'), `Pre-rendered ${r} must contain a meta description`);
-    assert(content.includes('rel="canonical"'), `Pre-rendered ${r} must contain a canonical URL`);
-    assert(!content.includes('localhost:5182'), `Pre-rendered ${r} must NEVER contain localhost:5182`);
-    assert(!content.includes('localhost:5176'), `Pre-rendered ${r} must NEVER leak internal localhost:5176 into public markup`);
-    assert(content.includes('application/ld+json'), `Pre-rendered ${r} must contain JSON-LD structured data`);
-  }
-  console.log(`✅ [PASS] Verified ${expectedRoutes.length} key pre-rendered pages with zero localhost leaks & valid JSON-LD.\n`);
-
-  console.log('================================================================');
-  console.log('🎉 ALL SEO REGRESSION TESTS PASSED SUCCESSFULLY!');
-  console.log('================================================================');
+for (const route of ['/login', '/get-started', '/forgot-password', '/404']) {
+  const html = fs.readFileSync(path.join(dist, route.slice(1), 'index.html'), 'utf8');
+  assert(/name="robots" content="noindex/.test(html), `${route}: must not be indexed`);
+  assert(!html.includes('application/ld+json'), `${route}: no public product schema`);
 }
-
-runSeoRegressionTest().catch((err) => {
-  console.error('Fatal error during SEO regression test:', err);
-  process.exit(1);
-});
+assert(fs.existsSync(path.join(dist, '404.html')), 'Static host needs a real 404 page');
+assert(!hosting.rewrites.some((r: any) => r.source === '/(.*)' || r.source === '/:path*'), 'Unknown URLs must not return a homepage with status 200');
+for (const [source, destination] of Object.entries(PAGE_REDIRECTS)) {
+  assert(knownRoutes.has(destination) && !PAGE_REDIRECTS[destination], `${source}: no dead end or redirect chain`);
+  assert(hosting.redirects.some((r: any) => r.source === source && r.destination === destination && r.permanent), `${source}: permanent hosted redirect`);
+  assert(!locations.includes(SITE_ORIGIN + source), `${source}: duplicate page excluded from sitemap`);
+}
+const robots = fs.readFileSync(path.join(dist, 'robots.txt'), 'utf8');
+for (const route of ['/account', '/product-preview/', '/api/']) assert(robots.includes(`Disallow: ${route}`));
+assert(robots.includes(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`));
+for (const route of ['/login', '/get-started', '/subscribe', '/account']) assert(hosting.headers.some((h: any) => h.source === route && h.headers.some((v: any) => v.key === 'X-Robots-Tag' && v.value.includes('noindex'))));
+for (const route of leadRoutes) {
+ const html = fs.readFileSync(path.join(dist, route.slice(1), 'index.html'), 'utf8');
+ assert(html.includes('/brand-foundations.css') && html.includes('/assessment-theme.css'), `${route}: shared brand stylesheet`);
+ assert(!/within the next few hours|under 15 minutes|already on it/i.test(html), `${route}: no unsupported response-time promises`);
+}
+console.log(`PASS: ${publicRoutes.length} canonical pages, unique metadata, visible FAQs/schema, ${linksChecked} internal targets, ${Object.keys(PAGE_REDIRECTS).length} redirects, private indexing rules and custom 404.`);

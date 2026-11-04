@@ -99,10 +99,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
         }}
       >
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: 800, color: '#071A31', letterSpacing: '-0.02em', margin: 0 }}>
+          <h2 style={{ fontSize: '24px', fontWeight: 800, color: "var(--site-ink)", letterSpacing: '-0.02em', margin: 0 }}>
             My Licenses
           </h2>
-          <p style={{ fontSize: '14px', color: '#64748b', marginTop: '6px', margin: 0 }}>
+          <p style={{ fontSize: '14px', color: "var(--site-muted)", marginTop: '6px', margin: 0 }}>
             {licenses.length > 0
               ? 'Manage your ZAMERIA licenses and connected domains.'
               : 'View and manage software entitlements attached to your paid subscriptions.'}
@@ -113,10 +113,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
           onClick={() => setIsAddModalOpen(true)}
           style={{
             padding: '11px 20px',
-            backgroundColor: '#071A31',
-            color: '#ffffff',
+            backgroundColor: "var(--site-primary)",
+            color: "var(--site-white)",
             border: 'none',
-            borderRadius: '10px',
+            borderRadius: "var(--site-radius)",
             fontSize: '13px',
             fontWeight: 700,
             cursor: 'pointer',
@@ -127,7 +127,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
             transition: 'all 0.15s ease',
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#0c284d')}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#071A31')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--site-ink)")}
         >
           {licenses.length === 0 ? (
             <>
@@ -152,10 +152,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
             justifyContent: 'space-between',
             flexWrap: 'wrap',
             gap: '16px',
-            backgroundColor: '#ffffff',
+            backgroundColor: "var(--site-white)",
             padding: '16px 20px',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
+            borderRadius: "var(--site-radius)",
+            border: "1px solid var(--site-line)",
           }}
         >
           {/* Search Input */}
@@ -169,10 +169,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                 width: '100%',
                 padding: '9px 14px 9px 36px',
                 fontSize: '13px',
-                borderRadius: '10px',
-                border: '1px solid #cbd5e1',
+                borderRadius: "var(--site-radius)",
+                border: "1px solid var(--site-line-strong)",
                 outline: 'none',
-                color: '#071A31',
+                color: "var(--site-ink)",
                 boxSizing: 'border-box',
               }}
             />
@@ -211,9 +211,9 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   style={{
                     padding: '6px 12px',
                     borderRadius: '9999px',
-                    border: isSelected ? '1px solid #071A31' : '1px solid #e2e8f0',
-                    backgroundColor: isSelected ? '#071A31' : '#f8fafc',
-                    color: isSelected ? '#ffffff' : '#64748b',
+                    border: isSelected ? "1px solid var(--site-ink)" : "1px solid var(--site-line)",
+                    backgroundColor: isSelected ? "var(--site-primary)" : "var(--site-paper)",
+                    color: isSelected ? "var(--site-white)" : "var(--site-muted)",
                     fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer',
@@ -233,9 +233,9 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
         /* Empty State 1: No License Assigned (Trial or Unsubscribed User) */
         <div
           style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '24px',
-            border: '1px solid #e2e8f0',
+            backgroundColor: "var(--site-white)",
+            borderRadius: "var(--site-radius)",
+            border: "1px solid var(--site-line)",
             padding: '64px 32px',
             textAlign: 'center',
             display: 'flex',
@@ -248,13 +248,13 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
             style={{
               width: '68px',
               height: '68px',
-              borderRadius: '20px',
-              backgroundColor: isTrialActive ? '#eff6ff' : isTrialNotStarted ? '#f1f5f9' : '#fef2f2',
+              borderRadius: "var(--site-radius)",
+              backgroundColor: isTrialActive ? "var(--site-blue-soft)" : isTrialNotStarted ? "var(--site-surface)" : '#fef2f2',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: '20px',
-              color: isTrialActive ? '#2563eb' : isTrialNotStarted ? '#64748b' : '#dc2626',
+              color: isTrialActive ? "var(--site-blue)" : isTrialNotStarted ? "var(--site-muted)" : '#dc2626',
             }}
           >
             <Key size={32} />
@@ -265,26 +265,26 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
               fontSize: '11.5px',
               fontWeight: 800,
               color: isTrialNotStarted
-                ? '#475569'
+                ? "var(--site-muted)"
                 : isTrialActive
-                ? '#2563eb'
+                ? "var(--site-blue)"
                 : isTrialExpired
                 ? '#b91c1c'
-                : '#64748b',
+                : "var(--site-muted)",
               backgroundColor: isTrialNotStarted
-                ? '#f1f5f9'
+                ? "var(--site-surface)"
                 : isTrialActive
-                ? '#eff6ff'
+                ? "var(--site-blue-soft)"
                 : isTrialExpired
                 ? '#fef2f2'
-                : '#f1f5f9',
+                : "var(--site-surface)",
               border: isTrialNotStarted
-                ? '1px solid #cbd5e1'
+                ? "1px solid var(--site-line-strong)"
                 : isTrialActive
                 ? '1px solid #bfdbfe'
                 : isTrialExpired
                 ? '1px solid #fecaca'
-                : '1px solid #e2e8f0',
+                : "1px solid var(--site-line)",
               padding: '3px 12px',
               borderRadius: '9999px',
               textTransform: 'uppercase',
@@ -301,11 +301,11 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
               : 'No Active License'}
           </div>
 
-          <h3 style={{ fontSize: '22px', fontWeight: 800, color: '#071A31', margin: '0 0 10px' }}>
+          <h3 style={{ fontSize: '22px', fontWeight: 800, color: "var(--site-ink)", margin: '0 0 10px' }}>
             No License Yet
           </h3>
 
-          <p style={{ fontSize: '14.5px', color: '#64748b', maxWidth: '480px', margin: '0 0 24px', lineHeight: 1.6 }}>
+          <p style={{ fontSize: '14.5px', color: "var(--site-muted)", maxWidth: '480px', margin: '0 0 24px', lineHeight: 1.6 }}>
             {isTrialNotStarted
               ? 'Your license will be generated when you subscribe to a paid plan. Your trial uses a Trial Activation Code to connect your WooCommerce store.'
               : isTrialActive
@@ -319,10 +319,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
             onClick={() => setIsAddModalOpen(true)}
             style={{
               padding: '12px 28px',
-              backgroundColor: '#071A31',
-              color: '#ffffff',
+              backgroundColor: "var(--site-primary)",
+              color: "var(--site-white)",
               border: 'none',
-              borderRadius: '12px',
+              borderRadius: "var(--site-radius)",
               fontSize: '14px',
               fontWeight: 700,
               cursor: 'pointer',
@@ -340,14 +340,14 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
         /* Empty State 2: No search results */
         <div
           style={{
-            backgroundColor: '#ffffff',
-            borderRadius: '20px',
-            border: '1px solid #e2e8f0',
+            backgroundColor: "var(--site-white)",
+            borderRadius: "var(--site-radius)",
+            border: "1px solid var(--site-line)",
             padding: '50px 20px',
             textAlign: 'center',
           }}
         >
-          <p style={{ fontSize: '14px', fontWeight: 600, color: '#64748b', margin: '0 0 12px' }}>
+          <p style={{ fontSize: '14px', fontWeight: 600, color: "var(--site-muted)", margin: '0 0 12px' }}>
             No licenses matching "{searchQuery || statusFilter}"
           </p>
           <button
@@ -357,12 +357,12 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
             }}
             style={{
               background: 'none',
-              border: '1px solid #cbd5e1',
+              border: "1px solid var(--site-line-strong)",
               padding: '6px 14px',
               borderRadius: '8px',
               fontSize: '12px',
               fontWeight: 600,
-              color: '#071A31',
+              color: "var(--site-ink)",
               cursor: 'pointer',
             }}
           >
@@ -380,9 +380,9 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
               <div
                 key={lic.id}
                 style={{
-                  backgroundColor: '#ffffff',
-                  borderRadius: '18px',
-                  border: '1px solid #e2e8f0',
+                  backgroundColor: "var(--site-white)",
+                  borderRadius: "var(--site-radius)",
+                  border: "1px solid var(--site-line)",
                   padding: '24px',
                   boxShadow: '0 4px 16px -4px rgba(7, 26, 49, 0.04)',
                   transition: 'all 0.15s ease',
@@ -402,7 +402,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#071A31', margin: 0 }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: 800, color: "var(--site-ink)", margin: 0 }}>
                       {lic.plan}
                     </h3>
                     <span
@@ -418,7 +418,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                             ? '#fef3c7'
                             : lic.status === 'Expired'
                             ? '#fef2f2'
-                            : '#f1f5f9',
+                            : "var(--site-surface)",
                         color:
                           lic.status === 'Active'
                             ? '#16a34a'
@@ -426,7 +426,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                             ? '#d97706'
                             : lic.status === 'Expired'
                             ? '#b91c1c'
-                            : '#64748b',
+                            : "var(--site-muted)",
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '4px',
@@ -438,13 +438,13 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                       {lic.status}
                     </span>
                     <span style={{ fontSize: '12px', color: '#94a3b8' }}>•</span>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748b' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: "var(--site-muted)" }}>
                       Order {lic.orderNumber}
                     </span>
                   </div>
 
-                  <div style={{ fontSize: '13px', color: '#64748b' }}>
-                    Expires: <strong style={{ color: '#071A31' }}>{lic.expiresAt}</strong>
+                  <div style={{ fontSize: '13px', color: "var(--site-muted)" }}>
+                    Expires: <strong style={{ color: "var(--site-ink)" }}>{lic.expiresAt}</strong>
                   </div>
                 </div>
 
@@ -452,30 +452,30 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
                     gap: '16px',
                     padding: '16px 20px',
-                    backgroundColor: '#f8fafc',
-                    borderRadius: '14px',
-                    border: '1px solid #f1f5f9',
+                    backgroundColor: "var(--site-paper)",
+                    borderRadius: "var(--site-radius)",
+                    border: "1px solid var(--site-surface)",
                   }}
                 >
                   {/* License Key Box */}
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
                       License Key
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <code
                         style={{
-                          fontFamily: 'monospace',
+                          fontFamily: "var(--site-font)",
                           fontSize: '13.5px',
                           fontWeight: 700,
-                          color: '#071A31',
-                          backgroundColor: '#ffffff',
+                          color: "var(--site-ink)",
+                          backgroundColor: "var(--site-white)",
                           padding: '6px 10px',
                           borderRadius: '8px',
-                          border: '1px solid #e2e8f0',
+                          border: "1px solid var(--site-line)",
                           letterSpacing: '0.04em',
                         }}
                       >
@@ -486,9 +486,9 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                         title="Copy license key"
                         style={{
                           padding: '6px 10px',
-                          backgroundColor: isCopied ? '#f0fdf4' : '#ffffff',
-                          color: isCopied ? '#16a34a' : '#475569',
-                          border: `1px solid ${isCopied ? '#bbf7d0' : '#cbd5e1'}`,
+                          backgroundColor: isCopied ? '#f0fdf4' : "var(--site-white)",
+                          color: isCopied ? '#16a34a' : "var(--site-muted)",
+                          border: `1px solid ${isCopied ? '#bbf7d0' : "var(--site-line-strong)"}`,
                           borderRadius: '8px',
                           fontSize: '12px',
                           fontWeight: 600,
@@ -507,13 +507,13 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
 
                   {/* Connected Domain Box */}
                   <div>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '6px' }}>
                       Connected Domain
                     </div>
                     {lic.connectedDomain ? (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Globe size={16} style={{ color: '#2563eb', flexShrink: 0 }} />
-                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#071A31' }}>
+                        <Globe size={16} style={{ color: "var(--site-blue)", flexShrink: 0 }} />
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: "var(--site-ink)" }}>
                           {lic.connectedDomain}
                         </span>
                         <span
@@ -553,7 +553,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                     paddingTop: '6px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#64748b' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: "var(--site-muted)" }}>
                     <Calendar size={13} />
                     <span>
                       {lic.activatedAt ? `Activated on ${lic.activatedAt}` : 'Awaiting store connection'}
@@ -565,20 +565,20 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                       onClick={() => setSelectedLicense(lic)}
                       style={{
                         padding: '8px 16px',
-                        backgroundColor: '#ffffff',
-                        border: '1px solid #cbd5e1',
+                        backgroundColor: "var(--site-white)",
+                        border: "1px solid var(--site-line-strong)",
                         borderRadius: '8px',
                         fontSize: '13px',
                         fontWeight: 600,
-                        color: '#071A31',
+                        color: "var(--site-ink)",
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '6px',
                         transition: 'all 0.15s ease',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f5f9')}
-                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ffffff')}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "var(--site-surface)")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "var(--site-white)")}
                     >
                       <span>View Details</span>
                       <ArrowRight size={13} />
@@ -609,8 +609,8 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
         >
           <div
             style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '24px',
+              backgroundColor: "var(--site-white)",
+              borderRadius: "var(--site-radius)",
               maxWidth: '600px',
               width: '100%',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
@@ -625,11 +625,11 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
             <div
               style={{
                 padding: '20px 24px',
-                borderBottom: '1px solid #e2e8f0',
+                borderBottom: "1px solid var(--site-line)",
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                backgroundColor: '#f8fafc',
+                backgroundColor: "var(--site-paper)",
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -637,9 +637,9 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   style={{
                     width: '36px',
                     height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: '#071A31',
-                    color: '#ffffff',
+                    borderRadius: "var(--site-radius)",
+                    backgroundColor: "var(--site-ink)",
+                    color: "var(--site-white)",
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -648,10 +648,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   <Key size={18} />
                 </div>
                 <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: '#071A31', margin: 0 }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: 800, color: "var(--site-ink)", margin: 0 }}>
                     License Details
                   </h3>
-                  <p style={{ fontSize: '12px', color: '#64748b', margin: '2px 0 0' }}>
+                  <p style={{ fontSize: '12px', color: "var(--site-muted)", margin: '2px 0 0' }}>
                     {selectedLicense.plan} Plan Entitlement
                   </p>
                 </div>
@@ -661,7 +661,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#64748b',
+                  color: "var(--site-muted)",
                   cursor: 'pointer',
                   padding: '4px',
                 }}
@@ -675,23 +675,23 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
               {/* License Key Hero Box */}
               <div
                 style={{
-                  backgroundColor: '#f8fafc',
-                  border: '1px solid #e2e8f0',
-                  borderRadius: '16px',
+                  backgroundColor: "var(--site-paper)",
+                  border: "1px solid var(--site-line)",
+                  borderRadius: "var(--site-radius)",
                   padding: '20px',
                   marginBottom: '20px',
                   textAlign: 'center',
                 }}
               >
-                <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: "var(--site-muted)", textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' }}>
                   License Key
                 </div>
                 <div
                   style={{
-                    fontFamily: 'monospace',
+                    fontFamily: "var(--site-font)",
                     fontSize: '17px',
                     fontWeight: 800,
-                    color: '#071A31',
+                    color: "var(--site-ink)",
                     letterSpacing: '0.06em',
                     marginBottom: '12px',
                   }}
@@ -702,9 +702,9 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   onClick={(e) => handleCopyKey(selectedLicense.licenseKey, selectedLicense.id, e)}
                   style={{
                     padding: '8px 18px',
-                    backgroundColor: copiedKeyId === selectedLicense.id ? '#f0fdf4' : '#ffffff',
-                    color: copiedKeyId === selectedLicense.id ? '#16a34a' : '#071A31',
-                    border: `1px solid ${copiedKeyId === selectedLicense.id ? '#bbf7d0' : '#cbd5e1'}`,
+                    backgroundColor: copiedKeyId === selectedLicense.id ? '#f0fdf4' : "var(--site-white)",
+                    color: copiedKeyId === selectedLicense.id ? '#16a34a' : "var(--site-ink)",
+                    border: `1px solid ${copiedKeyId === selectedLicense.id ? '#bbf7d0' : "var(--site-line-strong)"}`,
                     borderRadius: '8px',
                     fontSize: '13px',
                     fontWeight: 600,
@@ -720,13 +720,13 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
               </div>
 
               {/* Attributes Grid */}
-              <div
+              <div className="site-responsive-columns"
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '1fr 1fr',
                   gap: '16px',
                   paddingBottom: '20px',
-                  borderBottom: '1px solid #f1f5f9',
+                  borderBottom: "1px solid var(--site-surface)",
                   marginBottom: '20px',
                 }}
               >
@@ -734,10 +734,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
                     Plan
                   </div>
-                  <div style={{ fontSize: '14px', fontWeight: 800, color: '#071A31', marginTop: '4px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 800, color: "var(--site-ink)", marginTop: '4px' }}>
                     {selectedLicense.plan}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748b' }}>
+                  <div style={{ fontSize: '12px', color: "var(--site-muted)" }}>
                     {selectedLicense.plan.toLowerCase().includes('business') ? '₦300,000 / year' : '₦200,000 / year'}
                   </div>
                 </div>
@@ -766,10 +766,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
                     Activation Status
                   </div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#071A31', marginTop: '4px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: "var(--site-ink)", marginTop: '4px' }}>
                     {selectedLicense.activationStatus}
                   </div>
-                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                  <div style={{ fontSize: '11px', color: "var(--site-muted)" }}>
                     {selectedLicense.activatedAt ? `On ${selectedLicense.activatedAt}` : 'Pending connection'}
                   </div>
                 </div>
@@ -778,7 +778,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                   <div style={{ fontSize: '11px', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>
                     Expiry / Renewal Date
                   </div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#071A31', marginTop: '4px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: "var(--site-ink)", marginTop: '4px' }}>
                     {selectedLicense.expiresAt}
                   </div>
                 </div>
@@ -794,8 +794,8 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                       onClick={() => handleViewOrder(selectedLicense.orderId)}
                       style={{
                         padding: '6px 12px',
-                        backgroundColor: '#eff6ff',
-                        color: '#2563eb',
+                        backgroundColor: "var(--site-blue-soft)",
+                        color: "var(--site-blue)",
                         border: '1px solid #bfdbfe',
                         borderRadius: '8px',
                         fontSize: '13px',
@@ -810,7 +810,7 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                       <span>{selectedLicense.orderNumber}</span>
                       <ArrowRight size={13} />
                     </button>
-                    <span style={{ fontSize: '12px', color: '#64748b' }}>
+                    <span style={{ fontSize: '12px', color: "var(--site-muted)" }}>
                       Click to view purchase receipt & invoice breakdown
                     </span>
                   </div>
@@ -820,17 +820,17 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
               {/* Connected Domain Section */}
               <div
                 style={{
-                  backgroundColor: selectedLicense.connectedDomain ? '#f8fafc' : '#fefce8',
-                  borderRadius: '14px',
-                  border: `1px solid ${selectedLicense.connectedDomain ? '#e2e8f0' : '#fef08a'}`,
+                  backgroundColor: selectedLicense.connectedDomain ? "var(--site-paper)" : '#fefce8',
+                  borderRadius: "var(--site-radius)",
+                  border: `1px solid ${selectedLicense.connectedDomain ? "var(--site-line)" : '#fef08a'}`,
                   padding: '18px',
                   marginBottom: '16px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Globe size={16} style={{ color: selectedLicense.connectedDomain ? '#2563eb' : '#d97706' }} />
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#071A31' }}>
+                    <Globe size={16} style={{ color: selectedLicense.connectedDomain ? "var(--site-blue)" : '#d97706' }} />
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: "var(--site-ink)" }}>
                       Connected Domain:
                     </span>
                   </div>
@@ -851,10 +851,10 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
 
                 {selectedLicense.connectedDomain ? (
                   <div>
-                    <div style={{ fontSize: '15px', fontWeight: 800, color: '#071A31' }}>
+                    <div style={{ fontSize: '15px', fontWeight: 800, color: "var(--site-ink)" }}>
                       {selectedLicense.connectedDomain}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+                    <div style={{ fontSize: '12px', color: "var(--site-muted)", marginTop: '4px' }}>
                       Active real-time 2-way catalog sync running via WooCommerce REST API.
                     </div>
                   </div>
@@ -869,16 +869,16 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
 
                     <div
                       style={{
-                        backgroundColor: '#ffffff',
-                        borderRadius: '10px',
+                        backgroundColor: "var(--site-white)",
+                        borderRadius: "var(--site-radius)",
                         padding: '12px',
                         border: '1px solid #fde68a',
                       }}
                     >
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#071A31', marginBottom: '4px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: "var(--site-ink)", marginBottom: '4px' }}>
                         Store selected at checkout: {selectedLicense.requestedDomain || 'Not recorded'}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#64748b', lineHeight: 1.45 }}>
+                      <div style={{ fontSize: '12px', color: "var(--site-muted)", lineHeight: 1.45 }}>
                         Install the ZAMERIA WooCommerce plugin and enter this license key. The plugin securely detects and confirms the live store domain; it cannot be changed from this dashboard.
                       </div>
                     </div>
@@ -891,8 +891,8 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
             <div
               style={{
                 padding: '16px 24px',
-                backgroundColor: '#f8fafc',
-                borderTop: '1px solid #e2e8f0',
+                backgroundColor: "var(--site-paper)",
+                borderTop: "1px solid var(--site-line)",
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'flex-end',
@@ -903,12 +903,12 @@ export const LicensesTab: React.FC<LicensesTabProps> = ({ onOpenOrderDetails }) 
                 onClick={() => setSelectedLicense(null)}
                 style={{
                   padding: '9px 18px',
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #cbd5e1',
+                  backgroundColor: "var(--site-white)",
+                  border: "1px solid var(--site-line-strong)",
                   borderRadius: '8px',
                   fontSize: '13px',
                   fontWeight: 600,
-                  color: '#64748b',
+                  color: "var(--site-muted)",
                   cursor: 'pointer',
                 }}
               >
