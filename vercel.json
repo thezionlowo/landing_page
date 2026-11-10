@@ -261,6 +261,14 @@
   ],
   "rewrites": [
     {
+      "source": "/privacy",
+      "destination": "/privacy/index.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms/index.html"
+    },
+    {
       "source": "/leadcapture1",
       "destination": "/leadcapture1/index.html"
     },

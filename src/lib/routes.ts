@@ -13,7 +13,7 @@ export const getPosAppUrl = (path: string = ''): string => {
   }
 
   // The public site has no merchant/store context. It therefore opens the
-  // deployed POS application; the WordPress plugin itself uses its own /pos/.
+  // deployed POS application. The plugin also bundles a merchant-hosted /pos/.
   const suffix = path.startsWith('/') ? path : `/${path}`;
   return `https://pos.zameria.co${suffix}`;
 };

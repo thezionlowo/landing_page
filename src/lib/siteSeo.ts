@@ -1,5 +1,6 @@
 import { MARKETING_PAGES, PAGE_REDIRECTS } from '../content/marketingPages';
 import { HOME_FAQS } from '../content/homeFaqs';
+import { POLICY_PAGES } from '../content/policyPages';
 
 export const SITE_ORIGIN = 'https://www.zameria.co';
 export const INDEX_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
@@ -7,6 +8,7 @@ export interface RouteSEO { title: string; description: string; canonical: strin
 export const ROUTE_SEO_CONFIG: Record<string, RouteSEO> = {
   '/': { title: 'WooCommerce POS for Your Shop, Mobile & Desktop | ZAMERIA', description: 'Sell in your shop and stay connected to WooCommerce. Use ZAMERIA for products, stock, orders and customers on mobile, iPad, laptop or desktop.', canonical: SITE_ORIGIN + '/', robots: INDEX_ROBOTS, h1: 'Your shop and website. One connected POS.' },
   ...Object.fromEntries(Object.entries(MARKETING_PAGES).map(([path, page]) => [path, { title: page.title, description: page.description, canonical: SITE_ORIGIN + path, robots: INDEX_ROBOTS, h1: page.heading }])),
+  ...Object.fromEntries(Object.entries(POLICY_PAGES).map(([path, page]) => [path, { title: page.title, description: page.description, canonical: SITE_ORIGIN + path, robots: INDEX_ROBOTS, h1: page.heading }])),
 };
 for (const [path, title, description] of [
   ['/leadcapture1', 'Check Your Shop and Website Stock | ZAMERIA', 'Review how your shop and WooCommerce website share stock records.'],

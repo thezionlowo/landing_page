@@ -7,6 +7,7 @@ import { HomePage } from './pages/HomePage';
 import { PlanComparisonProvider } from './components/PlanComparison';
 import { SEOHead } from './components/SEOHead';
 import { ZameriaSupportChatWidget } from './components/ZameriaSupportChatWidget';
+import { POLICY_PAGES, type PolicyPath } from './content/policyPages';
 
 // Code-split subpages for performance and smaller initial bundles
 const LoginPage = React.lazy(() => import('./pages/auth/LoginPage').then(m => ({ default: m.LoginPage })));
@@ -19,6 +20,7 @@ const LeadCapture1Page = React.lazy(() => import('./pages/LeadCapture1Page').the
 const LeadCapture2Page = React.lazy(() => import('./pages/LeadCapture2Page').then(m => ({ default: m.LeadCapture2Page })));
 
 const MarketingPage = React.lazy(() => import('./pages/MarketingPage').then(m => ({ default: m.MarketingPage })));
+const PolicyPage = React.lazy(() => import('./pages/PolicyPage').then(m => ({ default: m.PolicyPage })));
 
 export function LandingPageContent() {
   return <HomePage />;
@@ -36,6 +38,9 @@ function MainAppRoutes() {
   const { path, search } = useRouter();
   const redirect = PAGE_REDIRECTS[path.replace(/\/$/, '')];
   if (redirect) return <PageRedirect to={redirect + search} />;
+
+  const policyPath = path.replace(/\/$/, '') as PolicyPath;
+  if (Object.prototype.hasOwnProperty.call(POLICY_PAGES, policyPath)) return <PolicyPage path={policyPath} />;
 
   if (path === '/leadcapture1' || path === '/leadcapture1/' || path === '/leadcapture1.html') {
     return <LeadCapture1Page />;
@@ -77,7 +82,7 @@ function MainAppRoutes() {
 
 export function AppShell({ children }: { children?: React.ReactNode }) {
   const { path } = useRouter();
-  const hideChatWidget = ['/', '/login', '/get-started', '/forgot-password', '/subscribe'].includes(path) || path.startsWith('/leadcapture1') || path.startsWith('/leadcapture2');
+  const hideChatWidget = ['/', '/login', '/get-started', '/forgot-password', '/subscribe', '/terms', '/privacy'].includes(path.replace(/\/$/, '') || '/') || path.startsWith('/leadcapture1') || path.startsWith('/leadcapture2');
 
   return (
     <>

@@ -113,6 +113,7 @@ export const GetStartedPage: React.FC = () => {
         <label htmlFor="reg-email">Email address<input id="reg-email" type="email" required autoComplete="email" placeholder="you@business.com" value={email} disabled={isLoading} onChange={e => { setEmail(e.target.value); setError(null); }} /></label>
         <div><label htmlFor="reg-password">Password</label><div className="site-auth-password"><input id="reg-password" type={showPassword ? 'text' : 'password'} required minLength={8} autoComplete="new-password" placeholder="At least 8 characters" value={password} disabled={isLoading} onChange={e => { setPassword(e.target.value); setError(null); }} /><button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div></div>
         <button className="site-auth-submit" type="submit" disabled={isLoading}>{isLoading ? 'Creating account…' : 'Create account'}</button>
+        <p className="site-policy-notice">Creating an account sends your registration and store details to ZAMERIA for account setup, access checks and onboarding follow-up. By creating an account, you agree to the <a href="/terms">Terms of Service</a>. Read our <a href="/privacy">Privacy Policy</a>.</p>
       </form>
       <p className="site-auth-switch">Already have an account? <a href="/login">Log in</a></p>
     </main>

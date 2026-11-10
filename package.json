@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && tsc -p tsconfig.server.json && vite build && npx tsx scripts/prerender.ts",
+    "build": "tsc -b && tsc -p tsconfig.server.json && vite build && node --import tsx scripts/prerender.ts",
     "preview": "vite preview",
     "test:seo": "npx tsx src/__tests__/seo-regression-test.ts",
     "test:e2e": "npx tsx src/__tests__/e2e-sync-test.ts",

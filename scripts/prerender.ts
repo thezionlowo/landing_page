@@ -13,6 +13,8 @@ import { LoginPage } from '../src/pages/auth/LoginPage';
 import { GetStartedPage } from '../src/pages/auth/GetStartedPage';
 import { ForgotPasswordPage } from '../src/pages/auth/ForgotPasswordPage';
 import { MARKETING_PAGES } from '../src/content/marketingPages';
+import { PolicyPage } from '../src/pages/PolicyPage';
+import { POLICY_PAGES, type PolicyPath } from '../src/content/policyPages';
 import { pageSchema, routeSeo, SITE_ORIGIN } from '../src/lib/siteSeo';
 
 const dist = path.resolve('dist');
@@ -20,6 +22,7 @@ const template = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 const routes: Record<string, React.ComponentType> = {
   '/': HomePage,
   ...Object.fromEntries(Object.entries(MARKETING_PAGES).map(([route, page]) => [route, () => React.createElement(MarketingPage, { page, path: route })])),
+  ...Object.fromEntries(Object.keys(POLICY_PAGES).map(route => [route, () => React.createElement(PolicyPage, { path: route as PolicyPath })])),
   '/login': LoginPage, '/get-started': GetStartedPage, '/forgot-password': ForgotPasswordPage, '/404': NotFoundPage,
 };
 const escape = (value: string) => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');

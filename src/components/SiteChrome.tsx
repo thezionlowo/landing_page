@@ -159,6 +159,8 @@ export function SiteFooter() {
             © {new Date().getFullYear()} ZAMERIA. Your store, connected.
           </span>
           <div>
+            <a href="/terms">Terms</a>
+            <a href="/privacy">Privacy</a>
             <a
               href="https://instagram.com/zameriahq"
               target="_blank"

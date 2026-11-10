@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { MARKETING_PAGES, PAGE_REDIRECTS } from '../content/marketingPages';
+import { POLICY_PAGES } from '../content/policyPages';
 import { HOME_FAQS } from '../content/homeFaqs';
 import { routeSeo, SITE_ORIGIN } from '../lib/siteSeo';
 
@@ -9,7 +10,7 @@ const root = process.cwd();
 const dist = path.join(root, 'dist');
 const hosting = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
 const decode = (s: string) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
-const publicRoutes = ['/', ...Object.keys(MARKETING_PAGES)];
+const publicRoutes = ['/', ...Object.keys(MARKETING_PAGES), ...Object.keys(POLICY_PAGES)];
 const privateRoutes = ['/login', '/get-started', '/forgot-password', '/subscribe', '/payment/complete', '/account'];
 const leadRoutes = ['/leadcapture1', '/leadcapture2'];
 const knownRoutes = new Set([...publicRoutes, ...privateRoutes, ...leadRoutes, ...Object.keys(PAGE_REDIRECTS)]);
@@ -42,8 +43,8 @@ for (const route of publicRoutes) {
   assert(graph.some((node: any) => node['@type'] === 'WebPage' && node.url === config.canonical));
   assert(!JSON.stringify(graph).match(/aggregateRating|reviewCount/), 'No invented ratings');
   const faq = graph.find((node: any) => node['@type'] === 'FAQPage');
-  const expectedFaqs = route === '/' ? HOME_FAQS : MARKETING_PAGES[route].faqs;
-  assert.equal(faq.mainEntity.length, expectedFaqs.length);
+  const expectedFaqs = route === '/' ? HOME_FAQS : MARKETING_PAGES[route]?.faqs || [];
+  assert.equal(faq?.mainEntity.length || 0, expectedFaqs.length);
   for (const [question, answer] of expectedFaqs) {
     assert(plain.includes(question) && plain.includes(answer), `${route}: schema FAQ must be visible`);
     assert(faq.mainEntity.some((node: any) => node.name === question && node.acceptedAnswer.text === answer));
