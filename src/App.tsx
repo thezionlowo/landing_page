@@ -15,6 +15,7 @@ const GetStartedPage = React.lazy(() => import('./pages/auth/GetStartedPage').th
 const ForgotPasswordPage = React.lazy(() => import('./pages/auth/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const AccountLayout = React.lazy(() => import('./pages/account/AccountLayout').then(m => ({ default: m.AccountLayout })));
 const SubscribePage = React.lazy(() => import('./pages/SubscribePage').then(m => ({ default: m.SubscribePage })));
+const PaddleCheckoutPage = React.lazy(() => import('./pages/PaddleCheckoutPage').then(m => ({ default: m.PaddleCheckoutPage })));
 const PaymentCompletePage = React.lazy(() => import('./pages/PaymentCompletePage').then(m => ({ default: m.PaymentCompletePage })));
 const LeadCapture1Page = React.lazy(() => import('./pages/LeadCapture1Page').then(m => ({ default: m.LeadCapture1Page })));
 const LeadCapture2Page = React.lazy(() => import('./pages/LeadCapture2Page').then(m => ({ default: m.LeadCapture2Page })));
@@ -66,6 +67,8 @@ function MainAppRoutes() {
     return <SubscribePage />;
   }
 
+  if (path === '/paddle-checkout') return <PaddleCheckoutPage />;
+
   if (path === '/payment/complete') {
     return <PaymentCompletePage />;
   }
@@ -82,7 +85,7 @@ function MainAppRoutes() {
 
 export function AppShell({ children }: { children?: React.ReactNode }) {
   const { path } = useRouter();
-  const hideChatWidget = ['/', '/login', '/get-started', '/forgot-password', '/subscribe', '/terms', '/privacy'].includes(path.replace(/\/$/, '') || '/') || path.startsWith('/leadcapture1') || path.startsWith('/leadcapture2');
+  const hideChatWidget = ['/', '/login', '/get-started', '/forgot-password', '/subscribe', '/terms', '/privacy', '/refunds', '/paddle-checkout'].includes(path.replace(/\/$/, '') || '/') || path.startsWith('/leadcapture1') || path.startsWith('/leadcapture2');
 
   return (
     <>

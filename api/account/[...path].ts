@@ -6,7 +6,7 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
   res.setHeader('Cache-Control', 'no-store');
   const send = (status: number, body: unknown) => { res.statusCode = status; res.end(JSON.stringify(body)); };
   const route = new URL(req.url || '/', 'https://local').pathname.replace(/^\/api\/account\//, '').replace(/\/$/, '');
-  const methods: Record<string, string> = { login: 'POST', register: 'POST', logout: 'POST', session: 'GET', licenses: 'GET', 'trial/request': 'POST', 'trial/activate': 'POST', 'change-password': 'POST', 'forgot-password': 'POST', 'reset-password': 'POST', profile: 'POST', billing: 'GET', receipt: 'GET', 'store/disconnect': 'POST' };
+  const methods: Record<string, string> = { login: 'POST', register: 'POST', logout: 'POST', session: 'GET', licenses: 'GET', 'trial/request': 'POST', 'trial/activate': 'POST', 'change-password': 'POST', 'forgot-password': 'POST', 'reset-password': 'POST', profile: 'POST', billing: 'GET', receipt: 'GET', 'store/disconnect': 'POST', 'paddle/customer': 'GET', 'paddle/portal': 'POST' };
   if (!methods[route]) return send(404, { error: 'Unknown account operation' });
   if (req.method !== methods[route]) return send(405, { error: 'Method not allowed' });
   if (req.method !== 'GET' && !sameOrigin(req)) return send(403, { error: 'Account request origin rejected' });
@@ -36,7 +36,7 @@ export default async function handler(req: IncomingMessage & { body?: any }, res
     if (route === 'register') { body.source = 'Website Signup'; body.registration_source = 'website'; }
     const upstream: Record<string, string> = {
       login: '/account/login', register: '/account/register', session: '/account/me',
-      licenses: '/account/licenses', 'trial/request': '/trial/request', 'trial/activate': '/license/activate', 'change-password': '/account/change-password', 'forgot-password': '/account/forgot-password', 'reset-password': '/account/reset-password', profile: '/account/update', billing: '/account/billing', receipt: '/account/receipt', 'store/disconnect': '/account/store/disconnect',
+      licenses: '/account/licenses', 'trial/request': '/trial/request', 'trial/activate': '/license/activate', 'change-password': '/account/change-password', 'forgot-password': '/account/forgot-password', 'reset-password': '/account/reset-password', profile: '/account/update', billing: '/account/billing', receipt: '/account/receipt', 'store/disconnect': '/account/store/disconnect', 'paddle/customer': '/account/paddle/customer', 'paddle/portal': '/account/paddle/portal',
     };
     if (route === 'trial/request') body = { business_name: body.business_name || '', store_url: body.store_url || '' };
     if (route === 'trial/activate') {

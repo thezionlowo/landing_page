@@ -33,7 +33,7 @@ const opposite = currency => currency === 'USD' ? 'NGN' : 'USD';
 const title = plan => plan === 'starter' ? 'Starter' : 'Business';
 function deferred() { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; }
 
-async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount = false, delayGeo = false, invalidSession = false, mobile = false } = {}) {
+async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount = false, delayGeo = false, invalidSession = false, mobile = false, usdProvider = 'paystack', usdAvailable = true, paddleCustomerID = null, paddleSDK = false } = {}) {
   const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 } });
   const accountGate = deferred(), geoGate = deferred();
   const state = { sessions: 0, geoRequests: 0, payloads: [], errors: [] };
@@ -51,6 +51,7 @@ async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount
       if (delayGeo) await geoGate.promise;
       return route.fulfill({ json: { countryCode: prices[detectedCurrency].country, currency: detectedCurrency } });
     }
+    if (url.pathname === '/api/account/paddle/customer') return route.fulfill({ status: paddleCustomerID ? 200 : 401, json: paddleCustomerID ? { paddle_customer_id: paddleCustomerID } : { error: 'Sign in' } });
     if (url.pathname.startsWith('/api/account/')) {
       if (url.pathname === '/api/account/session') {
         state.sessions++;
@@ -59,12 +60,17 @@ async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount
       }
       return route.fulfill({ json: { licenses: [], orders: [] } });
     }
+    if (url.pathname.endsWith('/zameria/checkout/config')) return route.fulfill({ json: { usd_provider: usdProvider, usd_available: usdAvailable, usd_auto_renews: usdProvider === 'paddle' } });
+    if (url.pathname.endsWith('/zameria/checkout/paddle')) return route.fulfill({ json: { environment: 'sandbox', client_token: 'test_public_fixture', transaction_id: 'txn_' + 'a'.repeat(26), plan: 'starter' } });
     if (url.pathname.endsWith('/zameria/checkout') && request.method() === 'POST') {
       state.payloads.push(request.postDataJSON());
       return route.fulfill({ status: 503, json: { error: 'QA intercepted checkout. No payment created.' } });
     }
     if (url.origin !== origin) return route.abort();
     return route.continue();
+  });
+  if (paddleSDK) await context.addInitScript(() => {
+    window.PaddleBillingV1 = { Initialized: false, Environment: { set: value => { window.qaPaddleEnvironment = value; } }, Initialize(options) { window.qaPaddleInit = options; this.Initialized = true; }, Update(options) { window.qaPaddleInit = options; }, Checkout: { open(options) { window.qaPaddleOpen = options; } } };
   });
   const page = await context.newPage();
   page.on('pageerror', error => state.errors.push(error.message));
@@ -171,9 +177,30 @@ try {
     await expectCheckout(test.page, 'USD', 'business');
     await submitAndCheck(test, 'USD', 'business');
   });
+  await run('Paddle USD annual disclosure and payload', { usdProvider: 'paddle' }, async test => {
+    await test.page.goto(`${origin}/subscribe?plan=starter&country=US&currency=USD`, { waitUntil: 'networkidle' });
+    assert((await test.page.locator('form').innerText()).includes('Renews automatically every year'));
+    await submitAndCheck(test, 'USD', 'starter');
+  });
+  await run('unapproved Paddle USD blocked while NGN still submits', { usdProvider: 'paddle', usdAvailable: false }, async test => {
+    await test.page.goto(`${origin}/subscribe?plan=starter&country=US&currency=USD`, { waitUntil: 'networkidle' });
+    assert(await test.page.getByRole('button', { name: /Continue to checkout/ }).isDisabled());
+    assert.equal(test.state.payloads.length, 0);
+    await test.page.goto(`${origin}/subscribe?plan=starter&country=NG&currency=NGN`, { waitUntil: 'networkidle' });
+    await submitAndCheck(test, 'NGN', 'starter');
+  });
+  for (const paddleCustomerID of [null, 'ctm_' + 'c'.repeat(26)]) {
+    await run(`Paddle server transaction and ${paddleCustomerID ? 'owned customer' : 'anonymous checkout'}`, { accountCurrency: 'USD', invalidSession: !paddleCustomerID, paddleSDK: true, paddleCustomerID }, async test => {
+      await test.page.goto(`${origin}/paddle-checkout?reference=zmr_${'a'.repeat(48)}`, { waitUntil: 'networkidle' });
+      await test.page.waitForFunction(() => !!window.qaPaddleOpen);
+      const state = await test.page.evaluate(() => ({ environment: window.qaPaddleEnvironment, customer: window.qaPaddleInit.pwCustomer, transactionID: window.qaPaddleOpen.transactionId, successURL: window.qaPaddleOpen.settings.successUrl }));
+      assert.equal(state.environment, 'sandbox'); assert.equal(state.transactionID, 'txn_' + 'a'.repeat(26));
+      assert.equal(state.customer?.id, paddleCustomerID || undefined); assert(new URL(state.successURL).pathname === '/payment/complete');
+    });
+  }
   // The route marker must preserve normal marketing/auth hydration as well as
   // fresh checkout mounts when Vercel rewrites /subscribe to the homepage shell.
-  for (const route of ['/', '/login', '/get-started', '/forgot-password', '/terms', '/privacy', '/woocommerce-pos']) {
+  for (const route of ['/', '/login', '/get-started', '/forgot-password', '/terms', '/privacy', '/refunds', '/woocommerce-pos']) {
     await run(`prerender hydration / ${route}`, {}, async test => {
       await test.page.goto(`${origin}${route}`, { waitUntil: 'networkidle' });
       await test.page.locator('h1').first().waitFor();

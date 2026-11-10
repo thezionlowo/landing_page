@@ -14,9 +14,11 @@
     "refresh:product-preview": "node scripts/refresh-product-preview.mjs",
     "test:checkout": "npx tsx src/__tests__/checkout-comparison-regression.tsx",
     "test:pricing": "node --import tsx src/__tests__/geo-pricing-runtime-regression.ts",
-    "test:checkout:browser": "node scripts/test-checkout-browser.mjs"
+    "test:checkout:browser": "node scripts/test-checkout-browser.mjs",
+    "test:paddle": "node --import tsx src/__tests__/paddle-checkout-regression.ts"
   },
   "dependencies": {
+    "@paddle/paddle-js": "1.6.6",
     "lucide-react": "^1.43.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

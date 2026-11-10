@@ -1653,14 +1653,14 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     persistSession({ ...customer, paymentMethods: nextList });
   };
 
-  // Annual licenses are purchased once; recurring-provider subscription management is not offered.
-  const cancelSubscription = () => { throw new Error('This annual license has no automatic renewal to cancel.'); };
-  const resumeSubscription = () => { throw new Error('Use secure checkout to renew your annual license.'); };
+  // Billing management resolves the authenticated provider on the server.
+  const cancelSubscription = () => { if (typeof window !== 'undefined') window.location.assign('/account?tab=billing'); };
+  const resumeSubscription = cancelSubscription;
   const changePlan = (newPlan: 'Starter' | 'Business', _cycle: 'monthly' | 'yearly' = 'yearly') => {
     if(typeof window!=='undefined')window.location.assign(`/subscribe?plan=${newPlan.toLowerCase()}`);
   };
 
-  // The dashboard only changes after the server has verified a Paystack receipt.
+  // The dashboard only changes after the server has verified the provider receipt.
   // This deliberately does not create a payment, order, or license in the browser.
   const recordVerifiedPayment = (receipt: {
     license_key: string;
@@ -1672,6 +1672,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     currency?: 'NGN' | 'USD';
     amount?: number;
     price?: string;
+    provider?: 'paddle' | 'paystack';
   }) => {
     if (!customer || !receipt.license_key) return;
     if (customer.licenses.some((license) => license.licenseKey === receipt.license_key)) return;
@@ -1696,9 +1697,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       ? receipt.amount
       : (isUsd ? (plan === 'Starter' ? 250 : 400) : (plan === 'Starter' ? 200000 : 300000));
 
-    const total = isUsd
-      ? (plan === 'Starter' ? '$250' : '$400')
-      : (plan === 'Starter' ? '₦200,000' : '₦300,000');
+    const total = new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amountNumber);
 
     const expiresAt = new Date(receipt.expires_at);
     const expiryLabel = Number.isNaN(expiresAt.getTime()) ? receipt.expires_at : expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
@@ -1740,8 +1739,8 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       currency,
       currencySymbol,
       amountNumber,
-      invoiceNumber: `PAYSTACK-${(receipt.payment_reference || idSuffix).slice(-10).toUpperCase()}`,
-      paymentMethod: 'Paystack',
+      invoiceNumber: `${receipt.provider === 'paddle' ? 'PADDLE' : 'PAYSTACK'}-${(receipt.payment_reference || idSuffix).slice(-10).toUpperCase()}`,
+      paymentMethod: receipt.provider === 'paddle' ? 'Paddle' : 'Paystack',
       billingName: `${customer.fullName} • ${customer.businessName}`,
       billingEmail: customer.email,
       items: [`ZAMERIA ${plan} Plan Subscription`, `License Key ${receipt.license_key}`],

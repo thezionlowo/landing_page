@@ -11,7 +11,7 @@ const dist = path.join(root, 'dist');
 const hosting = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
 const decode = (s: string) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>');
 const publicRoutes = ['/', ...Object.keys(MARKETING_PAGES), ...Object.keys(POLICY_PAGES)];
-const privateRoutes = ['/login', '/get-started', '/forgot-password', '/subscribe', '/payment/complete', '/account'];
+const privateRoutes = ['/login', '/get-started', '/forgot-password', '/subscribe', '/paddle-checkout', '/payment/complete', '/account'];
 const leadRoutes = ['/leadcapture1', '/leadcapture2'];
 const knownRoutes = new Set([...publicRoutes, ...privateRoutes, ...leadRoutes, ...Object.keys(PAGE_REDIRECTS)]);
 const sitemap = fs.readFileSync(path.join(dist, 'sitemap.xml'), 'utf8');

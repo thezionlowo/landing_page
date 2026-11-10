@@ -18,6 +18,7 @@ for (const [path, title, description] of [
   ['/get-started', 'Create Your Account | ZAMERIA', 'Create your ZAMERIA account and connect your WooCommerce store.'],
   ['/forgot-password', 'Reset Your Password | ZAMERIA', 'Recover access to your ZAMERIA account.'],
   ['/subscribe', 'Checkout | ZAMERIA', 'Enter your store details and continue to secure payment.'],
+  ['/paddle-checkout', 'Secure USD Checkout | ZAMERIA', 'Complete your annual USD subscription through Paddle.'],
   ['/payment/complete', 'Payment Status | ZAMERIA', 'Check your payment status and open your ZAMERIA account.'],
 ]) ROUTE_SEO_CONFIG[path] = { title, description, canonical: SITE_ORIGIN + path, robots: 'noindex, follow' };
 
