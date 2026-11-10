@@ -124,8 +124,8 @@
     "src/types/settings.ts": "fcf3e2fbac90b3a8d292d2776192b9d374e41ce5cbc3e718688d756cafb39ea6",
     "src/types/sync.ts": "886a4de2801a73682f742d76677c36c6dfdf60e6de6c7bf8f4f1afb8f1af8ad8",
     "src/vite-env.d.ts": "63402eb45931ed925cec4f2a9bc8bda714753d3fb9aef48bb09ea05493fe8fa8",
-    "package.json": "22c67d24b479fa64d0e3a6e499210bdf9ef54b72c2e5142b250601d169774f88",
-    "package-lock.json": "c3757bf5fe6f209aa0beef1bc3865ffd42823df3956fccfb1dfe91cbbc151ea5",
+    "package.json": "d68d4a770bf27bfbc7fb017631824362b5ac8e0088d06e6bc5788d15052fa3c1",
+    "package-lock.json": "2872c7973ff493410bd3f0e5ae87f5e0e5871f814280044bab80468a1b27eb35",
     "preview.html": "e0cbbe01a350be1646aac26d70a7676306cefe6521c6c11fefe26aa50d5f5b36",
     "vite.product-preview.config.ts": "fa9fa85b9dd66004759617a0ace7f93735a7e3f31de98c691e59fcac9b43aca6"
   },
