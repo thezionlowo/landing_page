@@ -21,22 +21,19 @@ export const PaymentCompletePage: React.FC = () => {
       setError("Missing payment reference.");
       return;
     }
-    let active = true;
-    let timer: ReturnType<typeof setTimeout>;
-    async function verify(attempt: number) {
-      try {
-        const receipt = await verifyZameriaCheckout(reference);
-        if (!active) return;
-        recordVerifiedPayment(receipt); setResult(receipt); sessionStorage.removeItem('zameria_pending_checkout');
-      } catch (reason) {
-        if (!active) return;
-        // Checkout completion can precede Paddle's completed transaction event.
-        if (attempt < 10) timer = setTimeout(() => verify(attempt + 1), 2500);
-        else setError(reason instanceof Error ? reason.message : 'Payment verification is pending. Check your account or contact support before paying again.');
-      }
-    }
-    verify(0);
-    return () => { active = false; clearTimeout(timer); };
+    verifyZameriaCheckout(reference)
+      .then((receipt) => {
+        recordVerifiedPayment(receipt);
+        setResult(receipt);
+        sessionStorage.removeItem("zameria_pending_checkout");
+      })
+      .catch((reason) =>
+        setError(
+          reason instanceof Error
+            ? reason.message
+            : "Could not verify this payment.",
+        ),
+      );
   }, [reference, recordVerifiedPayment]);
 
   return (
@@ -100,9 +97,9 @@ export const PaymentCompletePage: React.FC = () => {
           ) : error ? (
             <button
               className="hm-button"
-              onClick={() => window.location.reload()}
+              onClick={() => navigate("/subscribe")}
             >
-              Check payment again <ArrowRight size={16} />
+              Return to checkout <ArrowRight size={16} />
             </button>
           ) : null}
         </section>

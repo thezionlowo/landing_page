@@ -5,5 +5,5 @@ export const HOME_FAQS: [string, string][] = [
   ['How does the free trial work?', 'Create an account and connect an eligible store. Your seven-day trial starts when that store is activated, with Business access. No card is needed. Extra devices do not restart the trial.'],
   ['What happens if the internet goes down?', 'A previously synced device with valid access can save eligible sales locally. Reconnect to upload them and receive stock updates. Offline devices cannot share live stock changes. Offline access ends when its verified access window or licence expires.'],
   ['Can staff have their own accounts?', 'Yes. Staff use their own WordPress accounts, with access based on their role. Starter supports up to two staff members. Business supports unlimited staff.'],
-  ['Do plans renew automatically?', 'USD plans paid through Paddle renew automatically every year; cancel future renewals in Plan & billing. Naira plans paid through Paystack are renewed through checkout. Your account and WooCommerce orders are not deleted when access expires.'],
+  ['Do plans renew automatically?', 'No. Starter and Business are paid annually and renewed through checkout. Your account and WooCommerce orders are not deleted when access expires.'],
 ];

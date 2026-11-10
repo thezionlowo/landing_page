@@ -135,23 +135,6 @@
           "value": "noindex, nofollow"
         }
       ]
-    },
-    {
-      "source": "/paddle-checkout",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        },
-        {
-          "key": "Referrer-Policy",
-          "value": "no-referrer"
-        }
-      ]
     }
   ],
   "redirects": [
@@ -277,14 +260,6 @@
     }
   ],
   "rewrites": [
-    {
-      "source": "/refunds",
-      "destination": "/refunds/index.html"
-    },
-    {
-      "source": "/paddle-checkout",
-      "destination": "/index.html"
-    },
     {
       "source": "/privacy",
       "destination": "/privacy/index.html"

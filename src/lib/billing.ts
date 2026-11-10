@@ -8,7 +8,7 @@ export function mapBilling(records: any[]): OrderItem[] {
       plan: record.plan === 'starter' ? 'Starter Plan' : 'Business Plan', total, amountNumber: amount, currency,
       currencySymbol: currency === 'USD' ? '$' : '₦', invoiceNumber: record.invoice_number,
       transactionRef: record.reference, licenseId: record.license_id, licenseKey: '', licenseStatus: 'Active',
-      connectedDomain: null, paymentMethod: record.provider === 'paddle' ? 'Paddle' : 'Paystack', billingName: '', billingEmail: '', items: ['ZAMERIA annual subscription'] } as OrderItem;
+      connectedDomain: null, paymentMethod: 'Paystack', billingName: '', billingEmail: '', items: ['ZAMERIA annual subscription'] } as OrderItem;
   });
 }
 export async function downloadReceipt(reference: string): Promise<void> {

@@ -4,7 +4,6 @@ export const POLICY_PAGES = {
     heading: 'Terms of Service',
     description: 'Terms for ZAMERIA accounts, subscriptions, the WooCommerce plugin and the POS application.',
   },
-  '/refunds': { title: 'Refund Policy | ZAMERIA', heading: 'Refund Policy', description: 'How to request billing help, cancel future renewals and request a refund.' },
   '/privacy': {
     title: 'Privacy Policy | ZAMERIA',
     heading: 'Privacy Policy',
