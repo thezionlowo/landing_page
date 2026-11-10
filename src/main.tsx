@@ -10,7 +10,10 @@ import './styles/account.css';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  if (rootElement.hasChildNodes()) {
+  // Checkout/account URLs use the homepage HTML as their SPA shell. Hydrate only
+  // when the HTML was rendered for this route; otherwise mount the requested page.
+  const currentPath = window.location.pathname.replace(/\/$/, '') || '/';
+  if (rootElement.hasChildNodes() && rootElement.dataset.prerenderPath === currentPath) {
     ReactDOM.hydrateRoot(
       rootElement,
       <React.StrictMode>

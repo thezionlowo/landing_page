@@ -6,13 +6,15 @@ interface PricingCustomer {
   billingAddress?: { country?: string };
 }
 
-/** Keep a customer's billing region; otherwise preserve the region they chose. */
+/** Preserve an explicit quote, then use the account region or detected location. */
 export function checkoutPricing(customer: PricingCustomer | null | undefined, country: string | null | undefined, currency: string | null | undefined, fallback: GeoPricingConfig): GeoPricingConfig {
-  const lockedCountry = customer?.country || customer?.billingAddress?.country;
-  if (lockedCountry) return resolveGeoPricing(lockedCountry);
-  if (customer?.currency) return resolveGeoPricing(customer.currency === 'NGN' ? 'NG' : 'US');
+  // A restored account must not change the price/currency the buyer just selected.
+  // This only resolves a new checkout; existing subscription prices stay unchanged.
   if (country?.trim()) return resolveGeoPricing(country);
   if (currency === 'NGN' || currency === 'USD') return resolveGeoPricing(currency === 'NGN' ? 'NG' : 'US');
+  const accountCountry = customer?.country || customer?.billingAddress?.country;
+  if (accountCountry) return resolveGeoPricing(accountCountry);
+  if (customer?.currency) return resolveGeoPricing(customer.currency === 'NGN' ? 'NG' : 'US');
   return fallback;
 }
 

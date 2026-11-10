@@ -33,7 +33,7 @@ for (const [route, Component] of Object.entries(routes)) {
     .replace(/<meta\s+(?:name|property)=["'](?:description|robots|keywords|og:[^"']+|twitter:[^"']+)["'][^>]*>/gi, '')
     .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, '')
     .replace(/<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi, '')
-    .replace(/<div id="root">[\s\S]*?<\/div>/, `<div id="root">${body}</div>`);
+    .replace(/<div id="root">[\s\S]*?<\/div>/, `<div id="root" data-prerender-path="${escape(route)}">${body}</div>`);
   const schema = pageSchema(route);
   const head = [
     `<meta name="description" content="${escape(config.description)}" />`,

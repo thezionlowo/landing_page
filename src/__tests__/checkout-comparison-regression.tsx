@@ -53,12 +53,34 @@ async function run() {
     assert(comparison.includes('scope="col"'));
     assert(comparison.includes('Close plan comparison'));
   }
-  // Existing customers retain their billing region rather than adopting a marketing override.
-  assert.equal(checkoutPricing({ country: 'Nigeria' }, 'US', 'USD', INTERNATIONAL_PRICING).currency, 'NGN');
-  assert.equal(checkoutPricing({ currency: 'USD' }, 'NG', 'NGN', NIGERIA_PRICING).currency, 'USD');
-  assert.equal(checkoutPricing({ billingAddress: { country: 'GB' } }, 'NG', 'NGN', NIGERIA_PRICING).currency, 'USD');
+  // A quote selected on the pricing page survives account restoration and geolocation.
+  for (const customer of [
+    null,
+    { country: 'Nigeria', currency: 'NGN' },
+    { country: 'US', currency: 'USD' },
+    { billingAddress: { country: 'Nigeria' } },
+    { billingAddress: { country: 'GB' } },
+    { currency: 'NGN' },
+    { currency: 'USD' },
+  ]) {
+    for (const pricing of [INTERNATIONAL_PRICING, NIGERIA_PRICING]) {
+      for (const plan of ['starter', 'business'] as const) {
+        const url = new URL(planCheckoutUrl(plan, pricing), 'http://localhost');
+        for (const fallback of [NIGERIA_PRICING, INTERNATIONAL_PRICING]) {
+          const selected = checkoutPricing(customer, url.searchParams.get('country'), url.searchParams.get('currency'), fallback);
+          assert.equal(selected.currency, pricing.currency, 'An account must not silently replace the selected checkout currency');
+          assert.equal(selected.plans[plan].amount, pricing.plans[plan].amount);
+          assert.equal(checkoutPricing(customer, null, pricing.currency, fallback).currency, pricing.currency);
+        }
+      }
+    }
+  }
+  // Account purchases without an explicit quote still default to the saved billing region.
+  assert.equal(checkoutPricing({ country: 'Nigeria' }, null, null, INTERNATIONAL_PRICING).currency, 'NGN');
+  assert.equal(checkoutPricing({ currency: 'USD' }, null, null, NIGERIA_PRICING).currency, 'USD');
+  assert.equal(checkoutPricing({ billingAddress: { country: 'GB' } }, null, null, NIGERIA_PRICING).currency, 'USD');
   globalThis.fetch = async () => new Response(JSON.stringify({ error: 'Checkout unavailable' }), { status: 503 });
   await assert.rejects(startZameriaCheckout({ plan: 'starter', email: 'demo@example.invalid', businessName: 'Demo', storeUrl: 'https://shop.example.invalid', callbackUrl: 'http://localhost/payment/complete' }), /Checkout unavailable/);
-  console.log('Checkout comparison passed: NGN/USD × both plans, regional navigation, locked billing region, minimal forms, comparison choices, payment payloads and errors. No real payment was initiated.');
+  console.log('Checkout comparison passed: NGN/USD × both plans, explicit quotes across account restoration, saved-region fallback, minimal forms, comparison choices, payment payloads and errors. No real payment was initiated.');
 }
 void run();
