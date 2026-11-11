@@ -1,47 +1,47 @@
 {
-  "capturedAt": "2026-11-11T14:37:37.252Z",
+  "capturedAt": "2026-11-11T19:39:38.790Z",
   "source": "real isolated POS demo; no production requests",
-  "previewReceiptSha256": "06a7bee9f72de1af988fad21b5c5d433ac334482bdd411ad7ebd69a4185b4464",
+  "previewReceiptSha256": "5a0a3cd24a8a3232225bd86863fead36ec8d488c5362061361e78c7f9c3ffa66",
   "assets": {
     "desktop": {
       "file": "desktop.png",
       "screen": "dashboard",
       "width": 1156,
       "height": 830,
-      "bytes": 107672,
-      "sha256": "b12bb5104641b7da8cf6e8153101c52dc7b86d5e704103976c9e2c318db28482"
+      "bytes": 113284,
+      "sha256": "f4f60c912f98babfc310e75d40e7a567f897bbe76f5326b1d4d81de0ff7ee9f9"
     },
     "laptop": {
       "file": "laptop.png",
       "screen": "orders",
       "width": 1116,
       "height": 745,
-      "bytes": 133527,
-      "sha256": "0c5e19e98b57455659a730d246d64f67e1365c8c4012c1ce796eece1f9322954"
+      "bytes": 121066,
+      "sha256": "00167634616186a86e17499f6564bc85dd2a6ecdf60caf8c031cc07a2ae5fd97"
     },
     "tablet": {
       "file": "tablet.png",
       "screen": "products",
       "width": 956,
       "height": 738,
-      "bytes": 164525,
-      "sha256": "58a38e88b54dc9a527ea5228c1ab0028156d9df2c52db0c2a494033629330741"
+      "bytes": 180255,
+      "sha256": "a15e71481afc69155556abbd3e49bb3fe0d330afbe1f8114ceba1104cca7f603"
     },
     "phone": {
       "file": "phone.png",
       "screen": "customers",
       "width": 466,
       "height": 922,
-      "bytes": 97258,
-      "sha256": "6c4ad97311334f8ab0d00b65c510686f45411b940226a553bc84df1891b7deb5"
+      "bytes": 97969,
+      "sha256": "ed53355b79d51287064c33b5a738645ee341a5475aa234267f637a7633c07e23"
     },
     "workspace": {
       "file": "workspace.png",
       "screen": "sale",
       "width": 1440,
       "height": 900,
-      "bytes": 279252,
-      "sha256": "fd6f1a82cb51e6f7d59c5a8132ba8e76e10fc863dac3b83dacb7a327da324d23"
+      "bytes": 259802,
+      "sha256": "b4d490bfa8bca3401a275b8b47ec4892f28597c468a025f026b594fc039d8736"
     }
   }
 }
