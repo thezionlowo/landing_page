@@ -1,47 +1,47 @@
 {
-  "capturedAt": "2026-11-11T12:04:35.309Z",
+  "capturedAt": "2026-11-11T14:37:37.252Z",
   "source": "real isolated POS demo; no production requests",
-  "previewReceiptSha256": "ec02c51f11f5ba33ffc6bc393174bc0240c5abec7f3deec059e77006b9c942d7",
+  "previewReceiptSha256": "06a7bee9f72de1af988fad21b5c5d433ac334482bdd411ad7ebd69a4185b4464",
   "assets": {
     "desktop": {
       "file": "desktop.png",
       "screen": "dashboard",
       "width": 1156,
       "height": 830,
-      "bytes": 137265,
-      "sha256": "ab77655f8c0330f9416e14723f0e533d95382963860df7330d4eac84a87e0808"
+      "bytes": 107672,
+      "sha256": "b12bb5104641b7da8cf6e8153101c52dc7b86d5e704103976c9e2c318db28482"
     },
     "laptop": {
       "file": "laptop.png",
       "screen": "orders",
       "width": 1116,
       "height": 745,
-      "bytes": 125653,
-      "sha256": "2c7a881285cf85308f34b68752043333e29a440765a639efe5ba62fdb43b27eb"
+      "bytes": 133527,
+      "sha256": "0c5e19e98b57455659a730d246d64f67e1365c8c4012c1ce796eece1f9322954"
     },
     "tablet": {
       "file": "tablet.png",
       "screen": "products",
       "width": 956,
       "height": 738,
-      "bytes": 187041,
-      "sha256": "a38cb7d39246155e522409c545042d1cfb04d80ca9bebb72643935bf46878e3b"
+      "bytes": 164525,
+      "sha256": "58a38e88b54dc9a527ea5228c1ab0028156d9df2c52db0c2a494033629330741"
     },
     "phone": {
       "file": "phone.png",
       "screen": "customers",
       "width": 466,
       "height": 922,
-      "bytes": 96607,
-      "sha256": "414e87dbd8fef310514de81ace67901ebdd796e2ab98507a9dd1e301d3c9cf20"
+      "bytes": 97258,
+      "sha256": "6c4ad97311334f8ab0d00b65c510686f45411b940226a553bc84df1891b7deb5"
     },
     "workspace": {
       "file": "workspace.png",
       "screen": "sale",
       "width": 1440,
       "height": 900,
-      "bytes": 569017,
-      "sha256": "4c517f9100fd073e29acc349336a7bbe8d03aa2ed8f24f7d1d0bfda124bf64bc"
+      "bytes": 279252,
+      "sha256": "fd6f1a82cb51e6f7d59c5a8132ba8e76e10fc863dac3b83dacb7a327da324d23"
     }
   }
 }

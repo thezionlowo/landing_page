@@ -31,6 +31,7 @@ const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const assets = {};
 try {
   for (const shot of shots) {
+    console.log(`Preparing ${shot.name}: ${shot.screen}`);
     const context = await browser.newContext({ viewport: { width: shot.display + 100, height: 1100 }, deviceScaleFactor: 1 });
     await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
     const page = await context.newPage();
@@ -54,7 +55,16 @@ try {
     await page.waitForFunction(() => !!document.querySelector('iframe')?.contentDocument?.querySelector('main'), { timeout: 30000 });
     const frame = page.frames().find(frame => frame.parentFrame());
     await frame.locator('main').waitFor();
-    await frame.evaluate(async () => { await document.fonts.ready; await Promise.all([...document.images].map(image => image.decode().catch(() => {}))); });
+    await frame.evaluate(async () => {
+      await document.fonts.ready;
+      // Offscreen lazy product images do not begin loading until scrolled into view.
+      // Waiting on their decode promises can stall an otherwise complete mockup.
+      const visibleImages = [...document.images].filter(image => {
+        const bounds = image.getBoundingClientRect();
+        return bounds.bottom > 0 && bounds.top < innerHeight && bounds.right > 0 && bounds.left < innerWidth;
+      });
+      await Promise.all(visibleImages.map(image => image.decode().catch(() => {})));
+    });
     await page.waitForTimeout(1000);
     if (shot.screen === 'orders') {
       await frame.getByText('#1003', { exact: true }).click();
