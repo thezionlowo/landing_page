@@ -36,7 +36,7 @@ function deferred() { let resolve; const promise = new Promise(done => { resolve
 async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount = false, delayGeo = false, invalidSession = false, mobile = false, receipt, pending = 0, verificationError, staleAccountResponse = false } = {}) {
   const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 } });
   const accountGate = deferred(), geoGate = deferred(), staleGate = deferred(), staleStarted = deferred();
-  const state = { sessions: 0, geoRequests: 0, payloads: [], errors: [], verifications: 0, authenticated: !!accountCurrency && !invalidSession };
+  const state = { sessions: 0, geoRequests: 0, payloads: [], errors: [], verifications: 0, receiptRequests: 0, addressUpdates: 0, authenticated: !!accountCurrency && !invalidSession };
   const profile = {
     id: 'qa-currency', email: 'currency@example.invalid', fullName: 'Currency QA', businessName: 'Test Store',
     country: prices[accountCurrency || 'NGN'].country, currency: accountCurrency,
@@ -48,6 +48,7 @@ async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount
     profile.currency = receipt.currency;
     profile.country = receipt.country;
     profile.licenses = [{ ...receipt, id: receipt.license_id, store_domain: '', requested_domain: receipt.store_domain }];
+    profile.billing = [{ reference: receipt.payment_reference, license_id: receipt.license_id, plan: receipt.plan, currency: receipt.currency, amount_minor: Math.round(receipt.amount * 100), paid_at: new Date().toISOString(), invoice_number: 'QA-ANNUAL-RECEIPT' }];
   };
   if (accountCurrency) await context.addInitScript(profile => localStorage.setItem('zameria_customer_session_v3', JSON.stringify(profile)), profile);
   await context.route('**/*', async route => {
@@ -66,6 +67,17 @@ async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount
       return route.fulfill({ json: receipt });
     }
     if (url.pathname.startsWith('/api/account/')) {
+      if (url.pathname === '/api/account/receipt') {
+        state.receiptRequests++;
+        assert.equal(url.searchParams.get('reference'), receipt.payment_reference);
+        return route.fulfill({ contentType: 'application/pdf', body: '%PDF-1.4\n% Isolated regression receipt fixture\n%%EOF' });
+      }
+      if (url.pathname === '/api/account/profile') {
+        state.addressUpdates++;
+        profile.billing_address = request.postDataJSON().billingAddress;
+        return route.fulfill({ json: { account: profile } });
+      }
+
       if (url.pathname === '/api/account/login' || url.pathname === '/api/account/register') {
         state.authenticated = true;
         profile.email = request.postDataJSON().email; syncReceipt();
@@ -119,6 +131,12 @@ async function submitAndCheck(test, currency, plan) {
   assert.equal(payload.plan, plan);
   assert.equal(payload.amount, prices[currency].amounts[plan]);
   assert.equal(payload.country === 'Nigeria', currency === 'NGN');
+}
+async function expectAccountFlow(page) {
+  const html = await page.locator('#root').innerHTML();
+  assert(!html.includes('ZMR-QA-ANNUAL'), 'Internal credentials must not be rendered in customer markup');
+  assert.equal(await page.getByRole('button', { name: /copy.*(?:key|licen[cs]e)/i }).count(), 0);
+  assert(!/\b(?:licen[cs]e|activation) key\b/i.test(await page.locator('main').innerText()), 'Customer guidance must use account connection');
 }
 async function run(name, options, check) {
   if (process.env.ZAMERIA_CHECKOUT_FILTER && !new RegExp(process.env.ZAMERIA_CHECKOUT_FILTER).test(name)) return;
@@ -228,6 +246,7 @@ try {
       await test.page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
       await test.page.getByRole('heading', { name: 'Congratulations. You’re ready to go.' }).waitFor();
       assert((await test.page.locator('.payment-details').innerText()).includes('currency.example.invalid'));
+      await expectAccountFlow(test.page);
       assert.equal(test.state.verifications, 1, 'Recording a receipt must not restart verification');
       await test.page.waitForFunction(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3'))?.licenses?.length === 1);
       const cached = await test.page.evaluate(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3')));
@@ -239,9 +258,50 @@ try {
       assert.equal(cached.licenses.length, 1);
       await test.page.getByRole('button', { name: 'Open your dashboard' }).click();
       await test.page.waitForURL('**/account?tab=billing');
+      await test.page.getByRole('heading', { name: 'Plan & billing', exact: true }).waitFor();
+      await expectAccountFlow(test.page);
+      assert((await test.page.locator('.site-account-page').innerText()).includes('currency.example.invalid'));
+      if (process.env.ZAMERIA_CHECKOUT_SCREENSHOTS) {
+        await mkdir(process.env.ZAMERIA_CHECKOUT_SCREENSHOTS, { recursive: true });
+        await test.page.screenshot({ path: path.join(process.env.ZAMERIA_CHECKOUT_SCREENSHOTS, `billing-${plan}-${currency}.png`), fullPage: true });
+      }
       assert.equal(test.state.payloads.length, 0);
     });
   }
+  await run('account billing keeps receipts, address editing and legacy links', { accountCurrency: 'USD', receipt: paidReceipt('business') }, async test => {
+    const { page } = test;
+    await page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
+    await page.getByRole('button', { name: 'Open your dashboard' }).click();
+    await page.getByRole('heading', { name: 'Plan & billing', exact: true }).waitFor();
+    for (const alias of ['licenses', 'orders', 'plan']) {
+      await page.goto(`${origin}/account?tab=${alias}`, { waitUntil: 'load' });
+      await page.getByRole('heading', { name: 'Plan & billing', exact: true }).waitFor();
+      await expectAccountFlow(page);
+    }
+    await page.getByRole('button', { name: 'View plans', exact: true }).click();
+    await page.getByRole('dialog').waitFor();
+    await page.getByRole('button', { name: 'Close plan comparison' }).click();
+    await page.getByRole('button', { name: 'Edit address' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel('First name', { exact: true }).fill('Paid');
+    await dialog.getByLabel('Street address', { exact: true }).fill('1 Checkout Road');
+    await dialog.getByLabel('City', { exact: true }).fill('Test City');
+    await dialog.getByLabel('Country', { exact: true }).fill('US');
+    await dialog.getByRole('button', { name: 'Save address', exact: true }).click();
+    await page.getByRole('status').filter({ hasText: 'Billing address saved.' }).waitFor();
+    assert.equal(test.state.addressUpdates, 1);
+    await page.getByRole('button', { name: 'Download receipt QA-ANNUAL-RECEIPT', exact: true }).waitFor();
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download receipt QA-ANNUAL-RECEIPT', exact: true }).click();
+    assert.equal((await download).suggestedFilename(), `zameria-${reference}.pdf`);
+    assert.equal(test.state.receiptRequests, 1);
+    await page.getByRole('link', { name: 'Connect your store', exact: true }).click();
+    await page.getByRole('heading', { name: 'Your store', exact: true }).waitFor();
+    await expectAccountFlow(page);
+    assert((await page.locator('main').innerText()).includes('log in with your existing account'));
+    assert(!(await page.locator('main').innerText()).includes('Your eligible seven-day trial starts'));
+    assert.equal(test.state.payloads.length, 0);
+  });
   await run('verified payment survives an older account response', { accountCurrency: 'NGN', receipt: paidReceipt(), staleAccountResponse: true }, async test => {
     await test.page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
     await test.page.getByRole('button', { name: 'Open your dashboard' }).waitFor();
@@ -285,6 +345,8 @@ try {
       assert(new URL(page.url()).searchParams.get('reference') === reference);
       await page.getByRole('button', { name: 'Open your dashboard' }).click();
       await page.waitForURL('**/account?tab=billing');
+      await page.getByRole('heading', { name: 'Plan & billing', exact: true }).waitFor();
+      await expectAccountFlow(page);
       assert.equal(test.state.payloads.length, 0);
     });
   }

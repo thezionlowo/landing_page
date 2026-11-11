@@ -3,12 +3,13 @@ import { getPosAppUrl } from '../../lib/routes';
 
 interface Props {
   connected: boolean;
+  hasPaidPlan?: boolean;
   storeUrl: string;
   email: string;
   checkConnection: () => Promise<{ success: boolean; error?: string }>;
 }
 /** Store completion comes from server confirmation. Downloads and opening a till are not completion evidence. */
-export function SetupChecklist({ connected, storeUrl, email, checkConnection }: Props) {
+export function SetupChecklist({ connected, hasPaidPlan = false, storeUrl, email, checkConnection }: Props) {
   const [checking, setChecking] = useState(false);
   const [message, setMessage] = useState('');
   const check = async () => {
@@ -50,6 +51,6 @@ export function SetupChecklist({ connected, storeUrl, email, checkConnection }: 
         <p>Wait for the first sync. Check your products and prices, then make a test sale.</p>
       </li>
     </ol>
-    <p className="site-setup-footnote">Your eligible seven-day trial starts when the store connection is confirmed.</p>
+    <p className="site-setup-footnote">{hasPaidPlan ? 'Your account’s access is applied when you connect the plugin.' : 'Your eligible seven-day trial starts when the store connection is confirmed.'}</p>
   </section>;
 }

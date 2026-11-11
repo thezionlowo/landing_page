@@ -747,40 +747,7 @@ button:disabled {
   background: var(--site-blue-soft);
   margin: 0 auto;
 }
-.site-payment-license {
-  background: var(--site-paper);
-  border: 1px solid var(--site-line);
-  border-radius: 7px;
-  padding: 22px;
-  text-align: left;
-  margin-top: 25px;
-}
-.site-payment-license > span {
-  display: block;
-  font-size: 8px;
-  color: var(--site-muted);
-  letter-spacing: 0.1em;
-  margin-bottom: 9px;
-}
-.site-payment-license > div {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.site-payment-license strong {
-  overflow-wrap: anywhere;
-  font-family: var(--site-mono);
-  font-size: 13px;
-}
-.site-payment-license button {
-  flex-shrink: 0;
-  color: var(--site-blue);
-}
-.site-payment-license p {
-  font-size: 11px;
-  color: var(--site-muted);
-  margin-top: 12px;
-}
+
 /* Authenticated merchant workspace: recognisable brand, denser working layout. */
 .site-account {
   font-family: var(--site-font) !important;
@@ -1575,8 +1542,6 @@ button[aria-label="Contact ZAMERIA Support"] > span { display: none; }
 .payment-details { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; padding: 24px 0; margin: 20px 0 0; border-top: 1px solid var(--site-line); }
 .payment-details dt { font-size: 11px; color: var(--site-muted); margin-bottom: 6px; }
 .payment-details dd { margin: 0; font-size: 13px; color: var(--site-ink); overflow-wrap: anywhere; font-weight: 600; }
-.checkout-result .site-payment-license { margin: 0 0 24px; }
-.checkout-result .site-payment-license strong { font-size: clamp(12px, 3.4vw, 17px); overflow-wrap: anywhere; }
 .payment-next h2 { font-size: 14px; margin: 0 0 7px; }
 .payment-next p, .payment-connect-note { font-size: 12px; line-height: 1.75; color: var(--site-muted); }
 .payment-primary { width: 100%; justify-content: center; margin-top: 20px; }

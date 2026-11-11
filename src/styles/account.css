@@ -47,7 +47,6 @@
 .site-account-password button { position: absolute; right: 3px; top: 3px; border: none; min-height: 40px; padding: 10px; }
 .site-account-price { font-size: 28px !important; color: var(--site-ink) !important; font-weight: 700; letter-spacing: -.04em; }
 .site-account-price small { font-size: 14px; font-weight: 400; letter-spacing: 0; color: var(--site-muted); }
-.site-account-license { padding-top: 24px; margin-top: 24px; border-top: 1px solid var(--site-line); }
 .site-account-table-wrap { overflow-x: auto; margin-top: 20px; }
 .site-account-table-wrap table { width: 100%; text-align: left; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
 .site-account-table-wrap th, .site-account-table-wrap td { padding: 14px 16px; border-bottom: 1px solid var(--site-line); }
@@ -63,3 +62,6 @@
 @media (max-width: 480px) { .site-account-definition-list > div { grid-template-columns: 1fr; gap: 5px; } .site-account-copy-row { align-items: flex-start; flex-direction: column; } .site-account-panel { padding: 20px; } }
 
 .site-account { background: #f3f6fa !important; }
+
+.site-account-plan-connection { border-top: 1px solid var(--site-line); padding-top: 16px; margin-top: 20px; }
+.site-account-plan-connection a { display: inline-block; color: var(--site-primary); font-size: 13px; font-weight: 600; padding: 6px 0; text-underline-offset: 3px; }
