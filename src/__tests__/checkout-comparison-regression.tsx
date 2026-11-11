@@ -12,7 +12,7 @@ import { SubscribePage } from '../pages/SubscribePage';
 async function run() {
   // Explicit regional choices survive navigation and override a different detected region.
   for (const [country, currency, starter, business, fallback] of [
-    ['NG', 'NGN', 200000, 300000, INTERNATIONAL_PRICING],
+    ['NG', 'NGN', 200000, 350000, INTERNATIONAL_PRICING],
     ['US', 'USD', 250, 400, NIGERIA_PRICING],
   ] as const) {
     const pricing = checkoutPricing(null, country, currency, fallback);
@@ -30,6 +30,7 @@ async function run() {
       assert(!html.includes('<select'), 'A selected plan must not require another selection step');
       assert(!html.includes('A little less admin'));
       assert(html.includes('Compare plans'));
+      if (plan === 'starter') assert(html.includes('500 products · 5 staff accounts'));
 
       let submitted: Record<string, unknown> | undefined;
       globalThis.fetch = async (_url, init) => {
@@ -50,6 +51,8 @@ async function run() {
     assert(comparison.includes('Keep Starter'));
     assert(comparison.includes('Choose Business'));
     assert(comparison.includes('Unlimited'));
+    assert(comparison.includes('Up to 5'));
+    assert(comparison.includes('One per staff account'));
     assert(comparison.includes('scope="col"'));
     assert(comparison.includes('Close plan comparison'));
   }

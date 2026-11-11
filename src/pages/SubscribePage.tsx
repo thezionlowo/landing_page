@@ -112,7 +112,7 @@ export const SubscribePage: React.FC = () => {
             <div><strong>{selected.plan}</strong><span>{price}<small> / year</small></span></div>
             <button type="button" onClick={comparePlans} aria-haspopup="dialog">Compare plans</button>
           </div>
-          <ul className="checkout-includes"><li><Check size={15} />One WooCommerce store</li><li><Check size={15} />12 months of access</li><li><Check size={15} />{plan === 'starter' ? '500 products · 2 staff accounts' : 'Unlimited products and staff'}</li></ul>
+          <ul className="checkout-includes"><li><Check size={15} />One WooCommerce store</li><li><Check size={15} />12 months of access</li><li><Check size={15} />{plan === 'starter' ? '500 products · 5 staff accounts' : 'Unlimited products and staff'}</li></ul>
           <form onSubmit={submit}>
             <label htmlFor="checkout-business">Business name<input id="checkout-business" required autoComplete="organization" value={businessName} onChange={event => setBusinessName(event.target.value)} placeholder="Your store name" disabled={submitting} /></label>
             <label htmlFor="checkout-email">Email address<input id="checkout-email" required type="email" autoComplete="email" value={checkoutEmail} readOnly={isAuthenticated} onChange={event => setEmail(event.target.value)} placeholder="name@business.com" disabled={submitting} /></label>

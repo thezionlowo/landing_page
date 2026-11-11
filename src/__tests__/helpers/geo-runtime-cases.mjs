@@ -27,7 +27,7 @@ for (const country of ['NG', 'NGA', 'Nigeria', 'ng', 'US', 'GB', 'GH', 'ZA', 'KE
   assert.match(result.headers['cache-control'], /private.*no-store/);
   assert.equal(data.currency, nigeria ? 'NGN' : 'USD');
   assert.equal(data.plans.starter.amount, nigeria ? 200000 : 250);
-  assert.equal(data.plans.business.amount, nigeria ? 300000 : 400);
+  assert.equal(data.plans.business.amount, nigeria ? 350000 : 400);
   assert.equal('detectedIp' in data, false);
   pass();
 }

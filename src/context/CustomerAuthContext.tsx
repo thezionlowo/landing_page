@@ -492,7 +492,7 @@ export const DEMO_TRIAL_CUSTOMER: CustomerProfile = {
   billingCycle: 'monthly',
   nextBillingDate: '',
   storesCount: 0,
-  staffAllowance: 2,
+  staffAllowance: 5,
   billingAddress: {
     firstName: 'Zion',
     lastName: 'Lowo',
@@ -577,7 +577,7 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
     status: 'active',
     planId: 'Business',
     planName: 'Business Plan',
-    price: '₦300,000 / year',
+    price: '₦350,000 / year',
     billingCycle: 'yearly',
     startDate: 'September 12, 2026',
     renewsAt: 'September 12, 2027',
@@ -586,7 +586,7 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
   trialDaysRemaining: 0,
   trialEndsAt: 'September 12, 2026',
   plan: 'Business',
-  planPrice: '₦300,000 / year',
+  planPrice: '₦350,000 / year',
   billingCycle: 'yearly',
   nextBillingDate: 'September 12, 2027',
   storesCount: 1,
@@ -618,7 +618,7 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
       plan: 'Business',
       planName: 'Business Plan',
       billingCycle: 'yearly',
-      price: '₦300,000 / year',
+      price: '₦350,000 / year',
       status: 'Active',
       connectedDomain: 'brandone.com',
       activationStatus: 'Activated',
@@ -636,8 +636,8 @@ export const DEMO_PAID_CUSTOMER: CustomerProfile = {
       date: 'Sep 12, 2026',
       status: 'Completed',
       plan: 'Business Plan (Annual)',
-      total: '₦300,000',
-      amountNumber: 300000,
+      total: '₦350,000',
+      amountNumber: 350000,
       invoiceNumber: 'INV-2026-0941',
       paymentMethod: 'Mastercard ending in 4092',
       billingName: 'Zion Lowo • Zion Business Ltd.',
@@ -727,7 +727,7 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
       orderNumber: lic.orderNumber || `#ZM-LIC-${idx + 1}`,
       features: licPlan === 'Business'
         ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
-        : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
+        : ['Up to 500 products', 'Up to 5 staff members', 'Basic staff roles', 'Standard support'],
     });
   }
 
@@ -768,6 +768,7 @@ export function normalizeCustomerProfile(profile: CustomerProfile | null): Custo
     giftedDetails: isGifted ? profile.giftedDetails : undefined,
     accountStatus: finalAccountStatus,
     plan: finalPlan,
+    staffAllowance: finalPlan === 'Starter' ? 5 : finalPlan === 'Business' ? 999 : profile.staffAllowance,
     planPrice: finalPrice || 'None (Trial Eligible)',
     billingCycle: 'yearly',
     nextBillingDate: renewsAt || profile.nextBillingDate || '',
@@ -911,7 +912,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
               const giftedDetails = isGifted ? {plan: activePaidLicense.plan, expiresAt:activePaidLicense.expires_at, reason:activePaidLicense.gift_reason} as CustomerProfile['giftedDetails'] : undefined;
               const isPaid = Boolean(activePaidLicense);
 
-              // Authoritative plan resolution: Starter (₦200,000/yr) or Business (₦300,000/yr)
+              // Authoritative plan resolution: Starter (₦200,000/yr) or Business (₦350,000/yr)
               const rawGiftedPlan = String(giftedDetails?.plan || '').toLowerCase();
               const detectedPlanStr = String(rawGiftedPlan || acc.plan || activePaidLicense?.plan || prev.plan || '').toLowerCase();
               const isStarter = detectedPlanStr.includes('starter') || (!detectedPlanStr.includes('business') && rawGiftedPlan === 'starter');
@@ -976,7 +977,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                     orderNumber: lic.orderNumber || (paymentRef ? `#ZM-${paymentRef.slice(-8).toUpperCase()}` : `#ZM-LIC-${idx + 1}`),
                     features: licPlan === 'Business'
                       ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
-                      : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
+                      : ['Up to 500 products', 'Up to 5 staff members', 'Basic staff roles', 'Standard support'],
                   };
                 });
 
@@ -1187,7 +1188,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           orderNumber: '',
           features: plan === 'Business'
             ? ['Unlimited products', 'Unlimited POS registers', 'Multi-staff permissions', 'Priority support']
-            : ['Up to 500 products', '2 POS registers', 'Basic staff roles', 'Standard support'],
+            : ['Up to 500 products', 'Up to 5 staff members', 'Basic staff roles', 'Standard support'],
         });
       }
 
@@ -1252,7 +1253,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
               })() : ''),
               storesCount: storeUrl ? 1 : 0,
-              staffAllowance: paidPlan === 'Starter' ? 2 : 999,
+              staffAllowance: paidPlan === 'Starter' ? 5 : 999,
               billingAddress: acc.billing_address || {
                 firstName: fullName.split(' ')[0] || 'Store',
                 lastName: fullName.split(' ').slice(1).join(' ') || 'Owner',
@@ -1415,7 +1416,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         billingCycle: 'monthly',
         nextBillingDate: '',
         storesCount: 0,
-        staffAllowance: 2,
+        staffAllowance: 5,
         billingAddress: {
           firstName,
           lastName,
@@ -1690,15 +1691,16 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     const price = receipt.price || (isUsd
       ? (plan === 'Starter' ? '$250 / year' : '$400 / year')
-      : (plan === 'Starter' ? '₦200,000 / year' : '₦300,000 / year'));
+      : (plan === 'Starter' ? '₦200,000 / year' : '₦350,000 / year'));
 
     const amountNumber = typeof receipt.amount === 'number'
       ? receipt.amount
-      : (isUsd ? (plan === 'Starter' ? 250 : 400) : (plan === 'Starter' ? 200000 : 300000));
+      : (isUsd ? (plan === 'Starter' ? 250 : 400) : (plan === 'Starter' ? 200000 : 350000));
 
-    const total = isUsd
-      ? (plan === 'Starter' ? '$250' : '$400')
-      : (plan === 'Starter' ? '₦200,000' : '₦300,000');
+    // A receipt describes the accepted payment, including older catalogue prices.
+    const total = new Intl.NumberFormat('en-US', {
+      style: 'currency', currency, minimumFractionDigits: Number.isInteger(amountNumber) ? 0 : 2, maximumFractionDigits: 2,
+    }).format(amountNumber);
 
     const expiresAt = new Date(receipt.expires_at);
     const expiryLabel = Number.isNaN(expiresAt.getTime()) ? receipt.expires_at : expiresAt.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });

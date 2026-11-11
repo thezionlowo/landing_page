@@ -165,12 +165,12 @@ async function runLifecycleAudit() {
     ...expiredCustomer,
     accountStatus: 'active_business',
     plan: 'Business',
-    planPrice: '₦300,000 / year',
+    planPrice: '₦350,000 / year',
     subscription: {
       status: 'active',
       planId: 'Business',
       planName: 'Business Plan',
-      price: '₦300,000 / year',
+      price: '₦350,000 / year',
       billingCycle: 'yearly',
       startDate: new Date(nowMs).toISOString(),
       renewsAt: new Date(nowMs + 365 * 24 * 60 * 60 * 1000).toISOString(),
@@ -182,7 +182,7 @@ async function runLifecycleAudit() {
         plan: 'Business',
         planName: 'Business Plan',
         billingCycle: 'yearly',
-        price: '₦300,000 / year',
+        price: '₦350,000 / year',
         status: 'Active',
         connectedDomain: 'lagosflagship.ng',
         activationStatus: 'Activated',
@@ -210,12 +210,12 @@ async function runLifecycleAudit() {
   const webhookRecord = {
     reference: 'ZMR_TXN_BROWSER_CLOSED_1234',
     status: 'charge.success',
-    amount: 30000000,
+    amount: 35000000,
     accountId: paidCustomer.id,
     plan: 'Business',
   };
   assert(Boolean(webhookRecord.reference), 'Webhook contains authoritative transaction reference');
-  assert(webhookRecord.amount === 30000000, 'Webhook validates ₦300,000 Business amount');
+  assert(webhookRecord.amount === 35000000, 'Webhook validates ₦350,000 Business amount');
   console.log('✓ PASS: Server-side webhook captures payment and provisions license even if browser terminates.\n');
   passedTests++;
 
@@ -245,7 +245,7 @@ async function runLifecycleAudit() {
   // SCENARIO 8: STARTER PLAN SERVER-SIDE LIMIT ENFORCEMENT
   // -------------------------------------------------------------------------
   console.log('--- TEST 8: Starter Plan Limit Enforcement ---');
-  const starterPlanLimits = { maxProducts: 500, maxDevices: 2 };
+  const starterPlanLimits = { maxProducts: 500, maxDevices: 5 };
   
   // Product test
   const requestedProductIndex = 501;
@@ -253,10 +253,10 @@ async function runLifecycleAudit() {
   assert(isProductAllowed === false, 'Product #501 must be blocked on Starter plan');
 
   // Device test
-  const currentActiveDevices = 2;
-  const canAddThirdDevice = currentActiveDevices < starterPlanLimits.maxDevices;
-  assert(canAddThirdDevice === false, 'Register #3 must be blocked on Starter plan');
-  console.log('✓ PASS: Starter plan restricts catalog sync to 500 products and max 2 staff registers.\n');
+  const currentActiveDevices = 5;
+  const canAddSixthAccount = currentActiveDevices < starterPlanLimits.maxDevices;
+  assert(canAddSixthAccount === false, 'Staff account #6 must be blocked on Starter plan');
+  console.log('✓ PASS: Starter plan restricts catalog sync to 500 products and max 5 active staff accounts.\n');
   passedTests++;
 
   // -------------------------------------------------------------------------

@@ -213,7 +213,7 @@ async function runEndToEndTestSuite() {
         expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
         orderId: 'ord_' + Date.now(),
         orderNumber: '#ZM-STA-01',
-        features: ['1 WooCommerce Store', '1 Physical Location', 'Max 500 Products', 'Max 2 Staff'],
+        features: ['1 WooCommerce Store', '1 Physical Location', 'Max 500 Products', 'Max 5 Staff'],
       },
     ],
   };
@@ -248,10 +248,10 @@ async function runEndToEndTestSuite() {
   passed++;
 
   // ============================================================================
-  // STAGE 7: STARTER CAPACITY LIMITS (500 Products, 2 Staff)
+  // STAGE 7: STARTER CAPACITY LIMITS (500 Products, 5 Staff)
   // ============================================================================
   console.log('▶ [STAGE 7] Testing Starter Plan Capacity Enforcement...');
-  const starterLimits = { maxProducts: 500, maxStaff: 2, maxStores: 1 };
+  const starterLimits = { maxProducts: 500, maxStaff: 5, maxStores: 1 };
   
   // Product limits
   const attempt500thProduct = 500 <= starterLimits.maxProducts;
@@ -260,11 +260,11 @@ async function runEndToEndTestSuite() {
   assert(attempt501stProduct === false, 'Product #501 must be blocked on Starter');
 
   // Staff / Register limits
-  const attempt2ndStaff = 2 <= starterLimits.maxStaff;
-  const attempt3rdStaff = 3 <= starterLimits.maxStaff;
-  assert(attempt2ndStaff === true, 'Staff #2 must be allowed on Starter');
-  assert(attempt3rdStaff === false, 'Staff #3 must be blocked on Starter');
-  console.log('  ✓ PASS: Starter plan restricts store to 500 products and 2 active staff registers.\n');
+  const attempt5thStaff = 5 <= starterLimits.maxStaff;
+  const attempt6thStaff = 6 <= starterLimits.maxStaff;
+  assert(attempt5thStaff === true, 'Staff #5 must be allowed on Starter');
+  assert(attempt6thStaff === false, 'Staff #6 must be blocked on Starter');
+  console.log('  ✓ PASS: Starter plan restricts store to 500 products and 5 active staff accounts.\n');
   passed++;
 
   // ============================================================================

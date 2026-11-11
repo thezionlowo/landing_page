@@ -3,7 +3,7 @@
  * Single source of truth for all country, currency, plan, and price definitions.
  *
  * Rules:
- * 1. Nigeria (NG): Starter ₦200,000/year; Business ₦300,000/year.
+ * 1. Nigeria (NG): Starter ₦200,000/year; Business ₦350,000/year.
  * 2. All countries outside Nigeria: Starter $250/year; Business $400/year.
  * 3. These are fixed prices — currencies are NEVER converted via FX rates.
  * 4. Subscriptions lock their currency and amount upon creation.
@@ -46,7 +46,7 @@ export const STARTER_FEATURES = [
   '1 WooCommerce store',
   '1 physical location',
   'Up to 500 products',
-  'Up to 2 staff members',
+  'Up to 5 staff members',
   'POS checkout and stock sync',
 ];
 
@@ -76,12 +76,12 @@ const ngBusinessPlan: PlanPricing = {
   id: 'business',
   plan: 'Business',
   planName: 'Business Plan',
-  amount: 300000,
+  amount: 350000,
   currency: 'NGN',
   currencySymbol: '₦',
-  displayPrice: '₦300,000',
-  priceFormatted: '₦300,000 / year',
-  priceFormattedWithInterval: '₦300,000 / year',
+  displayPrice: '₦350,000',
+  priceFormatted: '₦350,000 / year',
+  priceFormattedWithInterval: '₦350,000 / year',
   billingCycle: 'yearly',
   features: BUSINESS_FEATURES,
 };
@@ -192,7 +192,7 @@ export function getAuthoritativePlanPrice(
   const isNigeria = isNigerianCountry(countryOrCurrency) || (countryOrCurrency && countryOrCurrency.toUpperCase() === 'NGN');
 
   if (isNigeria) {
-    return isBusiness ? '₦300,000 / year' : '₦200,000 / year';
+    return isBusiness ? '₦350,000 / year' : '₦200,000 / year';
   }
   return isBusiness ? '$400 / year' : '$250 / year';
 }
@@ -220,7 +220,7 @@ export function getAuthoritativePlanAmount(
   const isNigeria = isNigerianCountry(countryOrCurrency) || (countryOrCurrency && countryOrCurrency.toUpperCase() === 'NGN');
 
   if (isNigeria) {
-    return isBusiness ? 300000 : 200000;
+    return isBusiness ? 350000 : 200000;
   }
   return isBusiness ? 400 : 250;
 }

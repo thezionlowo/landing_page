@@ -7,8 +7,8 @@ The official customer-facing web portal and single source of truth for the **ZAM
 This application manages:
 * **Customer Registration & Authentication**: Secure merchant sign-up and login portal.
 * **Subscription Plans & Pricing**: Authoritative annual plan tiers:
-  * **Starter**: ₦200,000/year (Nigeria) / $200/year (Global). Includes up to 2 active registers and 500 catalog products.
-  * **Business**: ₦300,000/year (Nigeria) / $300/year (Global). Includes unlimited active registers and unlimited catalog products.
+  * **Starter**: ₦200,000/year (Nigeria) / $250/year (Global). Includes up to 5 staff accounts, one active session per account, and 500 catalog products.
+  * **Business**: ₦350,000/year (Nigeria) / $400/year (Global). Includes unlimited active registers and unlimited catalog products.
 * **Store Connection**: Direct WooCommerce store linkage enabling the POS software to seamlessly communicate with the merchant's online store via the ZAMERIA plugin bridge.
 
 ---

@@ -117,8 +117,8 @@ const paidBusiness: CustomerProfile = {
     ...DEMO_PAID_CUSTOMER.subscription,
     planId: 'Business',
     planName: 'Business Plan',
-    price: '₦300,000 / year',
-    amountNumber: 300000,
+    price: '₦350,000 / year',
+    amountNumber: 350000,
     status: 'active',
   },
   licenses: [

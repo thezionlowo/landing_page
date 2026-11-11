@@ -27,7 +27,7 @@ let browser;
 const results = [];
 const prices = {
   USD: { country: 'US', name: 'International USD', starter: '$250', business: '$400', amounts: { starter: 250, business: 400 } },
-  NGN: { country: 'NG', name: 'Nigeria NGN', starter: '₦200,000', business: '₦300,000', amounts: { starter: 200000, business: 300000 } },
+  NGN: { country: 'NG', name: 'Nigeria NGN', starter: '₦200,000', business: '₦350,000', amounts: { starter: 200000, business: 350000 } },
 };
 const opposite = currency => currency === 'USD' ? 'NGN' : 'USD';
 const title = plan => plan === 'starter' ? 'Starter' : 'Business';
@@ -206,9 +206,13 @@ try {
         await test.page.getByRole('button', { name: prices[currency].name, exact: true }).click();
         await test.page.getByRole('link', { name: 'Choose Starter', exact: true }).click();
         await expectCheckout(test.page, currency, 'starter');
+        const restoredSession = delayed === 'account' ? test.page.waitForResponse(response => new URL(response.url()).pathname === '/api/account/session' && response.status() === 200) : null;
         test.accountGate.resolve(); test.geoGate.resolve();
         await test.page.waitForLoadState('load');
-        if (delayed === 'account') { await test.page.waitForFunction(() => !document.querySelector('button[type=submit]')?.disabled); assert(test.state.sessions >= 2, 'The account must actually restore before the final assertion'); }
+        if (restoredSession) {
+          assert.equal((await (await restoredSession).json()).account.email, 'currency@example.invalid', 'The delayed authenticated session must actually restore');
+          await test.page.waitForFunction(() => !document.querySelector('button[type=submit]')?.disabled);
+        }
         await expectCheckout(test.page, currency, 'starter');
         await submitAndCheck(test, currency, 'starter');
       });
@@ -251,6 +255,7 @@ try {
       await test.page.waitForFunction(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3'))?.licenses?.length === 1);
       const cached = await test.page.evaluate(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3')));
       assert.equal(cached.plan, title(plan));
+      assert.equal(cached.staffAllowance, plan === 'starter' ? 5 : 999);
       assert.equal(cached.accountStatus, plan === 'starter' ? 'active_starter' : 'active_business');
       assert.equal(cached.currency, currency, 'Verified payment currency must win over previous account region');
       assert.equal(cached.licenses[0].licenseKey, 'ZMR-QA-ANNUAL');
@@ -265,9 +270,31 @@ try {
         await mkdir(process.env.ZAMERIA_CHECKOUT_SCREENSHOTS, { recursive: true });
         await test.page.screenshot({ path: path.join(process.env.ZAMERIA_CHECKOUT_SCREENSHOTS, `billing-${plan}-${currency}.png`), fullPage: true });
       }
+      if (plan === 'starter') {
+        assert((await test.page.locator('main').innerText()).includes('up to five staff accounts'));
+        await test.page.goto(`${origin}/account?tab=team`, { waitUntil: 'load' });
+        await test.page.getByRole('heading', { name: 'Team access', exact: true }).waitFor();
+        assert((await test.page.locator('main').innerText()).includes('up to five staff members'));
+        await test.page.goto(`${origin}/account?tab=devices`, { waitUntil: 'load' });
+        await test.page.getByRole('heading', { name: 'Devices & hardware', exact: true }).waitFor();
+        assert((await test.page.locator('main').innerText()).includes('five active staff sessions'));
+      }
       assert.equal(test.state.payloads.length, 0);
     });
   }
+  await run('legacy Business receipt retained while renewal uses current NGN price', { accountCurrency: 'NGN', receipt: { ...paidReceipt('business', 'NGN'), amount: 300000 } }, async test => {
+    const { page } = test;
+    await page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
+    await page.getByRole('button', { name: 'Open your dashboard' }).click();
+    await page.getByRole('heading', { name: 'Plan & billing', exact: true }).waitFor();
+    assert.match(await page.getByRole('region', { name: 'Payment receipts' }).innerText(), /(?:₦|NGN)\s*300,000(?:\.00)?/, 'Historical receipt keeps its currency and the amount paid');
+    await page.getByRole('button', { name: 'View plans', exact: true }).click();
+    await page.getByRole('dialog').waitFor();
+    assert((await page.getByRole('dialog').innerText()).includes('₦350,000'), 'New purchase uses current Business price');
+    await page.getByRole('button', { name: 'Keep Business', exact: true }).click();
+    await expectCheckout(page, 'NGN', 'business');
+    assert.equal(test.state.payloads.length, 0);
+  });
   await run('account billing keeps receipts, address editing and legacy links', { accountCurrency: 'USD', receipt: paidReceipt('business') }, async test => {
     const { page } = test;
     await page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });

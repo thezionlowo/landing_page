@@ -56,8 +56,8 @@ export function PlanComparisonDialog({ open, pricing, selectedPlan, onClose, onS
       <thead><tr><td /><th scope="col"><span className="site-plan-name">Starter</span><strong>{pricing.plans.starter.displayPrice}</strong><small>/ year</small></th><th scope="col" className="site-plan-featured"><span className="site-plan-recommendation">ROOM TO GROW</span><span className="site-plan-name">Business</span><strong>{pricing.plans.business.displayPrice}</strong><small>/ year</small></th></tr></thead>
       <tbody>{[
         ['Products', 'Up to 500', 'Unlimited'],
-        ['Staff', 'Up to 2', 'Unlimited'],
-        ['POS registers', 'Up to 2', 'Unlimited'],
+        ['Staff', 'Up to 5', 'Unlimited'],
+        ['Active sessions', 'One per staff account', 'One per staff account'],
         ['WooCommerce stores', '1', '1'],
         ['Physical locations', '1', '1'],
         ['POS & stock sync', 'Included', 'Included'],
