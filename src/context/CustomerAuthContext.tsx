@@ -1001,6 +1001,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                 giftedDetails,
                 accountStatus,
                 plan: isPaid ? activePlan : null,
+                staffAllowance: isPaid ? (activePlan === 'Starter' ? 5 : 999) : prev.staffAllowance,
                 planPrice: isPaid ? activePrice : prev.planPrice,
                 billingCycle: 'yearly',
                 nextBillingDate: primaryExpiry || prev.nextBillingDate,
