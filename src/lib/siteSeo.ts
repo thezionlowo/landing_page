@@ -6,6 +6,7 @@ export const SITE_ORIGIN = 'https://www.zameria.co';
 export const INDEX_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 export interface RouteSEO { title: string; description: string; canonical: string; robots: string; h1?: string; keywords?: string; }
 export const ROUTE_SEO_CONFIG: Record<string, RouteSEO> = {
+  '/pricing': { title: 'Annual POS Pricing: Starter & Business | ZAMERIA', description: 'Compare ZAMERIA Starter and Business annual plans. One WooCommerce store, a seven-day trial, and fixed pricing in naira or US dollars.', canonical: SITE_ORIGIN + '/pricing', robots: INDEX_ROBOTS, h1: 'Two plans.' },
   '/': { title: 'WooCommerce POS for Your Shop, Mobile & Desktop | ZAMERIA', description: 'Sell in your shop and stay connected to WooCommerce. Use ZAMERIA for products, stock, orders and customers on mobile, iPad, laptop or desktop.', canonical: SITE_ORIGIN + '/', robots: INDEX_ROBOTS, h1: 'Your shop and website. One connected POS.' },
   ...Object.fromEntries(Object.entries(MARKETING_PAGES).map(([path, page]) => [path, { title: page.title, description: page.description, canonical: SITE_ORIGIN + path, robots: INDEX_ROBOTS, h1: page.heading }])),
   ...Object.fromEntries(Object.entries(POLICY_PAGES).map(([path, page]) => [path, { title: page.title, description: page.description, canonical: SITE_ORIGIN + path, robots: INDEX_ROBOTS, h1: page.heading }])),

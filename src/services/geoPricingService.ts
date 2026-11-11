@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { INTERNATIONAL_PRICING, resolveGeoPricing } from '../lib/geoPricing.js';
 import type { GeoPricingConfig } from '../lib/geoPricing.js';
 
@@ -108,21 +108,18 @@ export function useGeoPricing(): {
   currencySymbol: string;
   setCountry: (code: string) => void;
 } {
-  const [geo, setGeo] = useState<GeoPricingConfig>(activeGeoConfig);
-  useEffect(() => {
-    initializeGeoPricing().then(setGeo);
-    const handleGeoChange = (event: Event) => {
-      const detail = (event as CustomEvent<GeoPricingConfig>).detail;
-      if (detail) setGeo(detail);
-    };
-    window.addEventListener(GEO_EVENT_NAME, handleGeoChange);
-    return () => window.removeEventListener(GEO_EVENT_NAME, handleGeoChange);
-  }, []);
+  const geo = useSyncExternalStore(subscribePricing, () => activeGeoConfig, () => INTERNATIONAL_PRICING);
+  useEffect(() => { void initializeGeoPricing(); }, []);
   return {
     geo,
     isNigeria: geo.isNigeria,
     currency: geo.currency,
     currencySymbol: geo.currencySymbol,
-    setCountry: code => setGeo(setCountryOverride(code)),
+    setCountry: code => { setCountryOverride(code); },
   };
+}
+
+function subscribePricing(changed: () => void) {
+  window.addEventListener(GEO_EVENT_NAME, changed);
+  return () => window.removeEventListener(GEO_EVENT_NAME, changed);
 }

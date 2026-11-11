@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
+import { authDestination, authSwitchURL, checkoutAccountHint } from '../../lib/checkoutAccount';
+import { useClientReady } from '../../lib/useClientReady';
 import { BrandMark } from '../../components/SiteChrome';
 
 export const LoginPage: React.FC = () => {
+  const clientReady = useClientReady();
   const { login } = useCustomerAuth();
-  const { navigate } = useRouter();
+  const { navigate, search } = useRouter();
 
   const [email, setEmail] = useState('');
+  useEffect(() => { setEmail(value => value || checkoutAccountHint(search).email || ''); }, [search]);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +42,7 @@ export const LoginPage: React.FC = () => {
     setIsLoading(false);
 
     if (res.success) {
-      navigate('/account');
+      navigate(authDestination(search));
     } else {
       setError(res.error || 'Authentication failed. Please check your credentials.');
     }
@@ -56,7 +60,7 @@ export const LoginPage: React.FC = () => {
         </div>
         <button className="site-auth-submit" type="submit" disabled={isLoading}>{isLoading ? 'Logging in…' : 'Log in'}</button>
       </form>
-      <p className="site-auth-switch">New to ZAMERIA? <a href="/get-started">Create an account</a></p>
+      <p className="site-auth-switch">New to ZAMERIA? <a href={authSwitchURL('/get-started', clientReady ? search : '')}>Create an account</a></p>
     </main>
     <footer>© {new Date().getFullYear()} ZAMERIA</footer>
   </div>;

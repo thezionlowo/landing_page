@@ -2,13 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useCustomerAuth } from '../../context/CustomerAuthContext';
 import { useRouter } from '../../router/Router';
+import { authDestination, authSwitchURL, checkoutAccountHint } from '../../lib/checkoutAccount';
+import { useClientReady } from '../../lib/useClientReady';
 import { BrandMark } from '../../components/SiteChrome';
 import type { LeadSource } from '../../services/leadCaptureClient';
 
 export const GetStartedPage: React.FC = () => {
   const { register } = useCustomerAuth();
-  const { navigate } = useRouter();
+  const { navigate, search } = useRouter();
 
+  const clientReady = useClientReady();
+  const purchaseHint = clientReady ? checkoutAccountHint(search) : {};
   const [businessName, setBusinessName] = useState('');
   const [storeUrl, setStoreUrl] = useState('');
   const [email, setEmail] = useState('');
@@ -17,6 +21,12 @@ export const GetStartedPage: React.FC = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const hint = checkoutAccountHint(search);
+    setEmail(value => value || hint.email || '');
+    setBusinessName(value => value || hint.businessName || '');
+  }, [search]);
 
   // Auto-fill from query params if present (e.g. from assessment or direct marketing link)
   useEffect(() => {
@@ -97,7 +107,7 @@ export const GetStartedPage: React.FC = () => {
     setIsLoading(false);
 
     if (res.success) {
-      navigate('/account');
+      navigate(authDestination(search));
     } else {
       setError(res.error || 'Could not complete registration. Please try again.');
     }
@@ -106,7 +116,7 @@ export const GetStartedPage: React.FC = () => {
   return <div className="site-auth-simple">
     <header><BrandMark /></header>
     <main>
-      <div className="site-auth-simple-heading"><h1>Create your account</h1><p>Your seven-day trial starts when you connect your store.</p></div>
+      <div className="site-auth-simple-heading"><h1>Create your account</h1><p>{purchaseHint.email ? 'Use your purchase email to manage your paid licence and store.' : 'Your seven-day trial starts when you connect your store.'}</p></div>
       {error && <p className="site-auth-error" role="alert">{error}</p>}
       <form onSubmit={handleSubmit}>
         <label htmlFor="reg-store-name">Business name<input id="reg-store-name" required autoComplete="organization" placeholder="Your business" value={businessName} disabled={isLoading} onChange={e => { setBusinessName(e.target.value); setError(null); }} /></label>
@@ -115,7 +125,7 @@ export const GetStartedPage: React.FC = () => {
         <button className="site-auth-submit" type="submit" disabled={isLoading}>{isLoading ? 'Creating account…' : 'Create account'}</button>
         <p className="site-policy-notice">Creating an account sends your registration and store details to ZAMERIA for account setup, access checks and onboarding follow-up. By creating an account, you agree to the <a href="/terms">Terms of Service</a>. Read our <a href="/privacy">Privacy Policy</a>.</p>
       </form>
-      <p className="site-auth-switch">Already have an account? <a href="/login">Log in</a></p>
+      <p className="site-auth-switch">Already have an account? <a href={authSwitchURL('/login', clientReady ? search : '')}>Log in</a></p>
     </main>
     <footer>© {new Date().getFullYear()} ZAMERIA</footer>
   </div>;

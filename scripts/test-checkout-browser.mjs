@@ -2,7 +2,7 @@
 // All APIs are intercepted; this test cannot initiate a real payment.
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { chromium } from 'playwright-core';
@@ -33,15 +33,21 @@ const opposite = currency => currency === 'USD' ? 'NGN' : 'USD';
 const title = plan => plan === 'starter' ? 'Starter' : 'Business';
 function deferred() { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; }
 
-async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount = false, delayGeo = false, invalidSession = false, mobile = false } = {}) {
+async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount = false, delayGeo = false, invalidSession = false, mobile = false, receipt, pending = 0, verificationError, staleAccountResponse = false } = {}) {
   const context = await browser.newContext({ viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 900 } });
-  const accountGate = deferred(), geoGate = deferred();
-  const state = { sessions: 0, geoRequests: 0, payloads: [], errors: [] };
+  const accountGate = deferred(), geoGate = deferred(), staleGate = deferred(), staleStarted = deferred();
+  const state = { sessions: 0, geoRequests: 0, payloads: [], errors: [], verifications: 0, authenticated: !!accountCurrency && !invalidSession };
   const profile = {
     id: 'qa-currency', email: 'currency@example.invalid', fullName: 'Currency QA', businessName: 'Test Store',
     country: prices[accountCurrency || 'NGN'].country, currency: accountCurrency,
     billingAddress: { country: prices[accountCurrency || 'NGN'].country },
     orders: [], licenses: [], subscription: { status: 'none' }, trial: { status: 'not_started' }, connectedStore: { status: 'not_connected', url: '' },
+  };
+  const syncReceipt = () => {
+    if (!state.fulfilled || !receipt || receipt.email !== profile.email) return;
+    profile.currency = receipt.currency;
+    profile.country = receipt.country;
+    profile.licenses = [{ ...receipt, id: receipt.license_id, store_domain: '', requested_domain: receipt.store_domain }];
   };
   if (accountCurrency) await context.addInitScript(profile => localStorage.setItem('zameria_customer_session_v3', JSON.stringify(profile)), profile);
   await context.route('**/*', async route => {
@@ -51,13 +57,34 @@ async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount
       if (delayGeo) await geoGate.promise;
       return route.fulfill({ json: { countryCode: prices[detectedCurrency].country, currency: detectedCurrency } });
     }
+    if (url.pathname.endsWith('/zameria/checkout/verify')) {
+      state.verifications++;
+      if (verificationError) return route.fulfill({ status: verificationError, json: { error: 'Payment not completed. Contact support before paying again.' } });
+      if (state.verifications <= pending) return route.fulfill({ status: 409, json: { error: 'Payment pending' } });
+      if (staleAccountResponse) await staleStarted.promise;
+      state.fulfilled = true; syncReceipt();
+      return route.fulfill({ json: receipt });
+    }
     if (url.pathname.startsWith('/api/account/')) {
+      if (url.pathname === '/api/account/login' || url.pathname === '/api/account/register') {
+        state.authenticated = true;
+        profile.email = request.postDataJSON().email; syncReceipt();
+        return route.fulfill({ json: { authenticated: true, account: profile } });
+      }
+      if (url.pathname === '/api/account/logout') { state.authenticated = false; return route.fulfill({ json: { success: true } }); }
+
       if (url.pathname === '/api/account/session') {
         state.sessions++;
+        if (staleAccountResponse && state.sessions === 2) {
+          const snapshot = structuredClone(profile);
+          staleStarted.resolve();
+          await staleGate.promise;
+          return route.fulfill({ json: { account: snapshot } });
+        }
         if (delayAccount) await accountGate.promise;
-        return route.fulfill({ status: accountCurrency && !invalidSession ? 200 : 401, json: accountCurrency && !invalidSession ? { account: profile } : { error: 'Not signed in' } });
+        return route.fulfill({ status: state.authenticated ? 200 : 401, json: state.authenticated ? { account: profile } : { error: 'Not signed in' } });
       }
-      return route.fulfill({ json: { licenses: [], orders: [] } });
+      return route.fulfill({ json: { licenses: profile.licenses, orders: [] } });
     }
     if (url.pathname.endsWith('/zameria/checkout') && request.method() === 'POST') {
       state.payloads.push(request.postDataJSON());
@@ -68,7 +95,7 @@ async function fixture({ accountCurrency, detectedCurrency = 'NGN', delayAccount
   });
   const page = await context.newPage();
   page.on('pageerror', error => state.errors.push(error.message));
-  return { context, page, state, accountGate, geoGate };
+  return { context, page, state, accountGate, geoGate, staleGate };
 }
 async function expectCheckout(page, currency, plan) {
   const selection = page.locator('.site-checkout-selection');
@@ -81,7 +108,9 @@ async function expectCheckout(page, currency, plan) {
 }
 async function submitAndCheck(test, currency, plan) {
   await test.page.getByLabel('Business name', { exact: true }).fill('Currency QA');
-  await test.page.getByLabel('Email address', { exact: true }).fill('currency@example.invalid');
+  const email = test.page.getByLabel('Email address', { exact: true });
+  if (await email.isEditable()) await email.fill('currency@example.invalid');
+  else assert.equal(await email.inputValue(), 'currency@example.invalid');
   await test.page.getByLabel('WooCommerce store URL', { exact: true }).fill('https://currency.example.invalid');
   await test.page.getByRole('button', { name: /Continue to checkout/ }).click();
   await test.page.getByRole('alert').filter({ hasText: 'QA intercepted checkout' }).waitFor();
@@ -92,6 +121,7 @@ async function submitAndCheck(test, currency, plan) {
   assert.equal(payload.country === 'Nigeria', currency === 'NGN');
 }
 async function run(name, options, check) {
+  if (process.env.ZAMERIA_CHECKOUT_FILTER && !new RegExp(process.env.ZAMERIA_CHECKOUT_FILTER).test(name)) return;
   const test = await fixture(options);
   try {
     await check(test);
@@ -102,7 +132,7 @@ async function run(name, options, check) {
     console.error(JSON.stringify({ name, url: test.page.url(), errors: test.state.errors, body: (await test.page.locator('body').innerText()).slice(0, 2500) }, null, 2));
     throw error;
   } finally {
-    test.accountGate.resolve(); test.geoGate.resolve();
+    test.accountGate.resolve(); test.geoGate.resolve(); test.staleGate.resolve();
     await test.context.close();
   }
 }
@@ -113,7 +143,7 @@ try {
       for (const plan of ['starter', 'business']) {
         await run(`${accountCurrency || 'anonymous'} account / ${currency} / ${plan}`, { accountCurrency, detectedCurrency: opposite(currency), mobile: plan === 'business' }, async test => {
           const { page } = test;
-          await page.goto(origin, { waitUntil: 'networkidle' });
+          await page.goto(origin, { waitUntil: 'load' });
           await page.getByRole('button', { name: prices[currency].name, exact: true }).click();
           const link = page.getByRole('link', { name: `Choose ${title(plan)}`, exact: true });
           const url = new URL(await link.getAttribute('href'), origin);
@@ -130,10 +160,10 @@ try {
           await dialog.getByRole('button', { name: `Choose ${title(other)}`, exact: true }).click();
           await expectCheckout(page, currency, other);
           assert.equal(new URL(page.url()).searchParams.get('currency'), currency);
-          await page.reload({ waitUntil: 'networkidle' });
+          await page.reload({ waitUntil: 'load' });
           await expectCheckout(page, currency, other);
           await submitAndCheck(test, currency, other);
-          await page.goBack({ waitUntil: 'networkidle' });
+          await page.goBack({ waitUntil: 'load' });
           await expectCheckout(page, currency, plan);
         });
       }
@@ -142,13 +172,13 @@ try {
   for (const currency of ['USD', 'NGN']) {
     for (const plan of ['starter', 'business']) {
       await run(`currency-only link / ${currency} / ${plan}`, { accountCurrency: opposite(currency), detectedCurrency: opposite(currency) }, async test => {
-        await test.page.goto(`${origin}/subscribe?plan=${plan}&currency=${currency}`, { waitUntil: 'networkidle' });
+        await test.page.goto(`${origin}/subscribe?plan=${plan}&currency=${currency}`, { waitUntil: 'load' });
         await expectCheckout(test.page, currency, plan);
         await submitAndCheck(test, currency, plan);
       });
     }
     await run(`account-region fallback / ${currency}`, { accountCurrency: currency, detectedCurrency: opposite(currency) }, async test => {
-      await test.page.goto(`${origin}/subscribe?plan=starter`, { waitUntil: 'networkidle' });
+      await test.page.goto(`${origin}/subscribe?plan=starter`, { waitUntil: 'load' });
       await expectCheckout(test.page, currency, 'starter');
       await submitAndCheck(test, currency, 'starter');
     });
@@ -159,25 +189,147 @@ try {
         await test.page.getByRole('link', { name: 'Choose Starter', exact: true }).click();
         await expectCheckout(test.page, currency, 'starter');
         test.accountGate.resolve(); test.geoGate.resolve();
-        await test.page.waitForLoadState('networkidle');
-        if (delayed === 'account') assert(test.state.sessions >= 2, 'The account must actually restore before the final assertion');
+        await test.page.waitForLoadState('load');
+        if (delayed === 'account') { await test.page.waitForFunction(() => !document.querySelector('button[type=submit]')?.disabled); assert(test.state.sessions >= 2, 'The account must actually restore before the final assertion'); }
         await expectCheckout(test.page, currency, 'starter');
         await submitAndCheck(test, currency, 'starter');
       });
     }
   }
   await run('expired session with cached Nigerian profile / USD', { accountCurrency: 'NGN', invalidSession: true }, async test => {
-    await test.page.goto(`${origin}/subscribe?plan=business&country=US&currency=USD`, { waitUntil: 'networkidle' });
+    await test.page.goto(`${origin}/subscribe?plan=business&country=US&currency=USD`, { waitUntil: 'load' });
     await expectCheckout(test.page, 'USD', 'business');
     await submitAndCheck(test, 'USD', 'business');
   });
   // The route marker must preserve normal marketing/auth hydration as well as
   // fresh checkout mounts when Vercel rewrites /subscribe to the homepage shell.
-  for (const route of ['/', '/login', '/get-started', '/forgot-password', '/terms', '/privacy', '/woocommerce-pos']) {
+  for (const route of ['/', '/login', '/get-started', '/forgot-password', '/terms', '/privacy', '/refunds', '/pricing', '/woocommerce-pos']) {
     await run(`prerender hydration / ${route}`, {}, async test => {
-      await test.page.goto(`${origin}${route}`, { waitUntil: 'networkidle' });
+      await test.page.goto(`${origin}${route}`, { waitUntil: 'load' });
       await test.page.locator('h1').first().waitFor();
       assert.equal(await test.page.locator('#root').getAttribute('data-prerender-path'), route);
+    });
+  }
+  for (const currency of ['NGN', 'USD']) {
+    await run(`back to pricing preserves ${currency}`, { detectedCurrency: opposite(currency) }, async test => {
+      await test.page.goto(`${origin}/subscribe?plan=starter&currency=${currency}`, { waitUntil: 'load' });
+      await expectCheckout(test.page, currency, 'starter');
+      await test.page.getByRole('link', { name: 'Back to plans' }).click();
+      await test.page.waitForFunction(price => document.querySelector('.saas-plan-price')?.textContent.includes(price), prices[currency].starter);
+      assert.equal(new URL(await test.page.getByRole('link', { name: 'Choose Starter', exact: true }).getAttribute('href'), origin).searchParams.get('currency'), currency);
+      await test.page.getByRole('button', { name: prices[opposite(currency)].name, exact: true }).click();
+      await test.page.waitForFunction(price => document.querySelector('.saas-plan-price')?.textContent.includes(price), prices[opposite(currency)].starter);
+    });
+  }
+  const reference = 'zmr_' + 'a'.repeat(48);
+  const paidReceipt = (plan = 'starter', currency = 'USD', email = 'currency@example.invalid') => ({ status: 'active', payment_verified: true, license_id: reference, license_key: 'ZMR-QA-ANNUAL', payment_reference: reference, plan, currency, country: prices[currency].country, amount: prices[currency].amounts[plan], store_domain: 'currency.example.invalid', expires_at: new Date(Date.now() + 365 * 86400000).toISOString(), email, business_name: 'Paid Store' });
+  for (const currency of ['USD', 'NGN']) for (const plan of ['starter', 'business']) {
+    await run(`verified licence / ${plan} / ${currency}`, { accountCurrency: opposite(currency), receipt: paidReceipt(plan, currency), mobile: plan === 'business' }, async test => {
+      await test.page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
+      await test.page.getByRole('heading', { name: 'Congratulations. You’re ready to go.' }).waitFor();
+      assert((await test.page.locator('.payment-details').innerText()).includes('currency.example.invalid'));
+      assert.equal(test.state.verifications, 1, 'Recording a receipt must not restart verification');
+      await test.page.waitForFunction(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3'))?.licenses?.length === 1);
+      const cached = await test.page.evaluate(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3')));
+      assert.equal(cached.plan, title(plan));
+      assert.equal(cached.accountStatus, plan === 'starter' ? 'active_starter' : 'active_business');
+      assert.equal(cached.currency, currency, 'Verified payment currency must win over previous account region');
+      assert.equal(cached.licenses[0].licenseKey, 'ZMR-QA-ANNUAL');
+      assert.equal(cached.licenses[0].requestedDomain, 'currency.example.invalid');
+      assert.equal(cached.licenses.length, 1);
+      await test.page.getByRole('button', { name: 'Open your dashboard' }).click();
+      await test.page.waitForURL('**/account?tab=billing');
+      assert.equal(test.state.payloads.length, 0);
+    });
+  }
+  await run('verified payment survives an older account response', { accountCurrency: 'NGN', receipt: paidReceipt(), staleAccountResponse: true }, async test => {
+    await test.page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
+    await test.page.getByRole('button', { name: 'Open your dashboard' }).waitFor();
+    await test.page.waitForFunction(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3'))?.licenses?.length === 1);
+    test.staleGate.resolve();
+    await test.page.waitForTimeout(200);
+    const cached = await test.page.evaluate(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3')));
+    assert.equal(cached.licenses.length, 1, 'Late pre-payment account data must not erase the purchase');
+    assert.equal(cached.currency, 'USD');
+    assert.equal(test.state.verifications, 1);
+  });
+  await run('pending payment recovers without a second checkout', { receipt: paidReceipt(), pending: 1 }, async test => {
+    await test.page.goto(`${origin}/payment/complete?trxref=${reference}`);
+    await test.page.getByRole('heading', { name: 'Congratulations. You’re ready to go.' }).waitFor();
+    assert.equal(test.state.verifications, 2);
+    assert.equal(test.state.payloads.length, 0);
+  });
+  await run('verification failure offers safe recovery', { verificationError: 403 }, async test => {
+    await test.page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
+    await test.page.getByRole('button', { name: 'Check payment again' }).click();
+    await test.page.waitForTimeout(150);
+    assert.equal(test.state.verifications, 2);
+    assert.equal(await test.page.locator('a[href*="/subscribe"]').count(), 0);
+    assert.equal(test.state.payloads.length, 0);
+  });
+  for (const create of [false, true]) {
+    await run(`guest purchase / ${create ? 'create account' : 'sign in'} / dashboard`, { receipt: paidReceipt() }, async test => {
+      const { page } = test;
+      await page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
+      await page.getByRole('heading', { name: 'Congratulations. You’re ready to go.' }).waitFor();
+      if (create) await page.getByRole('link', { name: 'Create your ZAMERIA account' }).click();
+      else await page.getByRole('button', { name: 'Continue to your dashboard' }).click();
+      await page.getByLabel('Email address', { exact: true }).waitFor();
+      await page.reload({ waitUntil: 'load' });
+      await page.waitForFunction(() => document.querySelector('input[type=email]')?.value === 'currency@example.invalid');
+      assert.equal(await page.getByLabel('Email address', { exact: true }).inputValue(), 'currency@example.invalid');
+      if (create) await page.getByLabel('Business name', { exact: true }).fill('Paid Store');
+      await page.getByLabel('Password', { exact: true }).fill('qa-fixture-password');
+      await page.getByRole('button', { name: create ? 'Create account' : 'Log in', exact: true }).click();
+      await page.getByRole('button', { name: 'Open your dashboard' }).waitFor();
+      assert(new URL(page.url()).searchParams.get('reference') === reference);
+      await page.getByRole('button', { name: 'Open your dashboard' }).click();
+      await page.waitForURL('**/account?tab=billing');
+      assert.equal(test.state.payloads.length, 0);
+    });
+  }
+  await run('another account cannot cache a buyer licence', { accountCurrency: 'NGN', receipt: paidReceipt('business','USD','buyer@example.invalid') }, async test => {
+    await test.page.goto(`${origin}/payment/complete?reference=${reference}`, { waitUntil: 'load' });
+    await test.page.getByRole('button', { name: 'Sign in with the purchase email' }).waitFor();
+    const cached = await test.page.evaluate(() => JSON.parse(localStorage.getItem('zameria_customer_session_v3')));
+    assert.equal(cached.licenses.length, 0);
+    await test.page.getByRole('button', { name: 'Sign in with the purchase email' }).click();
+    await test.page.getByLabel('Email address', { exact: true }).waitFor();
+    assert.equal(await test.page.getByLabel('Email address', { exact: true }).inputValue(), 'buyer@example.invalid');
+  });
+  await run('combined device images and interactive hero', {}, async test => {
+    await test.page.goto(origin, { waitUntil: 'load' });
+    await test.page.locator('.saas-device-stage').scrollIntoViewIfNeeded();
+    assert.equal(await test.page.locator('.saas-device-stage iframe').count(), 0);
+    assert.equal(await test.page.locator('.saas-device-stage img').count(), 4);
+    await test.page.waitForFunction(() => [...document.querySelectorAll('.saas-device-stage img')].every(image => image.complete && image.naturalWidth > 0));
+    assert.equal(await test.page.locator('.saas-pos-demo iframe').count(), 1);
+    await test.page.waitForFunction(() => document.querySelector('.saas-pos-demo iframe')?.style.opacity === '1');
+  });
+  for (const mobile of [false, true]) {
+    await run(`responsive checkout and public pages / ${mobile ? 'mobile' : 'desktop'}`, { mobile, receipt: paidReceipt('business') }, async test => {
+      const { page } = test;
+      for (const route of ['/subscribe?plan=business&currency=USD', '/payment/complete?reference=' + reference, '/pricing', '/terms', '/privacy', '/refunds', '/']) {
+        await page.goto(origin + route, { waitUntil: 'load' });
+        await page.locator('h1').first().waitFor();
+        assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'Page must not overflow horizontally: ' + route);
+        if (route.startsWith('/subscribe')) {
+          const back = await page.getByRole('link', { name: 'Back to plans' }).boundingBox();
+          const heading = await page.getByRole('heading', { name: 'Checkout', exact: true }).boundingBox();
+          assert(back.y < heading.y && back.x <= heading.x, 'Back link belongs above the form at its left edge');
+          assert.equal(await page.locator('.checkout-header a').filter({ hasText: /^Back$/ }).count(), 0);
+        }
+        if (process.env.ZAMERIA_CHECKOUT_SCREENSHOTS) {
+          await mkdir(process.env.ZAMERIA_CHECKOUT_SCREENSHOTS, { recursive: true });
+          if (route === '/') {
+            await page.locator('.saas-device-stage').scrollIntoViewIfNeeded();
+            await page.waitForFunction(() => [...document.querySelectorAll('.saas-device-stage img')].every(image => image.complete && image.naturalWidth > 0));
+          }
+          const name = route.split('?')[0].replaceAll('/', '-') || '-home';
+          await page.screenshot({ path: path.join(process.env.ZAMERIA_CHECKOUT_SCREENSHOTS, `${mobile ? 'mobile' : 'desktop'}${name}.png`), fullPage: true });
+          if (route === '/') await page.locator('.saas-device-stage').screenshot({ path: path.join(process.env.ZAMERIA_CHECKOUT_SCREENSHOTS, `${mobile ? 'mobile' : 'desktop'}-devices.png`) });
+        }
+      }
     });
   }
   console.log(JSON.stringify({ passed: results.length, failed: 0, paymentRequestsIntercepted: results.reduce((sum, result) => sum + result.paymentRequestsIntercepted, 0), realPayments: 0 }, null, 2));

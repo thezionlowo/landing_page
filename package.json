@@ -10,11 +10,12 @@
     "test:seo": "npx tsx src/__tests__/seo-regression-test.ts",
     "test:e2e": "npx tsx src/__tests__/e2e-sync-test.ts",
     "typecheck:server": "tsc -p tsconfig.server.json",
-    "prebuild": "node scripts/verify-plugin-download.mjs && node scripts/verify-product-preview.mjs",
+    "prebuild": "node scripts/verify-plugin-download.mjs && node scripts/verify-product-preview.mjs && node scripts/verify-product-shots.mjs",
     "refresh:product-preview": "node scripts/refresh-product-preview.mjs",
     "test:checkout": "npx tsx src/__tests__/checkout-comparison-regression.tsx",
     "test:pricing": "node --import tsx src/__tests__/geo-pricing-runtime-regression.ts",
-    "test:checkout:browser": "node scripts/test-checkout-browser.mjs"
+    "test:checkout:browser": "node scripts/test-checkout-browser.mjs",
+    "refresh:product-shots": "node scripts/capture-product-shots.mjs"
   },
   "dependencies": {
     "lucide-react": "^1.43.0",

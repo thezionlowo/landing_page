@@ -261,6 +261,14 @@
   ],
   "rewrites": [
     {
+      "source": "/pricing",
+      "destination": "/pricing/index.html"
+    },
+    {
+      "source": "/refunds",
+      "destination": "/refunds/index.html"
+    },
+    {
       "source": "/privacy",
       "destination": "/privacy/index.html"
     },

@@ -416,7 +416,7 @@ interface CustomerAuthContextType {
     paymentMethodId?: string;
     transactionRef?: string;
   }) => Promise<{ success: boolean; license: LicenseItem; order: OrderItem; isDuplicate?: boolean }>;
-  recordVerifiedPayment: (receipt: { license_key: string; plan: 'starter' | 'business'; expires_at: string; store_domain?: string; payment_reference?: string }) => void;
+  recordVerifiedPayment: (receipt: { email?: string; license_id?: string; license_key: string; plan: 'starter' | 'business'; expires_at: string; store_domain?: string; payment_reference?: string }) => void;
   purchaseNewLicense: (data: {
     plan: 'Starter' | 'Business';
     billingCycle?: 'monthly' | 'yearly';
@@ -1672,17 +1672,17 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     currency?: 'NGN' | 'USD';
     amount?: number;
     price?: string;
+    email?: string;
+    license_id?: string;
   }) => {
-    if (!customer || !receipt.license_key) return;
+    if (!customer || !receipt.license_key || !receipt.email || receipt.email.toLowerCase() !== customer.email.toLowerCase()) return;
     if (customer.licenses.some((license) => license.licenseKey === receipt.license_key)) return;
     const plan: 'Starter' | 'Business' = receipt.plan === 'starter' ? 'Starter' : 'Business';
 
-    const isUsd = receipt.currency === 'USD'
-      || (receipt.country && !isNigerianCountry(receipt.country))
-      || customer.currency === 'USD'
-      || (customer.country && !isNigerianCountry(customer.country))
-      || (typeof receipt.amount === 'number' && receipt.amount < 1000)
-      || receipt.price?.includes('$');
+    // A verified receipt's currency always wins over a previous account region.
+    const isUsd = receipt.currency ? receipt.currency === 'USD'
+      : receipt.country ? !isNigerianCountry(receipt.country)
+      : customer.currency === 'USD';
 
     const currency: 'NGN' | 'USD' = isUsd ? 'USD' : 'NGN';
     const currencySymbol: '₦' | '$' = isUsd ? '$' : '₦';
@@ -1705,7 +1705,7 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const now = new Date();
     const dateLabel = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const idSuffix = receipt.license_key.replace(/[^a-z0-9]/gi, '').slice(-12).toLowerCase();
-    const licenseId = `lic_${idSuffix}`;
+    const licenseId = receipt.license_id || `lic_${idSuffix}`;
     const orderId = `ord_${receipt.payment_reference || idSuffix}`;
     const orderNumber = `#ZM-${(receipt.payment_reference || idSuffix).slice(-8).toUpperCase()}`;
 
@@ -1752,9 +1752,12 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       transactionRef: receipt.payment_reference,
     };
 
+    // Discard account requests started before payment was fulfilled. A late
+    // response must not replace this verified purchase with an old empty plan.
+    invalidateAccountRequests();
     persistSession({
       ...customer,
-      accountStatus: 'active_business',
+      accountStatus: plan === 'Starter' ? 'active_starter' : 'active_business',
       plan,
       planPrice: price,
       country,

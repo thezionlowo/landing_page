@@ -5,6 +5,10 @@ export const ZAMERIA_API_BASE = (configuredApiBase || 'https://scoreflip-go-hwsg
 export type ZameriaPlan = 'starter' | 'business';
 
 export interface VerifiedCheckout {
+  status?: string;
+  license_id?: string;
+  email?: string;
+  business_name?: string;
   license_key: string;
   plan: ZameriaPlan;
   expires_at: string;
@@ -48,11 +52,19 @@ export async function startZameriaCheckout(input: {
   return data;
 }
 
-export async function verifyZameriaCheckout(reference: string): Promise<VerifiedCheckout> {
-  const response = await fetch(`${ZAMERIA_API_BASE}/checkout/verify?reference=${encodeURIComponent(reference)}`);
+export class CheckoutVerificationError extends Error {
+  constructor(message: string, public status: number) { super(message); }
+}
+
+export async function verifyZameriaCheckout(reference: string, signal?: AbortSignal): Promise<VerifiedCheckout> {
+  const timeout = AbortSignal.timeout(12000);
+  const response = await fetch(`${ZAMERIA_API_BASE}/checkout/verify?reference=${encodeURIComponent(reference)}`, { cache: 'no-store', signal: signal ? AbortSignal.any([signal, timeout]) : timeout });
   const data = await response.json().catch(() => ({}));
   if (!response.ok || !data.license_key) {
-    throw new Error(data.error || 'Payment has not completed yet.');
+    throw new CheckoutVerificationError(data.error || 'Payment has not completed yet.', response.status);
   }
+  if (!['starter', 'business'].includes(data.plan) || !data.store_domain || !Number.isFinite(Date.parse(data.expires_at))) throw new CheckoutVerificationError('We could not confirm the licence details. Contact support with your payment reference.', 502);
+  if (Date.parse(data.expires_at) <= Date.now()) throw new CheckoutVerificationError('This licence has expired. Open your account to review your plan or contact support.', 403);
+  if (data.status && data.status !== 'active') throw new CheckoutVerificationError('Your payment is recorded, but licence access is not active. Contact support before making another payment.', 403);
   return data;
 }

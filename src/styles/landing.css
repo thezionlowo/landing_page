@@ -486,24 +486,11 @@
 .saas-any-screen-copy p { color: #657084; font-size: 15px; line-height: 1.8; margin: 0 0 17px; }
 .saas-device-stage { position: relative; width: 100%; max-width: 1120px; aspect-ratio: 1.86; margin: 45px auto 0; isolation: isolate; }
 .saas-device-stage::before { content: ''; position: absolute; inset: 16% 2% -6%; background: radial-gradient(ellipse, #c1cfea75, transparent 68%); z-index: -1; }
-.saas-device { position: absolute; margin: 0; filter: drop-shadow(0 16px 18px #11244322); }
-.saas-device-bezel { background: #111a29; padding: 7px; border: 1px solid #566175; box-shadow: inset 0 0 0 1px #ffffff12; overflow: hidden; }
-.saas-device-bezel > img { display: block; width: 100%; height: auto; background: #f8fafc; }
+.saas-device { position: absolute; margin: 0;  }
 .saas-device-desktop { width: 59%; left: 31%; top: 0; z-index: 1; }
-.saas-device-desktop .saas-device-bezel { border-radius: 11px 11px 0 0; padding: 8px 8px 0; }
-.saas-monitor-chin { display: flex; align-items: center; justify-content: center; height: 25px; background: linear-gradient(#d4dae2, #c2cad6); border-radius: 0 0 10px 10px; border: 1px solid #a8b4c4; border-top: 0; }
-.saas-monitor-chin img { width: 14px; height: 14px; opacity: .8; }
-.saas-monitor-stand { width: 23%; height: 41px; margin: 0 auto; position: relative; background: linear-gradient(90deg, #a5b1c2, #e5eaf0 48%, #bac5d3); clip-path: polygon(31% 0, 69% 0, 78% 88%, 100% 93%, 100% 100%, 0 100%, 0 93%, 22% 88%); }
 .saas-device-laptop { width: 55%; left: 0; bottom: 3%; z-index: 2; }
-.saas-device-laptop .saas-device-bezel { border-radius: 11px 11px 0 0; padding: 9px 8px 11px; }
-.saas-laptop-base { position: relative; width: 108%; margin-left: -4%; height: 12px; border-radius: 1px 1px 50% 50% / 1px 1px 9px 9px; background: linear-gradient(#dce2eb 5%, #b3becd 55%, #7e8c9f); border: 1px solid #a9b5c5; }
-.saas-laptop-base > span { position: absolute; top: 0; left: 43%; right: 43%; height: 4px; border-radius: 0 0 4px 4px; background: #97a6b9; }
 .saas-device-ipad { width: 35%; right: 0; bottom: 7%; z-index: 3; }
-.saas-device-ipad .saas-device-bezel { padding: 8px 10px; border-radius: 17px; }
-.saas-device-ipad .saas-device-bezel > img { border-radius: 7px; }
 .saas-device-phone { width: 13.5%; left: 53%; bottom: 0; z-index: 4; }
-.saas-device-phone .saas-device-bezel { padding: 6px; border-radius: 23px; }
-.saas-device-phone .saas-device-bezel > img { border-radius: 17px; }
 .saas-device-labels { display: flex; justify-content: center; gap: 32px; padding: 0; margin: 30px 0 0; list-style: none; color: #45556d; }
 .saas-device-labels li { display: flex; gap: 8px; align-items: center; font-size: 13px; }
 .saas-device-labels svg { color: #3861f5; }
@@ -525,26 +512,11 @@
   .saas-device-laptop { width: 75%; left: -1%; bottom: 0; }
   .saas-device-ipad { width: 48%; right: -1%; bottom: 23%; }
   .saas-device-phone { width: 22%; left: 49%; bottom: -2%; }
-  .saas-device-bezel { padding: 3px; }
-  .saas-device-desktop .saas-device-bezel { padding: 4px 4px 0; border-radius: 6px 6px 0 0; }
-  .saas-monitor-chin { height: 16px; border-radius: 0 0 6px 6px; }
-  .saas-monitor-chin img { width: 10px; height: 10px; }
-  .saas-monitor-stand { height: 24px; }
-  .saas-device-laptop .saas-device-bezel { padding: 4px 4px 6px; border-radius: 6px 6px 0 0; }
-  .saas-laptop-base { height: 7px; }
-  .saas-laptop-base > span { height: 2px; }
-  .saas-device-ipad .saas-device-bezel { padding: 4px 5px; border-radius: 8px; }
-  .saas-device-ipad .saas-device-bezel > img { border-radius: 3px; }
-  .saas-device-phone .saas-device-bezel { padding: 3px; border-radius: 13px; }
-  .saas-device-phone .saas-device-bezel > img { border-radius: 10px; }
   .saas-device-labels { gap: 16px; flex-wrap: wrap; margin-top: 29px; }
   .saas-device-labels li { font-size: 11px; gap: 5px; }
   .saas-device-note { font-size: 11px; max-width: 280px; margin-left: auto; margin-right: auto; }
 }
-.saas-device-screen { position: relative; width: 100%; overflow: hidden; background: #f8fafc; }
-.saas-device-screen iframe { display: block; position: absolute; top: 0; left: 0; border: 0; transform-origin: top left; pointer-events: none; background: #f8fafc; }
-.saas-device-loading { position: absolute; inset: 0; display: grid; place-items: center; }
-.saas-device-loading img { width: 24px; height: 24px; }
-.saas-device-ipad .saas-device-screen { border-radius: 7px; }
-.saas-device-phone .saas-device-screen { border-radius: 17px; }
-@media (max-width: 480px) { .saas-device-ipad .saas-device-screen { border-radius: 3px; } .saas-device-phone .saas-device-screen { border-radius: 10px; } }
+
+.saas-device > img { display: block; width: 100%; height: auto; }
+.saas-pos-demo { position: relative; }
+.saas-workspace-poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top left; z-index: 1; }

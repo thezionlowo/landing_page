@@ -7,6 +7,7 @@ import { CustomerAuthProvider } from '../src/context/CustomerAuthContext';
 import { RouterProvider } from '../src/router/Router';
 import { PlanComparisonProvider } from '../src/components/PlanComparison';
 import { NotFoundPage } from '../src/pages/NotFoundPage';
+import { PricingPage } from '../src/pages/PricingPage';
 import { HomePage } from '../src/pages/HomePage';
 import { MarketingPage } from '../src/pages/MarketingPage';
 import { LoginPage } from '../src/pages/auth/LoginPage';
@@ -20,7 +21,7 @@ import { pageSchema, routeSeo, SITE_ORIGIN } from '../src/lib/siteSeo';
 const dist = path.resolve('dist');
 const template = fs.readFileSync(path.join(dist, 'index.html'), 'utf8');
 const routes: Record<string, React.ComponentType> = {
-  '/': HomePage,
+  '/': HomePage, '/pricing': PricingPage,
   ...Object.fromEntries(Object.entries(MARKETING_PAGES).map(([route, page]) => [route, () => React.createElement(MarketingPage, { page, path: route })])),
   ...Object.fromEntries(Object.keys(POLICY_PAGES).map(route => [route, () => React.createElement(PolicyPage, { path: route as PolicyPath })])),
   '/login': LoginPage, '/get-started': GetStartedPage, '/forgot-password': ForgotPasswordPage, '/404': NotFoundPage,

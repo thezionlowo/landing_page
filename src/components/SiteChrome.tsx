@@ -1,4 +1,4 @@
-import { PlanComparisonLink } from './PlanComparison';
+import { useClientReady } from '../lib/useClientReady';
 import { useCustomerAuth } from "../context/CustomerAuthContext";
 import { useRef, useState } from "react";
 import { ArrowDown, ArrowRight, ArrowUpRight, Menu, X } from "lucide-react";
@@ -17,7 +17,9 @@ export function BrandMark({ light = false }: { light?: boolean }) {
 }
 
 export function SiteHeader() {
-  const { isAuthenticated } = useCustomerAuth();
+  const { isAuthenticated: sessionAuthenticated } = useCustomerAuth();
+  const clientReady = useClientReady();
+  const isAuthenticated = clientReady && sessionAuthenticated;
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLButtonElement>(null);
   return (
@@ -37,7 +39,7 @@ export function SiteHeader() {
             <a href="/#product">Product</a>
             <a href="/#industries">Solutions</a>
             <a href="/#how-it-works">How it works</a>
-            <PlanComparisonLink>Pricing</PlanComparisonLink>
+            <a href="/pricing">Pricing</a>
           </nav>
           <div className="hm-nav-actions">
             <a
@@ -77,13 +79,13 @@ export function SiteHeader() {
               ["Product", "/#product"],
               ["Solutions", "/#industries"],
               ["How it works", "/#how-it-works"],
-              ["Pricing", "/#pricing"],
+              ["Pricing", "/pricing"],
               [
                 isAuthenticated ? "Your account" : "Log in",
                 isAuthenticated ? "/account" : "/login",
               ],
             ].map(([label, href]) => (
-              href === '/#pricing' ? <PlanComparisonLink key={href} onClick={() => setOpen(false)}>{label}<ArrowUpRight size={16} /></PlanComparisonLink> : <a key={href} href={href} onClick={() => setOpen(false)}>
+              <a key={href} href={href} onClick={() => setOpen(false)}>
                 {label}
                 <ArrowUpRight size={16} />
               </a>
@@ -131,7 +133,7 @@ export function SiteFooter() {
           <div>
             <span>EXPLORE</span>
             <a href="/#industries">Your industry</a>
-            <PlanComparisonLink>Pricing</PlanComparisonLink>
+            <a href="/pricing">Pricing</a>
             <a href="/#how-it-works">Getting started</a>
             <a href="/#faq">Common questions</a>
             <a href="/alternatives">Compare your options</a>
@@ -161,6 +163,7 @@ export function SiteFooter() {
           <div>
             <a href="/terms">Terms</a>
             <a href="/privacy">Privacy</a>
+            <a href="/refunds">Refunds</a>
             <a
               href="https://instagram.com/zameriahq"
               target="_blank"

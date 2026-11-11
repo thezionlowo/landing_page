@@ -20,6 +20,7 @@ const LeadCapture1Page = React.lazy(() => import('./pages/LeadCapture1Page').the
 const LeadCapture2Page = React.lazy(() => import('./pages/LeadCapture2Page').then(m => ({ default: m.LeadCapture2Page })));
 
 const MarketingPage = React.lazy(() => import('./pages/MarketingPage').then(m => ({ default: m.MarketingPage })));
+const PricingPage = React.lazy(() => import('./pages/PricingPage').then(m => ({ default: m.PricingPage })));
 const PolicyPage = React.lazy(() => import('./pages/PolicyPage').then(m => ({ default: m.PolicyPage })));
 
 export function LandingPageContent() {
@@ -38,6 +39,8 @@ function MainAppRoutes() {
   const { path, search } = useRouter();
   const redirect = PAGE_REDIRECTS[path.replace(/\/$/, '')];
   if (redirect) return <PageRedirect to={redirect + search} />;
+
+  if (path.replace(/\/$/, '') === '/pricing') return <PricingPage />;
 
   const policyPath = path.replace(/\/$/, '') as PolicyPath;
   if (Object.prototype.hasOwnProperty.call(POLICY_PAGES, policyPath)) return <PolicyPage path={policyPath} />;
@@ -82,7 +85,7 @@ function MainAppRoutes() {
 
 export function AppShell({ children }: { children?: React.ReactNode }) {
   const { path } = useRouter();
-  const hideChatWidget = ['/', '/login', '/get-started', '/forgot-password', '/subscribe', '/terms', '/privacy'].includes(path.replace(/\/$/, '') || '/') || path.startsWith('/leadcapture1') || path.startsWith('/leadcapture2');
+  const hideChatWidget = ['/', '/login', '/get-started', '/forgot-password', '/subscribe', '/terms', '/privacy', '/refunds', '/pricing', '/payment/complete'].includes(path.replace(/\/$/, '') || '/') || path.startsWith('/leadcapture1') || path.startsWith('/leadcapture2');
 
   return (
     <>

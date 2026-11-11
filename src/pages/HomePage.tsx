@@ -1,11 +1,10 @@
 import { HOME_FAQS } from '../content/homeFaqs';
 import { DeviceShowcase } from '../components/DeviceShowcase';
-import { planCheckoutUrl } from '../lib/checkoutPricing';
+import { PricingSection } from '../components/PricingSection';
 import { useState } from 'react';
-import { ArrowDown, ArrowRight, ArrowUpRight, Check, ChevronDown, Globe2, Layers, Package, Plug, ReceiptText, RefreshCw, ShieldCheck, Store, Users, WifiOff, Zap } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Check, ChevronDown, Globe2, Layers, Package, Plug, ReceiptText, RefreshCw, ShieldCheck, Store, Users, WifiOff } from 'lucide-react';
 import { SiteHeader, SiteFooter } from '../components/SiteChrome';
 import { InteractiveWorkspace } from '../components/InteractiveWorkspace';
-import { useGeoPricing } from '../services/geoPricingService';
 
 function Hero() {
   return <section className="saas-hero" aria-labelledby="home-title">
@@ -54,10 +53,7 @@ function Setup() {
   ].map(([Icon, title, copy], i) => { const StepIcon = Icon as typeof Store; return <article key={String(title)}><div><span>0{i + 1}</span><StepIcon size={22} /></div><h3>{String(title)}</h3><p>{String(copy)}</p></article>; })}</div><p className="saas-setup-note"><ShieldCheck size={14} /> Your seven-day trial starts when your eligible store is activated. No card required.</p></div></section>;
 }
 
-function Pricing() {
-  const { geo, isNigeria, setCountry } = useGeoPricing();
-  return <section id="pricing" className="saas-section saas-pricing"><div className="saas-container"><div className="saas-centered-heading"><span className="saas-eyebrow">SIMPLE ANNUAL PRICING</span><h2>Two plans.<br /><span>One annual payment.</span></h2><p>Try full Business access for seven days.<br />Choose an annual plan when you’re ready.</p><div className="saas-region" role="group" aria-label="Pricing region"><button aria-pressed={isNigeria} onClick={() => setCountry('NG')}>Nigeria <span>NGN</span></button><button aria-pressed={!isNigeria} onClick={() => setCountry('US')}>International <span>USD</span></button></div></div><div className="saas-plans">{(['starter', 'business'] as const).map(plan => { const details = geo.plans[plan];const business = plan === 'business'; return <article className={`saas-plan ${business ? 'saas-plan-business' : ''}`} key={plan}><div className="saas-plan-title"><span>{business ? <Zap size={20} /> : <Store size={20} />}{details.plan}</span>{business && <small>MORE ROOM TO GROW</small>}</div><p>{business ? 'For a bigger catalogue and a growing team.' : 'For a small shop ready to get connected.'}</p><div className="saas-plan-price"><strong>{details.displayPrice}</strong><span>/ year</span></div><span className="saas-plan-interval">Billed annually in {geo.currency}.</span><a className={`saas-button ${business ? '' : 'saas-button-secondary'}`} href={planCheckoutUrl(plan, geo)}>Choose {details.plan}<ArrowRight size={16} /></a><div className="saas-plan-divider">{business ? 'Capacity to grow. Everything connected.' : 'Your connected retail essentials.'}</div><ul>{details.features.map(feature => <li key={feature}><Check size={15} />{feature.replace('real-time inventory synchronization','inventory synchronization')}</li>)}</ul></article>; })}</div><div className="saas-pricing-footer"><span><ShieldCheck size={14} /> Secure checkout</span><span><Check size={14} /> Annual access, renewed through checkout</span><a href="/get-started">Start with the free trial <ArrowUpRight size={14} /></a></div></div></section>;
-}
+
 
 
 function FAQ() {
@@ -66,5 +62,5 @@ function FAQ() {
 }
 
 export function HomePage() {
-  return <div className="hm-home saas-landing"><a className="hm-skip-link" href="#main-content">Skip to content</a><SiteHeader /><main id="main-content"><Hero /><ConnectedRetail /><DeviceShowcase /><FeatureCards /><Industries /><Setup /><Pricing /><FAQ /><section className="saas-final"><div className="saas-container"><span className="saas-eyebrow">YOUR BUSINESS. BETTER CONNECTED.</span><h2>Connect your store.<br />Start selling.</h2><p>Try full Business access for seven days.<br />No card required.</p><a className="saas-button saas-button-white" href="/get-started">Start your free trial <ArrowRight size={18} /></a></div></section></main><SiteFooter /></div>;
+  return <div className="hm-home saas-landing"><a className="hm-skip-link" href="#main-content">Skip to content</a><SiteHeader /><main id="main-content"><Hero /><ConnectedRetail /><DeviceShowcase /><FeatureCards /><Industries /><Setup /><PricingSection /><FAQ /><section className="saas-final"><div className="saas-container"><span className="saas-eyebrow">YOUR BUSINESS. BETTER CONNECTED.</span><h2>Connect your store.<br />Start selling.</h2><p>Try full Business access for seven days.<br />No card required.</p><a className="saas-button saas-button-white" href="/get-started">Start your free trial <ArrowRight size={18} /></a></div></section></main><SiteFooter /></div>;
 }

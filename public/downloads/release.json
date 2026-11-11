@@ -1,6 +1,6 @@
 {
   "source": "21ST SEPT/Zion",
-  "builtAt": "2026-11-10T14:44:58.867Z",
+  "builtAt": "2026-11-11T07:15:20.929Z",
   "sourceFiles": {
     "zameria_web/src/App.tsx": "ebdd7632af01cd0f38b49c6b7906f54b0d3b55cf23a71e2c1ee2f4cd57f1db25",
     "zameria_web/src/components/auth/ProtectedRoute.tsx": "4ca73cb9cb9a6bfb1ba8106b02a8bf4a4a1caa1ea469f9218f591652a9051251",
@@ -53,7 +53,7 @@
     "zameria_web/src/mocks/demoStorage.ts": "8f7a65733ac79b31c26a4f4143be3ed30bd7c4352990ac4baadcedab05c87c3f",
     "zameria_web/src/mocks/demoSupport.ts": "38a28123f94f25f91bdf68e9c0ae69f24ed9d28fa5a07008ebafc9a002b9a5b3",
     "zameria_web/src/mocks/index.ts": "a369a6ca12105250c1cf93028d49ecd9772601eeed508abfe09459bf03adeb9a",
-    "zameria_web/src/mocks/skincareDemo.ts": "280a95a3e1e52f51e03151724be3de6656b82dba021ffdb653bfe8d23c727f2c",
+    "zameria_web/src/mocks/skincareDemo.ts": "76ac6ea45d4a954340966d34079defbb0cb2bcf4496c2136aa8f249e150775e5",
     "zameria_web/src/pages/CustomersPage.tsx": "deedd429dfc00ab2e60739131236c7f81669743857dfafeaf76e559f5439ef0d",
     "zameria_web/src/pages/DashboardPage.tsx": "d5f0b9e12a0927320e643b76667e31dc9814056880614dc64c27a40e680bb0e4",
     "zameria_web/src/pages/LoginPage.tsx": "040286bd6a36606752030e66c1fc7ca05d2af52af63f7924dac4879069fae679",
@@ -252,7 +252,7 @@
     "source/admin/src/workspace.css": "376521819f277ba7fdf7842f1870667951e243573b726f8dba00691456b18431",
     "source/admin/tsconfig.json": "df8e9c76896c636edd140f97c3ecb37b61ef8c4a9a79a5befab702239109ad61",
     "source/admin/vite.config.ts": "7bc5fc4aff68d7e36d6eaab2a8b7968e8a10ee352422594ae1a9862a2d77bf51",
-    "source/manifest.json": "a5d96a34c98c5ad86a0802e743c3e4138d9de36d30d85783f9008185c22371da",
+    "source/manifest.json": "ac9802e2781f1015794c1dcfb7fdef65c62bcafad6924b9e6ef0cc30d4548080",
     "source/pos/build/wordpress-react.ts": "2ec7acaa4fec7212be87bdda46c094d07784145a00c8e7d3d56677a2607bed6c",
     "source/pos/index.html": "9cf03581ab8cbbd5134db6ac8c7215a66477d51f0536dfd43f9c181bbb055efb",
     "source/pos/package-lock.json": "2872c7973ff493410bd3f0e5ae87f5e0e5871f814280044bab80468a1b27eb35",
@@ -317,7 +317,7 @@
     "source/pos/src/mocks/demoStorage.ts": "8f7a65733ac79b31c26a4f4143be3ed30bd7c4352990ac4baadcedab05c87c3f",
     "source/pos/src/mocks/demoSupport.ts": "38a28123f94f25f91bdf68e9c0ae69f24ed9d28fa5a07008ebafc9a002b9a5b3",
     "source/pos/src/mocks/index.ts": "a369a6ca12105250c1cf93028d49ecd9772601eeed508abfe09459bf03adeb9a",
-    "source/pos/src/mocks/skincareDemo.ts": "280a95a3e1e52f51e03151724be3de6656b82dba021ffdb653bfe8d23c727f2c",
+    "source/pos/src/mocks/skincareDemo.ts": "76ac6ea45d4a954340966d34079defbb0cb2bcf4496c2136aa8f249e150775e5",
     "source/pos/src/pages/CustomersPage.tsx": "deedd429dfc00ab2e60739131236c7f81669743857dfafeaf76e559f5439ef0d",
     "source/pos/src/pages/DashboardPage.tsx": "d5f0b9e12a0927320e643b76667e31dc9814056880614dc64c27a40e680bb0e4",
     "source/pos/src/pages/LoginPage.tsx": "040286bd6a36606752030e66c1fc7ca05d2af52af63f7924dac4879069fae679",
@@ -385,5 +385,5 @@
     "uninstall.php": "1d8a13e35ed38bb6d021f3b492ee7748062cc595d37ac3e14bc055f481aa4139",
     "zameria.php": "3fad2a95250e302cc31c5f503ed00da5b01be256d63b36b89020d430c8dd89ef"
   },
-  "zipSha256": "611dc6b272baf0f3ca11e946c332b7a1dd61e1d5333371acd63654a27bba9dcf"
+  "zipSha256": "166f06aff5f5f721d6b725333456aff37882e6e64060bbac591887f6dba6e037"
 }

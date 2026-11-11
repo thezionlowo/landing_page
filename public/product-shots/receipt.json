@@ -1,0 +1,47 @@
+{
+  "capturedAt": "2026-11-11T06:50:07.240Z",
+  "source": "real isolated POS demo; no production requests",
+  "previewReceiptSha256": "d094c5713b875940c663a391573918716321f2152ca8fb714e27aeea9628551e",
+  "assets": {
+    "desktop": {
+      "file": "desktop.png",
+      "screen": "dashboard",
+      "width": 1156,
+      "height": 830,
+      "bytes": 133688,
+      "sha256": "10d03ce387fbfac7b6ef65e0cabc97841c58b3902a99f4c42e76f6664471998d"
+    },
+    "laptop": {
+      "file": "laptop.png",
+      "screen": "orders",
+      "width": 1116,
+      "height": 745,
+      "bytes": 124930,
+      "sha256": "fa09d354c60e62a32841e0f1b89d59121d2f440a8cbd3a6bf664cd667b8f5b89"
+    },
+    "tablet": {
+      "file": "tablet.png",
+      "screen": "products",
+      "width": 956,
+      "height": 738,
+      "bytes": 186999,
+      "sha256": "b9e6d3c1e690bc942eb6738057f3b355f11df9b29c5f17a99aa3da2a556b7cb2"
+    },
+    "phone": {
+      "file": "phone.png",
+      "screen": "customers",
+      "width": 466,
+      "height": 922,
+      "bytes": 95653,
+      "sha256": "5f9eda2cdeeeb7e9f305d2a51c6d28df8c6fef5c3c80447471eaa12d8806abfd"
+    },
+    "workspace": {
+      "file": "workspace.png",
+      "screen": "sale",
+      "width": 1440,
+      "height": 900,
+      "bytes": 570965,
+      "sha256": "e299fd86573586ee3a0669bebcd11fb4320466d27cf1b87127e5782929ef30a1"
+    }
+  }
+}
