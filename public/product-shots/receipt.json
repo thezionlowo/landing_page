@@ -1,39 +1,39 @@
 {
-  "capturedAt": "2026-11-11T19:39:38.790Z",
+  "capturedAt": "2026-11-11T23:24:16.918Z",
   "source": "real isolated POS demo; no production requests",
-  "previewReceiptSha256": "5a0a3cd24a8a3232225bd86863fead36ec8d488c5362061361e78c7f9c3ffa66",
+  "previewReceiptSha256": "cae8716a859f83ce3020850ef5c194e3290f299dc0569ccc8f2c261dafc871a1",
   "assets": {
     "desktop": {
       "file": "desktop.png",
       "screen": "dashboard",
       "width": 1156,
       "height": 830,
-      "bytes": 113284,
-      "sha256": "f4f60c912f98babfc310e75d40e7a567f897bbe76f5326b1d4d81de0ff7ee9f9"
+      "bytes": 112902,
+      "sha256": "81949ab9ec95a19c4f944a7c6c7c79cf086c4575251014b30de7b3f95abb88b7"
     },
     "laptop": {
       "file": "laptop.png",
       "screen": "orders",
       "width": 1116,
       "height": 745,
-      "bytes": 121066,
-      "sha256": "00167634616186a86e17499f6564bc85dd2a6ecdf60caf8c031cc07a2ae5fd97"
+      "bytes": 105336,
+      "sha256": "c0a1345e6951a4cf5f3121f85861f44b652ef7631aa1d778aae9fa04177abdb2"
     },
     "tablet": {
       "file": "tablet.png",
       "screen": "products",
       "width": 956,
       "height": 738,
-      "bytes": 180255,
-      "sha256": "a15e71481afc69155556abbd3e49bb3fe0d330afbe1f8114ceba1104cca7f603"
+      "bytes": 161087,
+      "sha256": "c1bf63db87c13fffe24d5892ba299580622f3fa2ec72a423b4de859937fbde4e"
     },
     "phone": {
       "file": "phone.png",
       "screen": "customers",
       "width": 466,
       "height": 922,
-      "bytes": 97969,
-      "sha256": "ed53355b79d51287064c33b5a738645ee341a5475aa234267f637a7633c07e23"
+      "bytes": 89114,
+      "sha256": "543e7fc4af26be3cc76c8f1990ae193edb9a7a7dbb6f4226e798ebfb96317221"
     },
     "workspace": {
       "file": "workspace.png",
